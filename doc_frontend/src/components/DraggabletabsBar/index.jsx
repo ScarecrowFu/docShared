@@ -39,7 +39,7 @@ const SortableContainerList = SortableContainer(props => {
     } = props;
 
     return (
-        <div className='draggable-tabs-bar-root' {...others}>
+        <div className={classNames('draggable-tabs-bar-root', className, {sorting: isSorting})} {...others}>
             {dataSource.map((item, index) => {
                 const {key, title, closable} = item;
                 const isActive = activeKey === key;
