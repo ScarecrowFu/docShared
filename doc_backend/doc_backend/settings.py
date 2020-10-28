@@ -41,12 +41,14 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'corsheaders',
     'doc_api',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -126,6 +128,17 @@ STATIC_URL = '/static/'
 
 # 自定义用户模型
 AUTH_USER_MODEL = "doc_api.User"
+
+# 设置同源策略 测试环境下允许所有非同源站点访问
+CORS_ORIGIN_ALLOW_ALL = True
+
+# 白名单
+# CORS_ORIGIN_WHITELIST = (
+#     'google.com',
+#     'hostname.example.com',
+#     'localhost:8000',
+#     '127.0.0.1:9000'
+# )
 
 # 导入其他配置
 from doc_backend.other_settings import *

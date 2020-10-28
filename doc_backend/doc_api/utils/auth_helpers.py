@@ -36,10 +36,12 @@ def jwt_response_payload_handler(token, user=None, request=None, impersonated_by
     """自定义授权返回"""
     result = {
         'success': True,
-        'token': token,
         'messages': "认证成功!使用帐号密码登录系统!",
-        'user': {'id': user.id, 'username': user.username, 'email': user.email, 'nickname': user.nickname},
-        'is_admin': user.is_admin,
+        'user': {'id': user.id, 'username': user.username,
+                 'email': user.email, 'nickname': user.nickname,
+                 'is_admin': user.is_admin, 'token': token
+                 },
+
     }
     return result
 
