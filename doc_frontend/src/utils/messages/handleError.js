@@ -1,5 +1,6 @@
-import {notification} from 'antd';
+import {notification, message} from 'antd';
 import {toLogin} from 'src/utils/userAuth';
+import messageDuration from 'src/config/settings'
 
 /**
  * 尝试获取错误信息 errorTio > resData.message > resData.data > error.message > '未知系统错误'
@@ -35,7 +36,7 @@ function getErrorTip({error, errorTip}) {
     return serverErrorTip;
 }
 
-export default function handleError({error, errorTip}) {
+export default function handleError({error, errorTip, errorType='notification'}) {
     const {status} = error?.response || {};
 
     // 如果是未登录问题，不显示错误提示，直接跳转到登录页面
@@ -45,10 +46,16 @@ export default function handleError({error, errorTip}) {
     if (errorTip === false) return;
 
     const description = getErrorTip({error, errorTip});
-
-    notification.error({
-        message: '失败',
-        description,
-        duration: 2,
-    });
+    if (errorType === 'message') {
+        message.error({
+            content: description,
+            duration: messageDuration,
+        })
+    } else {
+        notification.error({
+            message: '失败',
+            description,
+            duration: messageDuration,
+        });
+    }
 }

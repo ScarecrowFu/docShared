@@ -13,10 +13,6 @@ module.exports = {
     authInfoName: "authInfo",
     // 登录信息 存储方式 localStorage sessionStorage cookie
     authInfoStorage: "localStorage",
-    //token失效回退到登录页时是否记录本次的路由
-    recordRoute: true,
-    // 默认横纵布局 horizontal vertical
-    layout: "vertical",
     // 是否开启主题配置按钮
     themeBar: true,
     // 是否显示多标签页
@@ -39,10 +35,4 @@ module.exports = {
     notFoundCode: 404,
     //服务器端错误
     errorServerCode: 500,
-    //是否显示在页面高亮错误
-    errorLog: ["development", "test", "production"],
-    //是否开启登录拦截
-    loginInterception: true,
-    //intelligence和all两种方式，前者后端权限只控制permissions不控制view文件的import（前后端配合，减轻后端工作量），all方式完全交给后端前端只负责加载
-    authentication: "intelligence",
 };
