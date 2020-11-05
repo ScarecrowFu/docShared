@@ -1,6 +1,8 @@
 import axios from 'axios'
-import {message} from 'antd'
-import {baseURL, requestTimeout, contentType, authInfoName } from 'src/config/settings';
+import {baseURL, requestTimeout, contentType, messageDuration } from 'src/config/settings';
+import {getLoginUser, toLogin} from 'src/utils/userAuth'
+import {notification} from 'antd';
+
 
 // 创建 service
 const service = axios.create({
@@ -12,7 +14,8 @@ const service = axios.create({
 // request 拦截器
 service.interceptors.request.use(
     config => {
-      const authInfo = JSON.parse(localStorage.getItem(authInfoName))
+      const authInfo = getLoginUser()
+      console.log('request authInfo', authInfo);
       if (authInfo) {
         const token = authInfo.token
         if (token) {
@@ -30,12 +33,11 @@ service.interceptors.response.use(
     response => {
       const res = response.data
       if (res.success === false) {
-        let config = {
-          content: res.messages,
-          top: 100,
-          duration: 5,
-        }
-        message.error(config);
+          notification.error({
+              message: '请查看错误信息',
+              description: res.messages,
+              duration: messageDuration,
+          });
         return Promise.reject('error')
       } else {
         return response
@@ -43,14 +45,37 @@ service.interceptors.response.use(
     },
     error => {
       if (error.response) {
+        const res = error.response.data;
         switch (error.response.status) {
           case 401:
-            break
+              notification.error({
+                  message: '登录凭证过期, 重新登录',
+                  description: res.messages,
+                  duration: messageDuration,
+              });
+              toLogin();
+              break;
           case 403:
-            break
+              notification.error({
+                  message: '认证信息错误',
+                  description: res.messages,
+                  duration: messageDuration,
+              });
+              break ;
           case 500:
-            break
+              notification.error({
+                  message: '服务发生错误, 请稍候再试或联系管理员',
+                  description: res.messages,
+                  duration: messageDuration,
+              });
+              break;
           default:
+              notification.error({
+                  message: '服务发生错误, 请稍候再试或联系管理员',
+                  description: res.messages,
+                  duration: messageDuration,
+              });
+              break;
         }
 
       }

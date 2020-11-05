@@ -52,7 +52,7 @@ JWT_AUTH = {
     'JWT_ISSUER': None,
     'JWT_ALLOW_REFRESH': False,
     'JWT_REFRESH_EXPIRATION_DELTA': datetime.timedelta(days=7),
-    'JWT_AUTH_HEADER_PREFIX': 'doc_backend',
+    'JWT_AUTH_HEADER_PREFIX': 'doc',
     'JWT_AUTH_COOKIE': None,
 
 }

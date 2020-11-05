@@ -386,13 +386,13 @@ module.exports = function (webpackEnv) {
     module: {
       strictExportPresence: true,
       rules: [
-        // //  自定义, 路由读取配置
-        // {
-        //   test: /PageRoutes\.js$/,
-        //   enforce: 'pre',
-        //   use: path.resolve(paths.appSrc, 'routers', 'routeLoader.js'),
-        //   include: paths.appSrc,
-        // },
+        //  自定义, 路由读取配置
+        {
+          test: /PageRoutes\.js$/,
+          enforce: 'pre',
+          use: path.resolve(paths.appSrc, 'routers', 'routeLoader.js'),
+          include: paths.appSrc,
+        },
         // Disable require.ensure as it's not a standard language feature.
         { parser: { requireEnsure: false } },
         {

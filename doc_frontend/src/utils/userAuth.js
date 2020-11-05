@@ -2,8 +2,9 @@ import {session} from 'src/utils/storage';
 import {getNodeByPropertyAndValue, convertToTree} from 'src/utils/tree';
 import {pathToRegexp} from 'path-to-regexp';
 import {ROUTE_BASE_NAME} from 'src/routers/AppRouter';
+import {authInfoKey} from 'src/config/settings'
 
-const LOGIN_USER_STORAGE_KEY = 'login-user';
+const LOGIN_USER_STORAGE_KEY = authInfoKey;
 
 const localStorage = window.localStorage;
 const sessionStorage = window.sessionStorage;
@@ -28,11 +29,10 @@ export function setLoginUser(loginUser = {}) {
         id,             // 用户id 必须
         name,           // 用户名 必须
         avatar,         // 用头像 非必须
-        token,          // 登录凭证 非必须 ajax请求有可能会用到，也许是cookie
-        permissions,    // 用户权限
+        token,          // 登录凭证 必须
+        permissions,    // 用户权限 非必须
         ...others,      // 其他属性
     });
-
     sessionStorage.setItem(LOGIN_USER_STORAGE_KEY, userStr);
 }
 
@@ -42,7 +42,6 @@ export function setLoginUser(loginUser = {}) {
  */
 export function getLoginUser() {
     const loginUser = sessionStorage.getItem(LOGIN_USER_STORAGE_KEY);
-
     return loginUser ? JSON.parse(loginUser) : null;
 }
 

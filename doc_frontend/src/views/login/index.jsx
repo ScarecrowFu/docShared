@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 import {Helmet} from 'react-helmet';
-import {Input, Button, Form} from 'antd';
+import {Input, Button, Form } from 'antd';
 import {LockOutlined, UserOutlined} from '@ant-design/icons';
 import {setLoginUser, toHome} from 'src/utils/userAuth';
 import config from 'src/utils/Hoc/configHoc';
@@ -10,7 +10,6 @@ import './style.less';
 
 @config({
     path: '/login',
-    ajax: true,
     noFrame: true,
     noAuth: true,
 })
@@ -32,41 +31,21 @@ class Login extends Component {
 
     handleSubmit = async () => {
         if (this.state.loading) return;
-
         const values = await this.form.validateFields();
 
-        this.setState({ loading: true });
-
-        const data = await login(values);
-        console.log('data', data);
-        // const messages = data.messages;
-
-        const {username, password} = values;
-        const params = {
-            username,
-            password,
-        };
-
-        setLoginUser({
-            id: params.username,
-            name: params.username,
-        });
-        toHome();
-
-        /*
         this.setState({loading: true, message: ''});
-        this.props.ajax.post('/mock/login', params, {errorTip: false})
+
+        login(values)
             .then(res => {
-                const {id, name} = res;
-                setLoginUser({
-                    id,
-                    name,
-                });
+                const data = res.data
+                setLoginUser(data.user);
                 toHome();
+            }, error => {
+                console.log(error.response)
             })
             .catch(() => this.setState({message: '用户名或密码错误！'}))
             .finally(() => this.setState({loading: false}));
-        */
+
     };
 
     render() {

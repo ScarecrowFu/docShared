@@ -24,10 +24,10 @@
  *
  * @module 本地存储
  */
-
+import {keyPrefix} from 'src/config/settings'
 const localStorage = window.localStorage;
 const sessionStorage = window.sessionStorage;
-let _keyPrefix = 'default-prefix-';
+let _keyPrefix = keyPrefix;
 
 /**
  * 初始化配置
