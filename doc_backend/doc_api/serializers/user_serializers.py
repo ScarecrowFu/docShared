@@ -36,7 +36,7 @@ class UserListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('id', 'username', 'nickname', 'email', 'phone', 'gender', 'title', 'is_active', 'created_time')
+        fields = ('id', 'username', 'nickname', 'email', 'phone', 'gender', 'title', 'is_active', 'is_admin', 'created_time')
 
 
 class UserActionSerializer(serializers.ModelSerializer):
@@ -57,5 +57,5 @@ class UserActionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('id', 'username', 'password', 'nickname', 'email', 'avatar', 'phone', 'gender', 'title', 'address')
+        fields = '__all__'
 

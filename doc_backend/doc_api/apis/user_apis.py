@@ -6,13 +6,15 @@ from doc_api.models import User, TeamGroup
 from doc_api.serializers.user_serializers import UserListSerializer, UserActionSerializer, UserDetailSerializer
 from doc_api.serializers.team_serializers import TeamGroupDetailSerializer, TeamGroupActionSerializer, \
     TeamGroupListSerializer
+from doc_api.filters.user_filters import UserParameterFilter
 
 
 class UserViewSet(viewsets.ModelViewSet):
     """用户管理"""
-    filter_backends = (filters.OrderingFilter, filters.SearchFilter,)
+    filter_backends = (filters.OrderingFilter, filters.SearchFilter, UserParameterFilter)
     search_fields = ('username', 'nickname', 'email', 'gender', 'phone', 'title', 'created_time')
-    ordering_fields = ('username', 'nickname', 'email', 'phone', 'gender', 'title', 'created_time')
+    ordering_fields = ('username', 'nickname', 'email', 'phone', 'gender', 'title', 'is_active', 'is_admin', 'created_time')
+    filterset_fields = ('username', 'nickname', 'email', 'phone', 'gender', 'title', 'is_active', 'is_admin', 'created_time')
     queryset = User.objects.filter(is_deleted=False).order_by('-id').all()
     permission_classes = (permissions.IsAuthenticated, )
 

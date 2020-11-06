@@ -49,6 +49,7 @@ class User(AbstractBaseUser, PermissionsMixin):
                                blank=True, null=True, verbose_name='头像')
     phone = models.CharField(max_length=255, blank=True, null=True, verbose_name='手机号码')
     gender = models.CharField(max_length=10, default='男', null=True, blank=True, verbose_name='性别')
+    age = models.CharField(max_length=10, null=True, blank=True, verbose_name='年龄')
     title = models.CharField(max_length=255, blank=True, null=True, verbose_name='岗位职称')
     address = models.CharField(max_length=255, null=True, blank=True, verbose_name='地址')
     intro = models.TextField(blank=True, null=True, verbose_name='简介')

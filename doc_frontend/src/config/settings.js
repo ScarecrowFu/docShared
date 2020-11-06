@@ -20,7 +20,7 @@ module.exports = {
     // 配后端数据的默认接收方式
     contentType: "application/json",
     // 消息框默认消失时间 s
-    messageDuration: 2,
+    messageDuration: 3,
     // 默认最长请求时间
     requestTimeout: 10000,
 };

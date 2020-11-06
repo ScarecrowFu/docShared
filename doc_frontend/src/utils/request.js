@@ -15,7 +15,6 @@ const service = axios.create({
 service.interceptors.request.use(
     config => {
       const authInfo = getLoginUser()
-      console.log('request authInfo', authInfo);
       if (authInfo) {
         const token = authInfo.token
         if (token) {
