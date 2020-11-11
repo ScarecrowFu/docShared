@@ -7,7 +7,8 @@ export default function getMenus(userId) {
     // 若由后端返回可使用菜单, 在这里根据 userId 请求相关菜单权限
     console.log(userId);
     return Promise.resolve([
-        {key: 'home', text: '首页', icon: 'home', path: '/', order: 900},
+        {key: 'home', text: '首页', icon: 'home', path: '/', order: 2000},
+        {key: 'c_docs', text: '文集管理', icon: 'file-word', path: '/c_docs', order: 1900},
         {key: 'user', text: '用户管理', icon: 'user', path: '/users', order: 800},
     ]);
 }

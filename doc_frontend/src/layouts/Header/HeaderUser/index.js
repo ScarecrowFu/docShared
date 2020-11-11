@@ -7,7 +7,7 @@ import {
 } from '@ant-design/icons';
 import {Menu, Dropdown} from 'antd';
 import {Link} from 'react-router-dom';
-import {toLogin, getLoginUser} from 'src/utils/userAuth';
+import {toLogin, getLoginUser, removeLoginUser} from 'src/utils/userAuth';
 import ModifyPassword from './ModifyPassword';
 import config from 'src/utils/Hoc/configHoc';
 import './style.less';
@@ -26,7 +26,8 @@ class HeaderUser extends Component {
 
     handleMenuClick = ({key}) => {
         if (key === 'logout') {
-            this.props.ajax.post('/mock/logout').then(toLogin);
+            removeLoginUser();
+            toLogin();
         }
 
         if (key === 'modifyPassword') {
@@ -36,7 +37,7 @@ class HeaderUser extends Component {
 
     render() {
         const user = getLoginUser() || {};
-        const name = user.name;
+        const name = user.nickname;
 
         const {className, theme} = this.props;
 

@@ -46,6 +46,14 @@ export function getLoginUser() {
 }
 
 /**
+ * 清除当前用户信息
+ * @returns {any}
+ */
+export function removeLoginUser() {
+    sessionStorage.removeItem(LOGIN_USER_STORAGE_KEY);
+}
+
+/**
  * 判断用户是否登录 前端简单通过登录用户是否存在来判断
  * @returns {boolean}
  */

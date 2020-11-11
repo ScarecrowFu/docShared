@@ -163,7 +163,6 @@ export default class Operator extends Component {
         let {items, moreText, moreContentWidth, moreTrigger} = this.props;
         let operators = [];
         let more = [];
-
         if (typeof moreTrigger === 'string') {
             moreTrigger = [moreTrigger];
         }
