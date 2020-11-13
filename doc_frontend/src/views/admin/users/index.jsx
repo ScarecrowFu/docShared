@@ -1,4 +1,4 @@
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import {Button, Form, notification} from 'antd';
 import PageContent from 'src/layouts/PageContent';
 import config from 'src/utils/Hoc/configHoc';
@@ -10,16 +10,15 @@ import Operator from 'src/library/Operator';
 import Pagination from 'src/library/Pagination';
 import batchDeleteConfirm from 'src/components/BatchDeleteConfirm';
 import EditModal from './EditModal';
-import EditPermModal from './EditPermModal';
-import {bulkDeleteCDoc, deleteCDoc, getCDocList, getCDocPermissionTypes} from 'src/apis/c_doc';
-import {getUserList} from 'src/apis/user';
-import {messageDuration} from "../../config/settings"
-
+import { getUserList, deleteUser, bulkDeleteUser, activationUser } from 'src/apis/user';
+import { yesOrNoTag } from 'src/utils/tagRender';
+import {getLoginUser} from 'src/utils/userAuth';
+import {messageDuration} from "src/config/settings"
 
 @config({
-    path: '/c_docs',
-    title: {text: '文集管理', icon: 'file-word'},
-    breadcrumbs: [{key: 'c_docs', text: '文集管理', icon: 'file-word'}],
+    path: '/admin/users',
+    title: {text: '用户管理', icon: 'user'},
+    breadcrumbs: [{key: 'user', text: '用户管理', icon: 'user'}],
 })
 class UserCenter extends Component {
     state = {
@@ -31,95 +30,77 @@ class UserCenter extends Component {
         pageSize: 10,       // 分页每页显示条数
         deleting: false,    // 批量删除中loading
         visible: false,     // 添加、修改弹框
-        visiblePerm: false,     // 修改文集权限
         id: null,           // 需要修改的数据id
         ordering: null,           // 排序
-        permissionTypes: {},
-        perm_options: [],           // 权限选项
-        user_options: [],           // 用户选项
     };
 
-
     columns = [
-        { title: '名称', dataIndex: 'name', sorter: true, width: 200 },
-        { title: '简介', dataIndex: 'intro', sorter: true, width: 200 },
-        {title: '文档数量', dataIndex: 'docs_cnt', sorter: true, width: 100},
+        { title: '账号', dataIndex: 'username', sorter: true, width: 200 },
+        { title: '名称', dataIndex: 'nickname', sorter: true, width: 200 },
+        { title: '邮箱', dataIndex: 'email', sorter: true, width: 200 },
+        { title: '电话', dataIndex: 'phone', sorter: true, width: 100 },
+        { title: '性别', dataIndex: 'gender', sorter: true, width: 100 },
+        { title: '职称', dataIndex: 'title', sorter: true, width: 100 },
         {
-            title: '权限', dataIndex: 'perm', sorter: true, width: 100,
-            render: (value, record) => {
-                const { id, perm } = record;
-                const items = [
-                    {
-                        label: '文集权限',
-                        icon: 'form',
-                        onClick: () => this.setState({ visiblePerm: true, id }),
-                    },
-                ];
-                return <span> {this.state.permissionTypes[perm] } {<Operator items={items}/>}</span>;
+            title: '管理员', dataIndex: 'is_admin', sorter: true, width: 100,
+            render: (value, record)  => {
+                return yesOrNoTag(value)
             },
-        },
-        { title: '创建时间', dataIndex: 'created_time', sorter: true, width: 100 },
-        {
-            title: '用户', dataIndex: 'creator', sorter: true, width: 100,
-            render: (value, record) => {
-                return value.nickname;
-            }
         },
         {
             title: '操作', dataIndex: 'operator', width: 120,
             render: (value, record) => {
-                const { id, name } = record;
+                const { id, nickname, is_active } = record;
+                const authInfo = getLoginUser()
+                const authUserID = authInfo.id;
                 const items = [
                     {
                         label: '编辑',
                         onClick: () => this.setState({ visible: true, id }),
                     },
-                    {
-                        label: '删除',
-                        color: 'red',
-                        confirm: {
-                            title: `您确定删除"${name}"?`,
-                            onConfirm: () => this.handleDelete(id),
-                        },
-                    },
                 ];
+                if (authUserID !== id) {
+                    items.push(
+                        {
+                            label: '删除',
+                            color: 'red',
+                            confirm: {
+                                title: `您确定删除"${nickname}"?`,
+                                onConfirm: () => this.handleDelete(id),
+                            },
+                        },
+                    )
+                    if (is_active) {
+                        items.push(
+                            {
+                                label: '禁用',
+                                color: 'gray',
+                                confirm: {
+                                    title: `您确定禁用"${nickname}"?`,
+                                    onConfirm: () => this.handleActivation(id, false),
+                                },
+                            },
+                        )
+                    }
+                    else {
+                        items.push(
+                            {
+                                label: '启用',
+                                color: 'blue',
+                                confirm: {
+                                    title: `您确定启用"${nickname}"?`,
+                                    onConfirm: () => this.handleActivation(id, true),
+                                },
+                            },
+                        )
+                    }
+                }
                 return <Operator items={items}/>;
             },
         },
     ];
 
-    handlePermissionTypes = () => {
-        getCDocPermissionTypes()
-            .then(res => {
-                const data = res.data;
-                this.setState({ permissionTypes: data.results });
-                const perm_options = [];
-                Object.keys(data.results).forEach(function(key) {
-                    perm_options.push({'value': key, 'label': data.results[key]});
-                });
-                this.setState({ perm_options: perm_options });
-            }, error => {
-                console.log(error.response);
-            })
-    }
-    // todo 整理为分页获取选项
-    handleUserOptions = () => {
-        getUserList({'not_page': true})
-            .then(res => {
-                const data = res.data;
-                const user_options = [];
-                data.results.forEach(function (item) {
-                    user_options.push({'value': item.id, 'label': item.nickname})
-                })
-                this.setState({ user_options: user_options });
-            }, error => {
-                console.log(error.response);
-            })
-    }
-
     componentDidMount() {
-        this.handlePermissionTypes();
-        this.handleUserOptions();
         this.handleSubmit();
     }
 
@@ -127,18 +108,7 @@ class UserCenter extends Component {
         if (this.state.loading) return;
 
         const values = await this.form.validateFields();
-        if ('created_time' in values) {
-            const created_time = values.created_time;
-            if (created_time !== undefined && created_time.length === 2) {
-                let min_created_time = created_time[0];
-                let max_created_time = created_time[1];
-                min_created_time = min_created_time.format('YYYY-MM-DD');
-                max_created_time = max_created_time.format('YYYY-MM-DD');
-                delete values.created_time;
-                values.min_created_time = min_created_time;
-                values.max_created_time = max_created_time;
-            }
-        }
+
         let params = {
             ...values,
             page: this.state.pageNum,
@@ -150,7 +120,7 @@ class UserCenter extends Component {
         console.log('params', params)
 
         this.setState({ loading: true });
-        getCDocList(params)
+        getUserList(params)
             .then(res => {
                 const data = res.data;
                 const dataSource = data?.results || [];
@@ -183,7 +153,7 @@ class UserCenter extends Component {
     handleDelete = (id) => {
         if (this.state.deleting) return;
         this.setState({ deleting: true });
-        deleteCDoc(id)
+        deleteUser(id)
             .then(res => {
                 const data = res.data;
                 notification.success({
@@ -198,6 +168,22 @@ class UserCenter extends Component {
             .finally(() => this.setState({ deleting: false }));
     };
 
+    handleActivation = (id, active=true) => {
+        const activeText = active ? '启用！' : '禁用';
+        activationUser(id, {'active': active})
+            .then(res => {
+                const data = res.data;
+                notification.success({
+                    message: `${activeText}用户`,
+                    description: data.messages,
+                    duration: messageDuration,
+                });
+                this.handleSubmit();
+            }, error => {
+                console.log(error.response);
+            })
+            .finally(() => this.setState({ deleting: false }));
+    };
 
     handleBatchDelete = () => {
         if (this.state.deleting) return;
@@ -206,7 +192,7 @@ class UserCenter extends Component {
         console.log('selectedRowKeys', selectedRowKeys);
         batchDeleteConfirm(selectedRowKeys.length)
             .then(() => {
-                bulkDeleteCDoc({'deleted_objects': selectedRowKeys})
+                bulkDeleteUser({'deleted_objects': selectedRowKeys})
                     .then(res => {
                         const data = res.data;
                         notification.success({
@@ -233,7 +219,6 @@ class UserCenter extends Component {
             pageNum,
             pageSize,
             visible,
-            visiblePerm,
             id,
         } = this.state;
 
@@ -250,27 +235,39 @@ class UserCenter extends Component {
                                 {...formProps}
                                 label="关键字"
                                 name="search"
-                                placeholder="名称"
+                                placeholder="账号/昵称/邮箱"
                             />
                             <FormElement
                                 {...formProps}
                                 type="select"
-                                label="权限"
-                                name="perm"
-                                options={this.state.perm_options}
+                                label="性别"
+                                name="gender"
+                                options={[
+                                    { value: '男', label: '男' },
+                                    { value: '女', label: '女' },
+                                ]}
                             />
                             <FormElement
                                 {...formProps}
                                 type="select"
-                                label="用户"
-                                name="creator"
-                                options={this.state.user_options}
+                                label="管理员"
+                                placeholder="是否管理员"
+                                name="is_admin"
+                                options={[
+                                    { value: true, label: '是' },
+                                    { value: false, label: '否' },
+                                ]}
                             />
                             <FormElement
-                                width={300}
-                                type="date-range"
-                                label="创建时间"
-                                name="created_time"
+                                {...formProps}
+                                type="select"
+                                label="可用"
+                                name="is_active"
+                                placeholder="是否可用"
+                                options={[
+                                    { value: true, label: '是' },
+                                    { value: false, label: '否' },
+                                ]}
                             />
                             <FormElement layout>
                                 <Button type="primary" htmlType="submit">搜索</Button>
@@ -312,12 +309,6 @@ class UserCenter extends Component {
                     isEdit={id !== null}
                     onOk={() => this.setState({ visible: false }, () => this.handleSubmit())}
                     onCancel={() => this.setState({ visible: false })}
-                />
-                <EditPermModal
-                    visible={visiblePerm}
-                    id={id}
-                    onOk={() => this.setState({ visiblePerm: false }, () => this.handleSubmit())}
-                    onCancel={() => this.setState({ visiblePerm: false })}
                 />
             </PageContent>
         );

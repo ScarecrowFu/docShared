@@ -3,8 +3,9 @@ import {Form, notification} from 'antd';
 import FormElement from 'src/library/FormElement';
 import config from 'src/utils/Hoc/configHoc';
 import ModalContent from 'src/library/ModalHoc/ModalContent';
-import {createCDoc, getCDocPermissionTypes, retrieveCDoc, updateCDoc} from 'src/apis/c_doc';
-import {messageDuration} from "../../config/settings"
+import {getCDocPermissionTypes, retrieveCDoc, updateCDoc} from 'src/apis/c_doc';
+import {messageDuration} from "src/config/settings"
+import {getUserList} from "src/apis/user"
 
 
 @config({
@@ -51,57 +52,75 @@ class EditPermModal extends Component {
                 let results = data.results
                 results.creator = data.results.creator.nickname
                 this.setState({data: results});
+                this.setState({current_perm: results.perm});
                 this.form.setFieldsValue(results);
+                if(results.perm === 30) {
+                    this.handleUserOptions();
+                    let perm_value = results.perm_value.split(',');
+                    perm_value = perm_value.map(numStr => parseInt(numStr));
+                    this.form.setFieldsValue({'selected_users': perm_value});
+                }
+                if(results.perm === 40) {
+                    this.form.setFieldsValue({'access_code': results.perm_value});
+                }
             }, error => {
                 console.log(error.response);
             })
             .finally(() => this.setState({loading: false}));
     };
 
+    // todo 整理为分页获取选项
+    handleUserOptions = () => {
+        getUserList({'not_page': true})
+            .then(res => {
+                const data = res.data;
+                const user_options = [];
+                data.results.forEach(function (item) {
+                    user_options.push({'value': item.id, 'label': item.nickname})
+                })
+                this.setState({ user_options: user_options });
+            }, error => {
+                console.log(error.response);
+            })
+    }
+
     handlePermChange = e => {
-        console.log('radio checked', e.target.value);
         this.setState({
             current_perm: e.target.value,
         });
+        if (e.target.value === 30 && this.state.user_options.length === 0) {
+            this.handleUserOptions()
+        }
     }
 
     handleSubmit = (values) => {
         if (this.state.loading) return;
-        const {isEdit} = this.props;
         const {id} = this.props;
-        const successTip = isEdit ? '修改成功！' : '添加成功！';
+        const successTip = '修改文集权限成功！' ;
         this.setState({loading: true});
-        if (isEdit){
-            updateCDoc(id, values)
-                .then(res => {
-                    const data = res.data;
-                    const {onOk} = this.props;
-                    onOk && onOk();
-                    notification.success({
-                        message: successTip,
-                        description: data.messages,
-                        duration: messageDuration,
-                    });
-                }, error => {
-                    console.log(error.response);
-                })
-                .finally(() => this.setState({loading: false}));
-        } else {
-            createCDoc(values)
-                .then(res => {
-                    const data = res.data;
-                    const {onOk} = this.props;
-                    onOk && onOk();
-                    notification.success({
-                        message: successTip,
-                        description: data.messages,
-                        duration: messageDuration,
-                    });
-                }, error => {
-                    console.log(error.response);
-                })
-                .finally(() => this.setState({loading: false}));
+        if(values.perm === 30) {
+            values.perm_value = values.selected_users.join()
+            delete values.selected_users
         }
+        if(values.perm === 40) {
+            values.perm_value = values.access_code
+            delete values.access_code
+        }
+        console.log(values)
+        updateCDoc(id, values)
+            .then(res => {
+                const data = res.data;
+                const {onOk} = this.props;
+                onOk && onOk();
+                notification.success({
+                    message: successTip,
+                    description: data.messages,
+                    duration: messageDuration,
+                });
+            }, error => {
+                console.log(error.response);
+            })
+            .finally(() => this.setState({loading: false}));
 
     };
 
@@ -162,9 +181,10 @@ class EditPermModal extends Component {
                             {...formProps}
                             type="select"
                             label="用户"
-                            name="perm_value"
+                            name="selected_users"
                             noSpace
                             required
+                            mode="multiple"
                             options={this.state.user_options}
                         />
                         : null}
@@ -173,7 +193,7 @@ class EditPermModal extends Component {
                         <FormElement
                             {...formProps}
                             label="访问码"
-                            name="search"
+                            name="access_code"
                             noSpace
                             required
                             placeholder="访问码"

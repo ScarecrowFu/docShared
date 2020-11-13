@@ -3,12 +3,13 @@ import {Form, notification} from 'antd';
 import FormElement from 'src/library/FormElement';
 import config from 'src/utils/Hoc/configHoc';
 import ModalContent from 'src/library/ModalHoc/ModalContent';
-import { createCDoc, retrieveCDoc, updateCDoc } from 'src/apis/c_doc';
-import {messageDuration} from "../../config/settings"
+import { createTeamGroup, retrieveTeamGroup, updateTeamGroup } from 'src/apis/team_group';
+import {messageDuration} from "src/config/settings"
+import {getUserList} from "../../../apis/user"
 
 @config({
     modal: {
-        title: props => props.isEdit ? '修改文集' : '添加文集',
+        title: props => props.isEdit ? '修改团队' : '添加团队',
         maskClosable: true
     },
 })
@@ -16,24 +17,40 @@ class EditModal extends Component {
     state = {
         loading: false, // 页面加载loading
         data: {},       // 回显数据
+        user_options: [],           // 用户选项
     };
 
     componentDidMount() {
+        this.handleUserOptions();
         const {isEdit} = this.props;
-
         if (isEdit) {
             this.fetchData();
         }
+    }
+
+    // todo 整理为分页获取选项
+    handleUserOptions = () => {
+        getUserList({'not_page': true})
+            .then(res => {
+                const data = res.data;
+                const user_options = [];
+                data.results.forEach(function (item) {
+                    user_options.push({'value': item.id, 'label': item.nickname})
+                })
+                this.setState({ user_options: user_options });
+            }, error => {
+                console.log(error.response);
+            })
     }
 
     fetchData = () => {
         if (this.state.loading) return;
         const {id} = this.props;
         this.setState({loading: true});
-        retrieveCDoc(id)
+        retrieveTeamGroup(id)
             .then(res => {
                 const data = res.data;
-                this.setState({data: data.results});
+                this.setState({data: res});
                 this.form.setFieldsValue(data.results);
             }, error => {
                 console.log(error.response);
@@ -45,10 +62,12 @@ class EditModal extends Component {
         if (this.state.loading) return;
         const {isEdit} = this.props;
         const {id} = this.props;
+        console.log('isEdit', isEdit);
+        console.log('id', id);
         const successTip = isEdit ? '修改成功！' : '添加成功！';
         this.setState({loading: true});
         if (isEdit){
-            updateCDoc(id, values)
+            updateTeamGroup(id, values)
                 .then(res => {
                     const data = res.data;
                     const {onOk} = this.props;
@@ -63,7 +82,7 @@ class EditModal extends Component {
                 })
                 .finally(() => this.setState({loading: false}));
         } else {
-            createCDoc(values)
+            createTeamGroup(values)
                 .then(res => {
                     const data = res.data;
                     const {onOk} = this.props;
@@ -113,10 +132,13 @@ class EditModal extends Component {
                     />
                     <FormElement
                         {...formProps}
-                        type="textarea"
-                        label="简介"
-                        name="intro"
+                        type="select"
+                        label="用户"
+                        name="members"
                         noSpace
+                        required
+                        mode="multiple"
+                        options={this.state.user_options}
                     />
                 </Form>
             </ModalContent>

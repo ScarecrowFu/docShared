@@ -8,7 +8,9 @@ export default function getMenus(userId) {
     console.log(userId);
     return Promise.resolve([
         {key: 'home', text: '首页', icon: 'home', path: '/', order: 2000},
-        {key: 'c_docs', text: '文集管理', icon: 'file-word', path: '/c_docs', order: 1900},
-        {key: 'user', text: '用户管理', icon: 'user', path: '/users', order: 800},
+        {key: 'c_doc', text: '文集管理', icon: 'file-word', path: '/admin/c_docs', order: 1900},
+        {key: 'user_manage', text: '用户管理', icon: 'user',  order: 800},
+        {key: 'user', parentKey: 'user_manage', text: '用户管理', icon: 'user', path: '/admin/users', order: 800},
+        {key: 'team', parentKey: 'user_manage', text: '团队管理', icon: 'team', path: '/admin/teams', order: 800},
     ]);
 }

@@ -4,7 +4,7 @@ import FormElement from 'src/library/FormElement';
 import config from 'src/utils/Hoc/configHoc';
 import ModalContent from 'src/library/ModalHoc/ModalContent';
 import { createUser, retrieveUser, updateUser } from 'src/apis/user';
-import {messageDuration} from "../../config/settings"
+import {messageDuration} from "src/config/settings"
 
 @config({
     modal: {

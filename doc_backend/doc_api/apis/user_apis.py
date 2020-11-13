@@ -256,7 +256,7 @@ class TeamGroupViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         self.perform_destroy(instance)
         # todo 记录操作日志
-        result = {'success': True, 'messages': f'删除用户:{instance.__str__()}'}
+        result = {'success': True, 'messages': f'删除团队:{instance.__str__()}'}
         return Response(result, status=status.HTTP_200_OK)
 
     @action(methods=['POST', 'DELETE'], detail=False)

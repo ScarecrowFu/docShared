@@ -10,15 +10,13 @@ import Operator from 'src/library/Operator';
 import Pagination from 'src/library/Pagination';
 import batchDeleteConfirm from 'src/components/BatchDeleteConfirm';
 import EditModal from './EditModal';
-import { getUserList, deleteUser, bulkDeleteUser, activationUser } from 'src/apis/user';
-import { yesOrNoTag } from 'src/utils/tagRender';
-import {getLoginUser} from 'src/utils/userAuth';
-import {messageDuration} from "../../config/settings"
+import { getTeamGroupList, deleteTeamGroup, bulkDeleteTeamGroup } from 'src/apis/team_group';
+import {messageDuration} from "src/config/settings"
 
 @config({
-    path: '/users',
-    title: {text: '用户管理', icon: 'user'},
-    breadcrumbs: [{key: 'user', text: '用户管理', icon: 'user'}],
+    path: '/admin/teams',
+    title: {text: '团队管理', icon: 'team'},
+    breadcrumbs: [{key: 'user', text: '团队管理', icon: 'team'}],
 })
 class UserCenter extends Component {
     state = {
@@ -35,66 +33,33 @@ class UserCenter extends Component {
     };
 
     columns = [
-        { title: '账号', dataIndex: 'username', sorter: true, width: 200 },
-        { title: '名称', dataIndex: 'nickname', sorter: true, width: 200 },
-        { title: '邮箱', dataIndex: 'email', sorter: true, width: 200 },
-        { title: '电话', dataIndex: 'phone', sorter: true, width: 100 },
-        { title: '性别', dataIndex: 'gender', sorter: true, width: 100 },
-        { title: '职称', dataIndex: 'title', sorter: true, width: 100 },
+        { title: '名称', dataIndex: 'name', sorter: true, width: 200 },
+        { title: '成员数', dataIndex: 'members_cnt', sorter: true, width: 100 },
         {
-            title: '管理员', dataIndex: 'is_admin', sorter: true, width: 100,
-            render: (value, record)  => {
-                return yesOrNoTag(value)
-            },
+            title: '创建者', dataIndex: 'creator', sorter: true, width: 100,
+            render: (value, record) => {
+                return value.nickname;
+            }
         },
+        { title: '创建时间', dataIndex: 'created_time', sorter: true, width: 100 },
         {
             title: '操作', dataIndex: 'operator', width: 120,
             render: (value, record) => {
-                const { id, nickname, is_active } = record;
-                const authInfo = getLoginUser()
-                const authUserID = authInfo.id;
+                const { id, name } = record;
                 const items = [
                     {
                         label: '编辑',
                         onClick: () => this.setState({ visible: true, id }),
                     },
-                ];
-                if (authUserID !== id) {
-                    items.push(
-                        {
-                            label: '删除',
-                            color: 'red',
-                            confirm: {
-                                title: `您确定删除"${nickname}"?`,
-                                onConfirm: () => this.handleDelete(id),
-                            },
+                    {
+                        label: '删除',
+                        color: 'red',
+                        confirm: {
+                            title: `您确定删除"${name}"?`,
+                            onConfirm: () => this.handleDelete(id),
                         },
-                    )
-                    if (is_active) {
-                        items.push(
-                            {
-                                label: '禁用',
-                                color: 'gray',
-                                confirm: {
-                                    title: `您确定禁用"${nickname}"?`,
-                                    onConfirm: () => this.handleActivation(id, false),
-                                },
-                            },
-                        )
-                    }
-                    else {
-                        items.push(
-                            {
-                                label: '启用',
-                                color: 'blue',
-                                confirm: {
-                                    title: `您确定启用"${nickname}"?`,
-                                    onConfirm: () => this.handleActivation(id, true),
-                                },
-                            },
-                        )
-                    }
-                }
+                    },
+                ];
                 return <Operator items={items}/>;
             },
         },
@@ -120,7 +85,7 @@ class UserCenter extends Component {
         console.log('params', params)
 
         this.setState({ loading: true });
-        getUserList(params)
+        getTeamGroupList(params)
             .then(res => {
                 const data = res.data;
                 const dataSource = data?.results || [];
@@ -153,28 +118,11 @@ class UserCenter extends Component {
     handleDelete = (id) => {
         if (this.state.deleting) return;
         this.setState({ deleting: true });
-        deleteUser(id)
+        deleteTeamGroup(id)
             .then(res => {
                 const data = res.data;
                 notification.success({
-                    message: '删除用户',
-                    description: data.messages,
-                    duration: messageDuration,
-                });
-                this.handleSubmit();
-            }, error => {
-                console.log(error.response);
-            })
-            .finally(() => this.setState({ deleting: false }));
-    };
-
-    handleActivation = (id, active=true) => {
-        const activeText = active ? '启用！' : '禁用';
-        activationUser(id, {'active': active})
-            .then(res => {
-                const data = res.data;
-                notification.success({
-                    message: `${activeText}用户`,
+                    message: '删除团队',
                     description: data.messages,
                     duration: messageDuration,
                 });
@@ -192,11 +140,11 @@ class UserCenter extends Component {
         console.log('selectedRowKeys', selectedRowKeys);
         batchDeleteConfirm(selectedRowKeys.length)
             .then(() => {
-                bulkDeleteUser({'deleted_objects': selectedRowKeys})
+                bulkDeleteTeamGroup({'deleted_objects': selectedRowKeys})
                     .then(res => {
                         const data = res.data;
                         notification.success({
-                            message: '批量删除用户',
+                            message: '批量删除团队',
                             description: data.messages,
                             duration: messageDuration,
                         });
@@ -235,39 +183,7 @@ class UserCenter extends Component {
                                 {...formProps}
                                 label="关键字"
                                 name="search"
-                                placeholder="账号/昵称/邮箱"
-                            />
-                            <FormElement
-                                {...formProps}
-                                type="select"
-                                label="性别"
-                                name="gender"
-                                options={[
-                                    { value: '男', label: '男' },
-                                    { value: '女', label: '女' },
-                                ]}
-                            />
-                            <FormElement
-                                {...formProps}
-                                type="select"
-                                label="管理员"
-                                placeholder="是否管理员"
-                                name="is_admin"
-                                options={[
-                                    { value: true, label: '是' },
-                                    { value: false, label: '否' },
-                                ]}
-                            />
-                            <FormElement
-                                {...formProps}
-                                type="select"
-                                label="可用"
-                                name="is_active"
-                                placeholder="是否可用"
-                                options={[
-                                    { value: true, label: '是' },
-                                    { value: false, label: '否' },
-                                ]}
+                                placeholder="名称"
                             />
                             <FormElement layout>
                                 <Button type="primary" htmlType="submit">搜索</Button>
