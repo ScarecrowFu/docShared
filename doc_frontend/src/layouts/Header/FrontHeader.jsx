@@ -4,11 +4,11 @@ import { MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
 import Link from '../PageLink';
 import Logo from './Logo';
 import HeaderUser from './HeaderUser';
-import HeaderMenu from './HeaderMenu';
+// import HeaderMenu from './HeaderMenu';
 import HeaderFullScreen from './HeaderFullScreen';
 import { connect } from 'src/models';
 import { PAGE_FRAME_LAYOUT } from 'src/models/settings';
-import Breadcrumb from '../Breadcrumb';
+// import Breadcrumb from '../Breadcrumb';
 import './style.less';
 
 @connect(state => {
@@ -31,7 +31,7 @@ import './style.less';
         layout: pageFrameLayout,
     };
 })
-class Header extends Component {
+class FrontHeader extends Component {
     static propTypes = {
         layout: PropTypes.string,
         theme: PropTypes.string,
@@ -61,30 +61,32 @@ class Header extends Component {
     render() {
         let {
             layout,
-            menus,          // 所有的菜单数据
-            topMenu,        // 当前页面选中菜单的顶级菜单
+            // menus,          // 所有的菜单数据
+            // topMenu,        // 当前页面选中菜单的顶级菜单
             sideCollapsed,
             sideCollapsedWidth,
             sideWidth,
             sideDragging,
-            breadcrumbs,
+            // breadcrumbs,
             children,
         } = this.props;
+
         sideWidth = sideCollapsed ? sideCollapsedWidth : sideWidth;
 
         const isTopSideMenu = layout === PAGE_FRAME_LAYOUT.TOP_SIDE_MENU;
-        const isTopMenu = layout === PAGE_FRAME_LAYOUT.TOP_MENU;
+        // const isTopMenu = layout === PAGE_FRAME_LAYOUT.TOP_MENU;
         const isSideMenu = layout === PAGE_FRAME_LAYOUT.SIDE_MENU;
-        const showToggle = isTopSideMenu || isSideMenu;
-        const showMenu = isTopSideMenu || isTopMenu;
+        // const showToggle = isTopSideMenu || isSideMenu;
+        // const showMenu = isTopSideMenu || isTopMenu;
 
-        let topMenus = menus;
-        if (isTopSideMenu) {
-            topMenus = menus && menus.map(item => ({ key: item.key, text: item.text, path: item.path, icon: item.icon }));
-        }
-        if (isTopMenu) {
-            topMenus = menus;
-        }
+        // let topMenus = menus;
+        // if (isTopSideMenu) {
+        //     topMenus = menus && menus.map(item => ({ key: item.key, text: item.text, path: item.path, icon: item.icon }));
+        // }
+        // if (isTopMenu) {
+        //     topMenus = menus;
+        // }
+
         let transitionDuration = sideDragging ? '0ms' : '300ms';
 
         const theme = this.props.theme || ((isTopSideMenu || isSideMenu) ? 'default' : 'dark');
@@ -104,19 +106,19 @@ class Header extends Component {
                         />
                     </Link>
                 </div>
-                {this.renderToggle(showToggle, sideCollapsed, theme)}
+                {/*{this.renderToggle(showToggle, sideCollapsed, theme)}*/}
                 {children ? (
                     <div styleName="center">{children}</div>
                 ) : (
                     <div styleName="center">
-                        {showMenu ? (
-                            <HeaderMenu
-                                theme={theme}
-                                dataSource={topMenus}
-                                selectedKeys={[ topMenu && topMenu.key ]}
-                            />
-                        ) : null}
-                        {isSideMenu ? <div style={{ marginLeft: 16 }}><Breadcrumb theme={theme} dataSource={breadcrumbs}/></div> : null}
+                        {/*{showMenu ? (*/}
+                        {/*    <HeaderMenu*/}
+                        {/*        theme={theme}*/}
+                        {/*        dataSource={topMenus}*/}
+                        {/*        selectedKeys={[ topMenu && topMenu.key ]}*/}
+                        {/*    />*/}
+                        {/*) : null}*/}
+                        {/*{isSideMenu ? <div style={{ marginLeft: 16 }}><Breadcrumb theme={theme} dataSource={breadcrumbs}/></div> : null}*/}
                     </div>
                 )}
 
@@ -129,4 +131,4 @@ class Header extends Component {
     }
 }
 
-export default  Header;
+export default  FrontHeader;

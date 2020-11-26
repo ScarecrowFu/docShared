@@ -3,7 +3,7 @@ import {getNodeByPropertyAndValue, convertToTree} from 'src/utils/tree';
 import {pathToRegexp} from 'path-to-regexp';
 import {ROUTE_BASE_NAME} from 'src/routers/AppRouter';
 import {authInfoKey} from 'src/config/settings'
-
+import {isObjEmpty} from 'src/utils'
 const LOGIN_USER_STORAGE_KEY = authInfoKey;
 
 const localStorage = window.localStorage;
@@ -33,6 +33,7 @@ export function setLoginUser(loginUser = {}) {
         permissions,    // 用户权限 非必须
         ...others,      // 其他属性
     });
+    localStorage.setItem(LOGIN_USER_STORAGE_KEY, userStr);
     sessionStorage.setItem(LOGIN_USER_STORAGE_KEY, userStr);
 }
 
@@ -41,7 +42,10 @@ export function setLoginUser(loginUser = {}) {
  * @returns {any}
  */
 export function getLoginUser() {
-    const loginUser = sessionStorage.getItem(LOGIN_USER_STORAGE_KEY);
+    let loginUser = sessionStorage.getItem(LOGIN_USER_STORAGE_KEY);
+    if (isObjEmpty(loginUser)) {
+        loginUser = localStorage.getItem(LOGIN_USER_STORAGE_KEY);
+    }
     return loginUser ? JSON.parse(loginUser) : null;
 }
 

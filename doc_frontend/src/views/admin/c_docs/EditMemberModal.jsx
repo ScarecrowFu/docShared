@@ -1,42 +1,191 @@
 import React, {Component} from 'react';
-import {Form, notification} from 'antd';
+import {Button, Divider, Form, notification} from 'antd';
 import FormElement from 'src/library/FormElement';
 import config from 'src/utils/Hoc/configHoc';
 import ModalContent from 'src/library/ModalHoc/ModalContent';
-import {getCDocPermissionTypes, retrieveCDoc, updateCDoc} from 'src/apis/c_doc';
+import {
+    getCDocMemberPermissionTypes,
+    getCDocUserList,
+    updateCDocUser,
+    deleteCDocUser,
+    retrieveCDoc,
+    updateCDoc,
+} from 'src/apis/c_doc';
 import {messageDuration} from "src/config/settings"
-import {getUserList} from "src/apis/user"
+import Table from "src/library/Table"
+import Operator from "src/library/Operator"
+import EditMemberUserModal from './EditMemberUserModal'
+// import EditMemberTeamModal from './EditTeamMemberModal'
+import './style.less';
 
 
 @config({
     modal: {
-        title: '修改文集权限',
+        title: '修改文集成员',
         maskClosable: true
     },
 })
-class EditPermModal extends Component {
+class EditMemberModal extends Component {
     state = {
         loading: false, // 页面加载loading
+        memberPermissionTypes: {},  // 成员权限
+        member_perm_options: [],           // 成员权限选项
         data: {},       // 回显数据
-        perm_options: [],           // 权限选项
-        user_options: [],           // 用户选项
-        current_perm: null,           // 当前权限
+        userData: [],       // 用户成员
+        teamData: [],       // 团队成员
+        user_member_id: null,           // 修要修改的用户成员
+        team_member_id: null,           // 修要修改的团队成员
+        visibleUserMember: false,
+        visibleTeamMember: false,
     };
 
+    user_columns = [
+        {
+            title: '成员账号', dataIndex: 'user', sorter: true, width: 100,
+            render: (value, record) => {
+                return value.username;
+            }
+        },
+        {
+            title: '名称', dataIndex: 'user', sorter: true, width: 100,
+            render: (value, record) => {
+                return value.nickname;
+            }
+         },
+        { title: '添加时间', dataIndex: 'created_time', sorter: true, width: 150 },
+        { title: '权限', dataIndex: 'perm', sorter: true, width: 100, editable: true,
+            render: (value, record) => {
+                return (
+                    <Form
+                        ref={form => this.form = form}
+                        initialValues={{'perm': value}}
+                    >
+                    <FormElement
+                        showLabel={false}
+                        label="权限"
+                        type="select"
+                        name="perm"
+                        options={this.state.member_perm_options}
+                        onChange={this.handleUpdateUserMember(record.id, value)}
+                    />
+                    </Form>
+                );
+            },
+        },
+        {
+            title: '操作', dataIndex: 'operator', width: 100,
+            render: (value, record) => {
+                const items = [
+                    {
+                        label: '删除',
+                        color: 'red',
+                        confirm: {
+                            title: `您确定删除"${record.user.nickname}"?`,
+                            onConfirm: () => this.handleDeleteUserMember(record.id),
+                        },
+                    },
+                ];
+                return <Operator items={items}/>;
+            },
+        },
+    ];
+
+    team_columns = [
+        { title: '团队名称', dataIndex: 'name', sorter: true, width: 100 },
+        { title: '添加时间', dataIndex: 'created_time', sorter: true, width: 100 },
+        {
+            title: '操作', dataIndex: 'operator', width: 100,
+            render: (value, record) => {
+                const { id, name } = record;
+                const items = [
+                    {
+                        label: '成员权限',
+                        onClick: () => this.setState({ visible: true, id }),
+                    },
+                    {
+                        label: '删除',
+                        color: 'red',
+                        confirm: {
+                            title: `您确定删除"${name}"?`,
+                            onConfirm: () => this.handleDelete(id),
+                        },
+                    },
+                ];
+                return <Operator items={items}/>;
+            },
+        },
+    ];
+
     componentDidMount() {
-        this.handlePermissionOptions();
+        this.handleUserPermissionOptions();
         this.fetchData();
+        this.fetchUserData();
     }
 
-    handlePermissionOptions = () => {
-        getCDocPermissionTypes()
+
+    fetchUserData = () => {
+        if (this.state.loading) return;
+        const {id} = this.props;
+        this.setState({loading: true});
+        getCDocUserList({'c_doc': id, 'not_page': true})
+            .then(res => {
+                const data = res.data;
+                let results = data.results
+                console.log('fetchUserData', results);
+                this.setState({userData: results});
+            }, error => {
+                console.log(error.response);
+            })
+            .finally(() => this.setState({loading: false}));
+    };
+
+    handleUpdateUserMember  = (id) => (value) => {
+        if (this.state.loading) return;
+        this.setState({loading: true});
+        updateCDocUser(id, {'perm': value}, 'patch')
+            .then(res => {
+                const data = res.data;
+                notification.success({
+                    message: '成功修改成员权限',
+                    description: data.messages,
+                    duration: messageDuration,
+                });
+            }, error => {
+                console.log(error.response);
+            })
+            .finally(() => this.setState({loading: false}));
+
+    };
+
+    handleDeleteUserMember  = (id) => {
+        if (this.state.deleting) return;
+        this.setState({ deleting: true });
+        deleteCDocUser(id)
+            .then(res => {
+                const data = res.data;
+                notification.success({
+                    message: '删除用户成员',
+                    description: data.messages,
+                    duration: messageDuration,
+                });
+                this.fetchUserData();
+            }, error => {
+                console.log(error.response);
+            })
+            .finally(() => this.setState({ deleting: false }));
+
+    };
+
+    handleUserPermissionOptions = () => {
+        getCDocMemberPermissionTypes()
             .then(res => {
                 const data = res.data;
                 const perm_options = [];
                 Object.keys(data.results).forEach(function(key) {
                     perm_options.push({'value': parseInt(key), 'label': data.results[key]});
                 });
-                this.setState({ perm_options: perm_options });
+                this.setState({ memberPermissionTypes: data.results });
+                this.setState({ member_perm_options: perm_options });
             }, error => {
                 console.log(error.response);
             })
@@ -50,63 +199,25 @@ class EditPermModal extends Component {
             .then(res => {
                 const data = res.data;
                 let results = data.results
-                results.creator = data.results.creator.nickname
                 this.setState({data: results});
-                this.setState({current_perm: results.perm});
                 this.form.setFieldsValue(results);
-                if(results.perm === 30) {
-                    this.handleUserOptions();
-                    let perm_value = results.perm_value.split(',');
-                    perm_value = perm_value.map(numStr => parseInt(numStr));
-                    this.form.setFieldsValue({'selected_users': perm_value});
-                }
-                if(results.perm === 40) {
-                    this.form.setFieldsValue({'access_code': results.perm_value});
-                }
             }, error => {
                 console.log(error.response);
             })
             .finally(() => this.setState({loading: false}));
     };
 
-    // todo 整理为分页获取选项
-    handleUserOptions = () => {
-        getUserList({'not_page': true})
-            .then(res => {
-                const data = res.data;
-                const user_options = [];
-                data.results.forEach(function (item) {
-                    user_options.push({'value': item.id, 'label': item.nickname})
-                })
-                this.setState({ user_options: user_options });
-            }, error => {
-                console.log(error.response);
-            })
-    }
 
-    handlePermChange = e => {
-        this.setState({
-            current_perm: e.target.value,
-        });
-        if (e.target.value === 30 && this.state.user_options.length === 0) {
-            this.handleUserOptions()
-        }
-    }
 
     handleSubmit = (values) => {
         if (this.state.loading) return;
         const {id} = this.props;
         const successTip = '修改文集权限成功！' ;
         this.setState({loading: true});
-        if(values.perm === 30) {
-            values.perm_value = values.selected_users.join()
-            delete values.selected_users
-        }
         if(values.perm === 40) {
             values.perm_value = values.access_code
             delete values.access_code
         }
-        console.log(values)
         updateCDoc(id, values)
             .then(res => {
                 const data = res.data;
@@ -126,7 +237,7 @@ class EditPermModal extends Component {
 
     render() {
         const {onCancel} = this.props;
-        const {loading, data } = this.state;
+        const {loading, data, userData, user_member_id, visibleUserMember } = this.state;
         const formProps = {
             labelWidth: 100,
         };
@@ -146,13 +257,6 @@ class EditPermModal extends Component {
                     <FormElement {...formProps} type="hidden" name="id"/>
                     <FormElement
                         {...formProps}
-                        label="文集作者"
-                        name="creator"
-                        noSpace
-                        disabled={true}
-                    />
-                    <FormElement
-                        {...formProps}
                         label="文集名称"
                         name="name"
                         noSpace
@@ -166,44 +270,51 @@ class EditPermModal extends Component {
                         noSpace
                         disabled={true}
                     />
-                    <FormElement
-                        {...formProps}
-                        type="radio-group"
-                        label="权限选择"
-                        name="perm"
-                        noSpace
-                        required
-                        options={this.state.perm_options}
-                        onChange={this.handlePermChange}
-                    />
-                    {this.state.current_perm === 30 ?
-                        <FormElement
-                            {...formProps}
-                            type="select"
-                            label="用户"
-                            name="selected_users"
-                            noSpace
-                            required
-                            mode="multiple"
-                            options={this.state.user_options}
-                        />
-                        : null}
-
-                    {this.state.current_perm === 40 ?
-                        <FormElement
-                            {...formProps}
-                            label="访问码"
-                            name="access_code"
-                            noSpace
-                            required
-                            placeholder="访问码"
-                        />
-                        : null}
-
+                    <FormElement layout>
+                        <Button type="primary" styleName="form-button" onClick={() => this.setState({ visibleUserMember: true, user_member_id: null })}>添加用户</Button>
+                        <Button type="primary" styleName="form-button">添加团队</Button>
+                    </FormElement>
                 </Form>
+
+                <Table
+                    loading={loading}
+                    columns={this.user_columns}
+                    dataSource={userData}
+                    rowKey="id"
+                    serialNumber={false}
+                    showSorterTooltip={true}
+                    // onChange={this.handleTableChange}
+                />
+                <Divider dashed />
+
+                <Table
+                    loading={loading}
+                    columns={this.team_columns}
+                    dataSource={data.teams}
+                    rowKey="id"
+                    serialNumber={false}
+                    showSorterTooltip={true}
+                    // onChange={this.handleTableChange}
+                />
+                <EditMemberUserModal
+                    isEdit={user_member_id !== null}
+                    visible={visibleUserMember}
+                    id={user_member_id}
+                    c_doc_id={data.id}
+                    onOk={() => this.setState({ visibleUserMember: false }, () => this.fetchUserData())}
+                    onCancel={() => this.setState({ visibleUserMember: false })}
+                />
+                {/*<EditMemberTeamModal*/}
+                {/*    isEdit={user_member !== null}*/}
+                {/*    visible={visibleUserMember}*/}
+                {/*    user_member={user_member}*/}
+                {/*    c_doc_id={data.id}*/}
+                {/*    onOk={() => this.setState({ visibleUserMember: false }, () => this.fetchData())}*/}
+                {/*    onCancel={() => this.setState({ visibleUserMember: false })}*/}
+                {/*/>*/}
             </ModalContent>
         );
     }
 }
 
-export default EditPermModal;
+export default EditMemberModal;

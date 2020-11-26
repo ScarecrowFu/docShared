@@ -3,30 +3,47 @@ import {Form, notification} from 'antd';
 import FormElement from 'src/library/FormElement';
 import config from 'src/utils/Hoc/configHoc';
 import ModalContent from 'src/library/ModalHoc/ModalContent';
-import { createTeamGroup, retrieveTeamGroup, updateTeamGroup } from 'src/apis/team_group';
+import {createCDocUser, getCDocMemberPermissionTypes, retrieveCDocUser, updateCDocUser} from 'src/apis/c_doc';
 import {messageDuration} from "src/config/settings"
 import {getUserList} from "../../../apis/user"
 
 @config({
     modal: {
-        title: props => props.isEdit ? '修改团队' : '添加团队',
+        title: props => props.isEdit ? '修改用户成员' : '添加用户成员',
         maskClosable: true
     },
 })
-class EditModal extends Component {
+class EditMemberUserModal extends Component {
     state = {
         loading: false, // 页面加载loading
         data: {},       // 回显数据
         user_options: [],           // 用户选项
+        member_perm_options: [],           // 成员权限选项
     };
 
     componentDidMount() {
-        this.handleUserOptions();
         const {isEdit} = this.props;
+        this.handleUserOptions();
+        this.handleUserPermissionOptions();
         if (isEdit) {
             this.fetchData();
         }
     }
+
+    fetchData = () => {
+        if (this.state.loading) return;
+        const {id} = this.props;
+        this.setState({loading: true});
+        retrieveCDocUser(id)
+            .then(res => {
+                const data = res.data;
+                this.setState({data: {'id': data.results.id, 'user': data.results.user.id, 'perm': data.results.perm}});
+                this.form.setFieldsValue(data.results);
+            }, error => {
+                console.log(error.response);
+            })
+            .finally(() => this.setState({loading: false}));
+    };
 
     // todo 整理为分页获取选项
     handleUserOptions = () => {
@@ -43,29 +60,29 @@ class EditModal extends Component {
             })
     }
 
-    fetchData = () => {
-        if (this.state.loading) return;
-        const {id} = this.props;
-        this.setState({loading: true});
-        retrieveTeamGroup(id)
+    handleUserPermissionOptions = () => {
+        getCDocMemberPermissionTypes()
             .then(res => {
                 const data = res.data;
-                this.setState({data: res});
-                this.form.setFieldsValue(data.results);
+                const perm_options = [];
+                Object.keys(data.results).forEach(function(key) {
+                    perm_options.push({'value': parseInt(key), 'label': data.results[key]});
+                });
+                this.setState({ member_perm_options: perm_options });
             }, error => {
                 console.log(error.response);
             })
-            .finally(() => this.setState({loading: false}));
-    };
+    }
 
     handleSubmit = (values) => {
         if (this.state.loading) return;
         const {isEdit} = this.props;
         const {id} = this.props;
+        const {c_doc_id} = this.props;
         const successTip = isEdit ? '修改成功！' : '添加成功！';
         this.setState({loading: true});
         if (isEdit){
-            updateTeamGroup(id, values)
+            updateCDocUser(id, values)
                 .then(res => {
                     const data = res.data;
                     const {onOk} = this.props;
@@ -80,7 +97,11 @@ class EditModal extends Component {
                 })
                 .finally(() => this.setState({loading: false}));
         } else {
-            createTeamGroup(values)
+            let param = {
+                ...values,
+                'c_doc': c_doc_id
+            }
+            createCDocUser(param)
                 .then(res => {
                     const data = res.data;
                     const {onOk} = this.props;
@@ -123,20 +144,19 @@ class EditModal extends Component {
 
                     <FormElement
                         {...formProps}
-                        label="名称"
-                        name="name"
+                        type="select"
+                        label="用户"
+                        name="user"
                         required
-                        noSpace
+                        options={this.state.user_options}
                     />
                     <FormElement
                         {...formProps}
                         type="select"
-                        label="用户"
-                        name="members"
-                        noSpace
+                        label="权限"
+                        name="perm"
                         required
-                        mode="multiple"
-                        options={this.state.user_options}
+                        options={this.state.member_perm_options}
                     />
                 </Form>
             </ModalContent>
@@ -144,4 +164,4 @@ class EditModal extends Component {
     }
 }
 
-export default EditModal;
+export default EditMemberUserModal;

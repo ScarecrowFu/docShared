@@ -370,7 +370,7 @@ class FormElement extends Component {
         }
 
         // 不处理不显示红色星号
-        if ((!formLabel && required) || !showLabel) formLabel = ' ';
+        if ((!formLabel && required) || !showLabel) formLabel = '';
 
         if (shouldUpdate && !('noStyle' in this.props)) noStyle = true;
 

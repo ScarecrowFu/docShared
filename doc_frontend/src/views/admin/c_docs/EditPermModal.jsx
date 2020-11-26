@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {Form, notification} from 'antd';
+import {Form, notification, Alert} from 'antd';
 import FormElement from 'src/library/FormElement';
 import config from 'src/utils/Hoc/configHoc';
 import ModalContent from 'src/library/ModalHoc/ModalContent';
@@ -48,7 +48,6 @@ class EditPermModal extends Component {
             .then(res => {
                 const data = res.data;
                 let results = data.results
-                results.creator = data.results.creator.nickname
                 this.setState({data: results});
                 this.setState({current_perm: results.perm});
                 this.form.setFieldsValue(results);
@@ -100,6 +99,15 @@ class EditPermModal extends Component {
         const formProps = {
             labelWidth: 100,
         };
+        const message =  (
+            <div>
+                <p>公开: 所有人均可查看</p>
+                <p>私密: 仅创建者可查看</p>
+                <p>成员可见: 文集协作成员可查看, 具体成员可在 "成员" 中设置, 成员可设置用户与团队</p>
+                <p>访问码可见: 使用正确的访问码可查看</p>
+            </div>
+
+        );
         return (
             <ModalContent
                 loading={loading}
@@ -114,13 +122,6 @@ class EditPermModal extends Component {
                     initialValues={data}
                 >
                     <FormElement {...formProps} type="hidden" name="id"/>
-                    <FormElement
-                        {...formProps}
-                        label="文集作者"
-                        name="creator"
-                        noSpace
-                        disabled={true}
-                    />
                     <FormElement
                         {...formProps}
                         label="文集名称"
@@ -158,6 +159,13 @@ class EditPermModal extends Component {
                         : null}
 
                 </Form>
+                <Alert
+                    message="Tips"
+                    description={message}
+                    type="success"
+                    showIcon
+                    closable
+                />
             </ModalContent>
         );
     }

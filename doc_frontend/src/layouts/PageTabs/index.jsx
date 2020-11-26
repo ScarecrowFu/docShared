@@ -35,10 +35,8 @@ class PageTabs extends Component {
 
     handleSortEnd = ({oldIndex, newIndex}) => {
         const dataSource = [...this.props.dataSource];
-
         // 元素移动
         dataSource.splice(newIndex, 0, dataSource.splice(oldIndex, 1)[0]);
-
         this.props.action.system.setTabs(dataSource);
     };
 

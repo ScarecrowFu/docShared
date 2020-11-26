@@ -7,6 +7,8 @@ router = routers.DefaultRouter()
 router.register('users', user_apis.UserViewSet, basename='users')
 router.register('team_groups', user_apis.TeamGroupViewSet, basename='team_groups')
 router.register('collected_docs', c_doc_apis.CollectedDocViewSet, basename='collected_docs')
+router.register('collected_doc_users', c_doc_apis.CollectedDocUserViewSet, basename='collected_doc_users')
+router.register('collected_doc_teams', c_doc_apis.CollectedDocTeamViewSet, basename='collected_doc_teams')
 
 
 urlpatterns = [

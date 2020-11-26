@@ -39,7 +39,7 @@ import './BasicLayout.less';
         isMobile,
     };
 })
-class FrameTopSideMenu extends Component {
+class BasicLayout extends Component {
     constructor(...props) {
         super(...props);
         const {action: {menu, side, system}, isMobile} = this.props;
@@ -51,8 +51,16 @@ class FrameTopSideMenu extends Component {
 
         // 获取系统菜单 和 随菜单携带过来的权限
         this.state.loading = true;
+        const pathname = window.location.pathname;
+        let menuType = 'front';
+        if (pathname.startsWith('/admin')) {
+            menuType = 'admin'
+        }
+        if (pathname.startsWith('/personal')) {
+            menuType = 'personal'
+        }
         menu.getMenus({
-            params: {userId},
+            params: {userId:userId, menuType:menuType},
             onResolve: (res) => {
                 const menus = res || [];
                 const permissions = [];
@@ -96,9 +104,7 @@ class FrameTopSideMenu extends Component {
                 menu.getMenuStatus();
                 side.show();
                 this.setTitleAndBreadcrumbs();
-
                 isMobile && side.setCollapsed(true);
-
                 // 如果是移动端 隐藏菜单
             });
         });
@@ -141,14 +147,20 @@ class FrameTopSideMenu extends Component {
                     };
                 });
             }
+            const pathname = window.location.pathname
+            let indexPath = '/';
+            let indexItem = {key: 'index', icon: 'home', text: '首页', path: '/'};
+            if (pathname.startsWith('/admin')) {
+                indexPath = '/admin';
+                indexItem = {key: 'admin', icon: 'home', text: '后台管理', path: '/admin'};
+            }
+            if (pathname.startsWith('/personal')) {
+                indexPath = '/personal';
+                indexItem = {key: 'personal', icon: 'home', text: '个人中心', path: '/personal'};
+            }
 
-            if (selectedMenu.path !== '/') {
-                breadcrumbs.unshift({
-                    key: 'index',
-                    icon: 'home',
-                    text: '首页',
-                    path: '/',
-                });
+            if (selectedMenu.path !== indexPath) {
+                breadcrumbs.unshift(indexItem);
             }
 
             breadcrumbs.push({
@@ -157,21 +169,18 @@ class FrameTopSideMenu extends Component {
                 text: selectedMenu.text,
             });
         }
-
         // 从菜单中没有获取到，有肯能是当前页面设置了，但是没有菜单对应
         if (!breadcrumbs.length && prevBreadcrumbs && prevBreadcrumbs.length) {
             page.setBreadcrumbs(prevBreadcrumbs);
         } else {
             page.setBreadcrumbs(breadcrumbs);
         }
-
         // 从菜单中没有获取到，有肯能是当前页面设置了，但是没有菜单对应
         if (!title && prevTitle) {
             page.setTitle(prevTitle);
         } else {
             page.setTitle(title);
         }
-
         pageHeadShow ? page.showHead() : page.hideHead();
     }
 
@@ -246,10 +255,9 @@ class FrameTopSideMenu extends Component {
 
         const windowWidth = window.innerWidth;
         const sideWidthSpace = hasSide ? sideWidth : 0;
-
         return (
             <div styleName="base-frame" className="no-print">
-                <Helmet title={titleIsString ? titleText : ''}/>
+                <Helmet title={titleIsString ? 'docShared ' + titleText : 'docShared '}/>
                 <Header/>
                 <Side layout={layout} theme={theme}/>
                 <div styleName={topSpaceClass.join(' ')} className={topSpaceClass.join(' ')}/>
@@ -263,4 +271,4 @@ class FrameTopSideMenu extends Component {
     }
 }
 
-export default FrameTopSideMenu;
+export default BasicLayout;

@@ -122,15 +122,15 @@ export default (options = {}) => {
                     page.setBreadcrumbs([]);
                 }
 
-                if (breadcrumbs && breadcrumbs !== true) {
-                    let nextBreadcrumbs = breadcrumbs;
-
-                    if (typeof breadcrumbs === 'function') {
-                        nextBreadcrumbs = breadcrumbs(this.props);
-                    }
-
-                    page.setBreadcrumbs(nextBreadcrumbs);
-                }
+                // 此逻辑与Layout 中的setTitleAndBreadcrumbs 会有冲突， 暂时注释， 需要优化
+                // if (breadcrumbs && breadcrumbs !== true) {
+                //     let nextBreadcrumbs = breadcrumbs;
+                //
+                //     if (typeof breadcrumbs === 'function') {
+                //         nextBreadcrumbs = breadcrumbs(this.props);
+                //     }
+                //     page.setBreadcrumbs(nextBreadcrumbs);
+                // }
 
                 if (Array.isArray(appendBreadcrumbs) && appendBreadcrumbs.length) {
                     page.appendBreadcrumbs(appendBreadcrumbs);

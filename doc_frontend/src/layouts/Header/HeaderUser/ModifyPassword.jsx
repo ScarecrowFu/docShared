@@ -21,8 +21,6 @@ class ModifyPassword extends Component {
     handleOk = (values) => {
         if (this.state.loading) return;
         const { onOk } = this.props;
-
-        console.log(values);
         this.setState({ loading: true });
         this.props.ajax.post(`/users/${values.id}/password`, values)
             .then(() => {

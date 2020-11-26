@@ -11,7 +11,7 @@ class CollectedDoc(models.Model):
                                verbose_name='文集权限值')
     # 当文集权限为10时，记录为空
     # 当文集权限为20时，记录为空
-    # 当文集权限为30时，记录为文集成员数据库ID组成的字符串，逗号分割
+    # 当文集权限为30时，记录为空
     # 当文集权限为40时，记录为访问码
     perm_value = models.TextField(default='', null=True, blank=True, verbose_name='文集权限值')
     creator = models.ForeignKey('User', null=True, blank=True, on_delete=models.SET_NULL, verbose_name='创建者',
@@ -28,33 +28,69 @@ class CollectedDoc(models.Model):
         return self.name
 
 
-class CollectedDocMember(models.Model):
-    c_doc = models.ForeignKey('CollectedDoc', models.CASCADE, verbose_name='所属文集', related_name='members')
-    member = models.ForeignKey('User', null=True, blank=True, on_delete=models.SET_NULL, verbose_name='成員',
-                               related_name='c_doc_members')
-    team_group = models.ForeignKey('TeamGroup', null=True, blank=True, on_delete=models.SET_NULL, verbose_name='团队',
-                                   related_name='c_doc_teams')
+class CollectedDocUser(models.Model):
+    c_doc = models.ForeignKey('CollectedDoc', models.CASCADE, verbose_name='所属文集', related_name='users')
+    user = models.ForeignKey('User', null=True, blank=True, on_delete=models.SET_NULL, verbose_name='成員',
+                             related_name='c_doc_users')
     # 10表示普通成员(新建/修改/删除个人文档)
     # 20表示高级成员(新建/修改文集内所有文档+删除个人文档)
     # 30表示文集管理员(新建/修改/删除文集文档+修改文集信息)
     perm = models.IntegerField(default=10, choices=dict_for_model_choices(CollectedDocMembersPermissions),
                                verbose_name='成员协作权限')
     creator = models.ForeignKey('User', null=True, blank=True, on_delete=models.SET_NULL, verbose_name='创建者',
-                                related_name='created_c_docs_members')
+                                related_name='created_c_docs_users')
     created_time = models.DateTimeField(auto_now_add=True, verbose_name='创建日期')
     modified_time = models.DateTimeField(auto_now=True, verbose_name='修改日期')
 
     class Meta:
-        db_table = 'collected_doc_member'
-        verbose_name = '文集成员'
+        db_table = 'collected_doc_user'
+        verbose_name = '文集成员(用户)权限'
         verbose_name_plural = verbose_name
 
     def __str__(self):
-        if self.member:
-            return f'{self.c_doc.name}-{self.member.nickname}-{CollectedDocMembersPermissions[self.perm]}'
-        if self.team_group:
-            return f'{self.c_doc.name}-{self.team_group.name}-{CollectedDocMembersPermissions[self.perm]}'
-        return f'{self.c_doc.name}-无成员-{CollectedDocMembersPermissions[self.perm]}'
+        return f'{self.c_doc.name}-{self.user.nickname}-{CollectedDocMembersPermissions[self.perm]}'
+
+
+class CollectedDocTeam(models.Model):
+    c_doc = models.ForeignKey('CollectedDoc', models.CASCADE, verbose_name='所属文集', related_name='teams')
+    team_group = models.ForeignKey('TeamGroup', null=True, blank=True, on_delete=models.SET_NULL, verbose_name='团队',
+                                   related_name='c_doc_teams')
+    creator = models.ForeignKey('User', null=True, blank=True, on_delete=models.SET_NULL, verbose_name='创建者',
+                                related_name='created_c_docs_teams')
+    created_time = models.DateTimeField(auto_now_add=True, verbose_name='创建日期')
+    modified_time = models.DateTimeField(auto_now=True, verbose_name='修改日期')
+
+    class Meta:
+        db_table = 'collected_doc_team'
+        verbose_name = '文集成员(团队)'
+        verbose_name_plural = verbose_name
+
+    def __str__(self):
+        return f'{self.c_doc.name}-{self.team_group.name}'
+
+
+class CollectedDocTeamUser(models.Model):
+    c_doc_team = models.ForeignKey('CollectedDocTeam', models.CASCADE, verbose_name='所属文件团队成员',
+                                   related_name='c_doc_team_users')
+    user = models.ForeignKey('User', null=True, blank=True, on_delete=models.SET_NULL, verbose_name='成員',
+                             related_name='c_doc_team_users_perms')
+    # 10表示普通成员(新建/修改/删除个人文档)
+    # 20表示高级成员(新建/修改文集内所有文档+删除个人文档)
+    # 30表示文集管理员(新建/修改/删除文集文档+修改文集信息)
+    perm = models.IntegerField(default=10, choices=dict_for_model_choices(CollectedDocMembersPermissions),
+                               verbose_name='成员协作权限')
+    creator = models.ForeignKey('User', null=True, blank=True, on_delete=models.SET_NULL, verbose_name='创建者',
+                                related_name='created_c_docs_team_users')
+    created_time = models.DateTimeField(auto_now_add=True, verbose_name='创建日期')
+    modified_time = models.DateTimeField(auto_now=True, verbose_name='修改日期')
+
+    class Meta:
+        db_table = 'collected_doc_team_user'
+        verbose_name = '文集成员(团队)权限'
+        verbose_name_plural = verbose_name
+
+    def __str__(self):
+        return f'{self.c_doc_team.__str__()}-{self.user.nickname}-{CollectedDocMembersPermissions[self.perm]}'
 
 
 class CollectedDocSetting(models.Model):

@@ -26,8 +26,18 @@ export default {
     },
 
     setTabs: (newTabs) => {
-        // const tabs = newTabs.filter(item => item.path !== '/login');
-        return {tabs: newTabs};
+        const pathname = window.location.pathname;
+        if (pathname === '/') {
+            return {tabs: []}
+        }
+        let tabs = newTabs.filter(item => item.path !== '/');
+        if (pathname.startsWith('/admin')) {
+            tabs = newTabs.filter(item => item.path !== '/' && item.path.startsWith('/admin'));
+        }
+        if (pathname.startsWith('/personal')) {
+            tabs = newTabs.filter(item => item.path !== '/' && item.path.startsWith('/personal'));
+        }
+        return {tabs: tabs};
     },
     setKeepPage: keepAlive => ({keepAlive}),
 

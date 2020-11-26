@@ -82,7 +82,6 @@ class UserCenter extends Component {
         if (this.state.ordering) {
             params['ordering'] = this.state.ordering;
         }
-        console.log('params', params)
 
         this.setState({ loading: true });
         getTeamGroupList(params)
@@ -137,7 +136,6 @@ class UserCenter extends Component {
         if (this.state.deleting) return;
         this.setState({ deleting: true });
         const { selectedRowKeys } = this.state;
-        console.log('selectedRowKeys', selectedRowKeys);
         batchDeleteConfirm(selectedRowKeys.length)
             .then(() => {
                 bulkDeleteTeamGroup({'deleted_objects': selectedRowKeys})

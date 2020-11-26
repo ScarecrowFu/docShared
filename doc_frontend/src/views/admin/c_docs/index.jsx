@@ -11,9 +11,11 @@ import Pagination from 'src/library/Pagination';
 import batchDeleteConfirm from 'src/components/BatchDeleteConfirm';
 import EditModal from './EditModal';
 import EditPermModal from './EditPermModal';
+import EditMemberModal from './EditMemberModal';
 import {bulkDeleteCDoc, deleteCDoc, getCDocList, getCDocPermissionTypes} from 'src/apis/c_doc';
 import {getUserList} from 'src/apis/user';
-import {messageDuration} from "src/config/settings"
+import {messageDuration} from "src/config/settings";
+
 
 
 @config({
@@ -32,6 +34,7 @@ class UserCenter extends Component {
         deleting: false,    // 批量删除中loading
         visible: false,     // 添加、修改弹框
         visiblePerm: false,     // 修改文集权限
+        visibleMember: false,     // 修改文集成員
         id: null,           // 需要修改的数据id
         ordering: null,           // 排序
         permissionTypes: {},
@@ -85,7 +88,7 @@ class UserCenter extends Component {
                     {
                         label: '成员',
                         color: 'grey',
-                        onClick: () => this.setState({ visible: true, id }),
+                        onClick: () => this.setState({ visibleMember: true, id }),
                     },
                 ];
                 return <Operator items={items}/>;
@@ -152,8 +155,6 @@ class UserCenter extends Component {
         if (this.state.ordering) {
             params['ordering'] = this.state.ordering;
         }
-        console.log('params', params)
-
         this.setState({ loading: true });
         getCDocList(params)
             .then(res => {
@@ -208,7 +209,6 @@ class UserCenter extends Component {
         if (this.state.deleting) return;
         this.setState({ deleting: true });
         const { selectedRowKeys } = this.state;
-        console.log('selectedRowKeys', selectedRowKeys);
         batchDeleteConfirm(selectedRowKeys.length)
             .then(() => {
                 bulkDeleteCDoc({'deleted_objects': selectedRowKeys})
@@ -239,6 +239,7 @@ class UserCenter extends Component {
             pageSize,
             visible,
             visiblePerm,
+            visibleMember,
             id,
         } = this.state;
 
@@ -323,6 +324,12 @@ class UserCenter extends Component {
                     id={id}
                     onOk={() => this.setState({ visiblePerm: false }, () => this.handleSubmit())}
                     onCancel={() => this.setState({ visiblePerm: false })}
+                />
+                <EditMemberModal
+                    visible={visibleMember}
+                    id={id}
+                    onOk={() => this.setState({ visibleMember: false }, () => this.handleSubmit())}
+                    onCancel={() => this.setState({ visibleMember: false })}
                 />
             </PageContent>
         );

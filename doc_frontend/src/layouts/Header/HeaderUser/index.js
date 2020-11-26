@@ -4,13 +4,19 @@ import {
     EditOutlined,
     LogoutOutlined,
     SettingOutlined,
+    SmileOutlined,
+    SolutionOutlined,
+    SwitcherOutlined,
+    LoginOutlined,
 } from '@ant-design/icons';
 import {Menu, Dropdown} from 'antd';
 import {Link} from 'react-router-dom';
 import {toLogin, getLoginUser, removeLoginUser} from 'src/utils/userAuth';
 import ModifyPassword from './ModifyPassword';
 import config from 'src/utils/Hoc/configHoc';
+import {isObjEmpty} from 'src/utils'
 import './style.less';
+import {ROUTE_BASE_NAME} from "../../../routers/AppRouter"
 
 const Item = Menu.Item;
 
@@ -33,20 +39,41 @@ class HeaderUser extends Component {
         if (key === 'modifyPassword') {
             this.setState({passwordVisible: true});
         }
+
+        if (key === 'login') {
+            window.location.href = `${ROUTE_BASE_NAME}/login`;
+        }
+
+        if (key === 'front') {
+            window.location.href = `${ROUTE_BASE_NAME}/`;
+        }
+
+        if (key === 'personal') {
+            window.location.href = `${ROUTE_BASE_NAME}/personal`;
+        }
+
+        if (key === 'admin') {
+            window.location.href = `${ROUTE_BASE_NAME}/admin`;
+        }
+
     };
 
     render() {
         const user = getLoginUser() || {};
-        const name = user.nickname;
-
+        const name = user.nickname ? user.nickname : '游客';
         const {className, theme} = this.props;
 
         const menu = (
             <Menu styleName="menu" theme={theme} selectedKeys={[]} onClick={this.handleMenuClick}>
-                <Item key="modifyPassword"><EditOutlined/>修改密码</Item>
-                <Item><Link to="/settings"><SettingOutlined/>设置</Link></Item>
+                <Item key="front"><SmileOutlined/>首页</Item>
+                {!isObjEmpty(user) ? (<Item key="personal"><SolutionOutlined/>个人中心</Item>) : null}
+                {!isObjEmpty(user) ? (<Item key="admin"><SwitcherOutlined/>后台管理</Item>) : null}
                 <Menu.Divider/>
-                <Item key="logout"><LogoutOutlined/>退出登录</Item>
+                {!isObjEmpty(user) ? (<Item key="modifyPassword"><EditOutlined/>修改密码</Item>) : null}
+                {!isObjEmpty(user) ? (<Item><Link to="/settings"><SettingOutlined/>设置</Link></Item>) : null}
+                {!isObjEmpty(user) ? (<Menu.Divider/>) : null}
+                {!isObjEmpty(user) ? (<Item key="logout"><LogoutOutlined/>退出登录</Item>) : <Item key="login"><LoginOutlined/>登录</Item>}
+
             </Menu>
         );
         return (

@@ -2,6 +2,7 @@ import React, {Component} from 'react';
 import {BrowserRouter, Route, Switch} from 'react-router-dom';
 import {isLogin} from 'src/utils/userAuth';
 import BasicLayout from 'src/layouts/BasicLayout';
+import FrontLayout from 'src/layouts/FrontLayout';
 import Error404 from 'src/components/Error/Error404';
 import config from 'src/utils/Hoc/configHoc';
 import KeepAuthRoute from './KeepAuthRoute';
@@ -38,19 +39,27 @@ class AppRouter extends Component {
             <BrowserRouter basename={ROUTE_BASE_NAME}>
                 <div style={{display: 'flex', flexDirection: 'column', position: 'relative', minHeight: '100vh'}}>
                     <Route path="/" render={props => {
-                        // 框架组件单独渲染，与其他页面成为兄弟节点，框架组件和具体页面组件渲染互不影响
+                        const pathname = window.location.pathname
+                        if (pathname.startsWith('/admin') || pathname.startsWith('/personal') ) {
+                            // 框架组件单独渲染，与其他页面成为兄弟节点，框架组件和具体页面组件渲染互不影响
+                            if (systemNoFrame) return null;
+                            // 通过配置，筛选那些页面不需要框架
+                            if (noFrameRoutes.includes(props.location.pathname)) return null;
 
-                        if (systemNoFrame) return null;
-                        // 通过配置，筛选那些页面不需要框架
-                        if (noFrameRoutes.includes(props.location.pathname)) return null;
+                            // 框架内容属于登录之后内容，如果未登录，也不显示框架
+                            if (!isLogin()) return null;
 
-                        // 框架内容属于登录之后内容，如果未登录，也不显示框架
-                        if (!isLogin()) return null;
+                            // 如果浏览器url中携带了noFrame=true参数，不显示框架
+                            if (queryNoFrame === 'true') return null;
 
-                        // 如果浏览器url中携带了noFrame=true参数，不显示框架
-                        if (queryNoFrame === 'true') return null;
+                            return <BasicLayout {...props}/>;
+                        } else {
+                            if (pathname.startsWith('/login')) {
+                                return null;
+                            }
+                            return <FrontLayout {...props}/>;
+                        }
 
-                        return <BasicLayout {...props}/>;
                     }}/>
                     <Route exact path={userRoutes.map(item => item.path)}>
                         <KeepPage/>

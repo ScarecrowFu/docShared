@@ -27,7 +27,7 @@ export default {
      * 获取系统菜单
      */
     getMenus: {
-        payload: ({params} = {}) => getMenus(params.userId),
+        payload: ({params} = {}) => getMenus(params.userId, params.menuType),
         reducer: {
             resolve: (state, {payload: menus}) => {
                 // 重新获取菜单之后，过滤mostUsedMenus，防止脏数据

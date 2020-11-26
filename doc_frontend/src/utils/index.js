@@ -414,6 +414,17 @@ export function objRemove(obj, keyPath) {
 }
 
 /**
+ * 是否空对象
+ * @param obj 要操作的数据
+ */
+export function isObjEmpty(obj) {
+    if (obj === null || obj === undefined) {
+        return true;
+    }
+    return Boolean(obj && typeof obj === 'object') && !Object.keys(obj).length;
+}
+
+/**
  * 根据keyPath定位到指定数组，并添加元素
  * @param obj 要操作的数据
  * @param keyPath 类似于：a.b.c，通过keyPath，定位到obj中某个数组

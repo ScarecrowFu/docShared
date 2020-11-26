@@ -45,8 +45,6 @@ class EditModal extends Component {
         if (this.state.loading) return;
         const {isEdit} = this.props;
         const {id} = this.props;
-        console.log('isEdit', isEdit);
-        console.log('id', id);
         const successTip = isEdit ? '修改成功！' : '添加成功！';
         this.setState({loading: true});
         if (isEdit){
