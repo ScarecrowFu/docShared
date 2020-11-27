@@ -10,12 +10,14 @@ import {
     deleteCDocUser,
     retrieveCDoc,
     updateCDoc,
+    getCDocTeamList,
+    deleteCDocTeam,
 } from 'src/apis/c_doc';
 import {messageDuration} from "src/config/settings"
 import Table from "src/library/Table"
 import Operator from "src/library/Operator"
 import EditMemberUserModal from './EditMemberUserModal'
-// import EditMemberTeamModal from './EditTeamMemberModal'
+import EditMemberTeamModal from './EditMemberTeamModal'
 import './style.less';
 
 
@@ -41,19 +43,19 @@ class EditMemberModal extends Component {
 
     user_columns = [
         {
-            title: '成员账号', dataIndex: 'user', sorter: true, width: 100,
+            title: '成员账号', dataIndex: 'user',  width: 100,
             render: (value, record) => {
                 return value.username;
             }
         },
         {
-            title: '名称', dataIndex: 'user', sorter: true, width: 100,
+            title: '名称', dataIndex: 'user',  width: 100,
             render: (value, record) => {
                 return value.nickname;
             }
          },
-        { title: '添加时间', dataIndex: 'created_time', sorter: true, width: 150 },
-        { title: '权限', dataIndex: 'perm', sorter: true, width: 100, editable: true,
+        { title: '添加时间', dataIndex: 'created_time',  width: 150 },
+        { title: '权限', dataIndex: 'perm',  width: 100, editable: true,
             render: (value, record) => {
                 return (
                     <Form
@@ -91,23 +93,27 @@ class EditMemberModal extends Component {
     ];
 
     team_columns = [
-        { title: '团队名称', dataIndex: 'name', sorter: true, width: 100 },
-        { title: '添加时间', dataIndex: 'created_time', sorter: true, width: 100 },
+        { title: '团队名称', dataIndex: 'team_group',  width: 100,
+            render: (value, record) => {
+                return value.name;
+            }},
+        { title: '成员数量', dataIndex: 'members_cnt',  width: 100 },
+        { title: '添加时间', dataIndex: 'created_time',  width: 100 },
         {
             title: '操作', dataIndex: 'operator', width: 100,
             render: (value, record) => {
-                const { id, name } = record;
+                const { id, team_group } = record;
                 const items = [
                     {
-                        label: '成员权限',
-                        onClick: () => this.setState({ visible: true, id }),
+                        label: '编辑',
+                        onClick: () => this.setState({ visibleTeamMember: true, team_member_id: id }),
                     },
                     {
                         label: '删除',
                         color: 'red',
                         confirm: {
-                            title: `您确定删除"${name}"?`,
-                            onConfirm: () => this.handleDelete(id),
+                            title: `您确定删除"${team_group.name}"?`,
+                            onConfirm: () => this.handleDeleteTeamMember(id),
                         },
                     },
                 ];
@@ -120,6 +126,7 @@ class EditMemberModal extends Component {
         this.handleUserPermissionOptions();
         this.fetchData();
         this.fetchUserData();
+        this.fetchTeamData();
     }
 
 
@@ -157,6 +164,22 @@ class EditMemberModal extends Component {
 
     };
 
+    fetchTeamData = () => {
+        if (this.state.loading) return;
+        const {id} = this.props;
+        this.setState({loading: true});
+        getCDocTeamList({'c_doc': id, 'not_page': true})
+            .then(res => {
+                const data = res.data;
+                let results = data.results
+                console.log('fetchTeamData', results);
+                this.setState({teamData: results});
+            }, error => {
+                console.log(error.response);
+            })
+            .finally(() => this.setState({loading: false}));
+    };
+
     handleDeleteUserMember  = (id) => {
         if (this.state.deleting) return;
         this.setState({ deleting: true });
@@ -169,6 +192,25 @@ class EditMemberModal extends Component {
                     duration: messageDuration,
                 });
                 this.fetchUserData();
+            }, error => {
+                console.log(error.response);
+            })
+            .finally(() => this.setState({ deleting: false }));
+
+    };
+
+    handleDeleteTeamMember  = (id) => {
+        if (this.state.deleting) return;
+        this.setState({ deleting: true });
+        deleteCDocTeam(id)
+            .then(res => {
+                const data = res.data;
+                notification.success({
+                    message: '删除团队成员',
+                    description: data.messages,
+                    duration: messageDuration,
+                });
+                this.fetchTeamData();
             }, error => {
                 console.log(error.response);
             })
@@ -237,16 +279,14 @@ class EditMemberModal extends Component {
 
     render() {
         const {onCancel} = this.props;
-        const {loading, data, userData, user_member_id, visibleUserMember } = this.state;
+        const {loading, data, userData, user_member_id, visibleUserMember, team_member_id, visibleTeamMember, teamData } = this.state;
         const formProps = {
             labelWidth: 100,
         };
         return (
             <ModalContent
                 loading={loading}
-                okText="修改"
-                cancelText="取消"
-                onOk={() => this.form.submit()}
+                cancelText="关 闭"
                 onCancel={onCancel}
             >
                 <Form
@@ -272,7 +312,7 @@ class EditMemberModal extends Component {
                     />
                     <FormElement layout>
                         <Button type="primary" styleName="form-button" onClick={() => this.setState({ visibleUserMember: true, user_member_id: null })}>添加用户</Button>
-                        <Button type="primary" styleName="form-button">添加团队</Button>
+                        <Button type="primary" styleName="form-button" onClick={() => this.setState({ visibleTeamMember: true, team_member_id: null })}>添加团队</Button>
                     </FormElement>
                 </Form>
 
@@ -283,18 +323,16 @@ class EditMemberModal extends Component {
                     rowKey="id"
                     serialNumber={false}
                     showSorterTooltip={true}
-                    // onChange={this.handleTableChange}
                 />
                 <Divider dashed />
 
                 <Table
                     loading={loading}
                     columns={this.team_columns}
-                    dataSource={data.teams}
+                    dataSource={teamData}
                     rowKey="id"
                     serialNumber={false}
                     showSorterTooltip={true}
-                    // onChange={this.handleTableChange}
                 />
                 <EditMemberUserModal
                     isEdit={user_member_id !== null}
@@ -304,14 +342,14 @@ class EditMemberModal extends Component {
                     onOk={() => this.setState({ visibleUserMember: false }, () => this.fetchUserData())}
                     onCancel={() => this.setState({ visibleUserMember: false })}
                 />
-                {/*<EditMemberTeamModal*/}
-                {/*    isEdit={user_member !== null}*/}
-                {/*    visible={visibleUserMember}*/}
-                {/*    user_member={user_member}*/}
-                {/*    c_doc_id={data.id}*/}
-                {/*    onOk={() => this.setState({ visibleUserMember: false }, () => this.fetchData())}*/}
-                {/*    onCancel={() => this.setState({ visibleUserMember: false })}*/}
-                {/*/>*/}
+                <EditMemberTeamModal
+                    isEdit={team_member_id !== null}
+                    visible={visibleTeamMember}
+                    id={team_member_id}
+                    c_doc_id={data.id}
+                    onOk={() => this.setState({ visibleTeamMember: false }, () => this.fetchTeamData())}
+                    onCancel={() => this.setState({ visibleTeamMember: false })}
+                />
             </ModalContent>
         );
     }

@@ -38,7 +38,7 @@ export default class ModalContent extends Component {
         okHtmlType: '',
         resetText: '重置',
         cancelText: '取消',
-        onOk: () => void 0,
+        // onOk: () => void 0,
         onCancel: () => void 0,
     };
 
@@ -118,9 +118,9 @@ export default class ModalContent extends Component {
                         <div className="ant-modal-footer" style={{ flex: 0 }}>
                             {footer ? footer : (
                                 <>
-                                    <Button type="primary" onClick={onOk} htmlType={okHtmlType}>{okText}</Button>
+                                    {onOk ? <Button type="primary" onClick={onOk} htmlType={okHtmlType}>{okText}</Button>: null}
                                     {onReset ? <Button onClick={onReset}>{resetText}</Button> : null}
-                                    <Button onClick={onCancel}>{cancelText}</Button>
+                                    {onCancel ? <Button onClick={onCancel}>{cancelText}</Button> : null}
                                 </>
                             )}
                         </div>

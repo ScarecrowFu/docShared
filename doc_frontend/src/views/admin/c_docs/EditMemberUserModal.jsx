@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {Form, notification} from 'antd';
+import {Alert, Form, notification} from 'antd';
 import FormElement from 'src/library/FormElement';
 import config from 'src/utils/Hoc/configHoc';
 import ModalContent from 'src/library/ModalHoc/ModalContent';
@@ -125,6 +125,14 @@ class EditMemberUserModal extends Component {
         const formProps = {
             labelWidth: 100,
         };
+        const message =  (
+            <div>
+                <p>普通成员: 新建/修改/删除个人文档</p>
+                <p>高级成员: 新建/修改文集内所有文档/删除个人文档</p>
+                <p>文集管理员: 关于该文集的所有操作权限</p>
+            </div>
+
+        );
         return (
             <ModalContent
                 loading={loading}
@@ -159,6 +167,13 @@ class EditMemberUserModal extends Component {
                         options={this.state.member_perm_options}
                     />
                 </Form>
+                <Alert
+                    message="Tips"
+                    description={message}
+                    type="success"
+                    showIcon
+                    closable
+                />
             </ModalContent>
         );
     }

@@ -1,6 +1,8 @@
 from django.db import models
 from doc_api.settings.conf import CollectedDocMembersPermissions, CollectedDocPermissions
 from doc_api.utils.base_helpers import dict_for_model_choices
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 
 class CollectedDoc(models.Model):
@@ -107,3 +109,10 @@ class CollectedDocSetting(models.Model):
 
     def __str__(self):
         return self.c_doc.name
+
+
+@receiver(post_save, sender=CollectedDoc)
+def create_setting(sender, instance, created, **kwargs):
+    if created:
+        CollectedDocSetting.objects.create(c_doc=instance)
+

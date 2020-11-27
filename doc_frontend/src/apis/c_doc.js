@@ -64,6 +64,30 @@ export function getCDocMemberPermissionTypes(params) {
   });
 }
 
+export function getCExportSet(instance_id, params) {
+  return request({
+    url: `/api/collected_docs/${instance_id}/export_set/`,
+    method: "get",
+    params,
+  });
+}
+
+export function saveCExportSet(instance_id, data) {
+  return request({
+    url: `/api/collected_docs/${instance_id}/export_set/`,
+    method: "post",
+    data,
+  });
+}
+
+export function transferCDoc(instance_id, data) {
+  return request({
+    url: `/api/collected_docs/${instance_id}/transfer/`,
+    method: "post",
+    data,
+  });
+}
+
 /////////////////////////////////////////////////////////////
 
 

@@ -17,7 +17,7 @@ class TeamGroupBaseSerializer(serializers.ModelSerializer):
 class TeamGroupDetailSerializer(serializers.ModelSerializer):
     created_time = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S', read_only=True)
     modified_time = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S', read_only=True)
-    # members = UserBaseSerializer(many=True, read_only=True)
+    members = UserBaseSerializer(many=True, read_only=True)
     creator = UserBaseSerializer(read_only=True)
 
     class Meta:

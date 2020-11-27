@@ -46,6 +46,13 @@ service.interceptors.response.use(
       if (error.response) {
         const res = error.response.data;
         switch (error.response.status) {
+          case 400:
+                notification.error({
+                    message: '错误的请求',
+                    description: res.messages,
+                    duration: messageDuration,
+                });
+                break;
           case 401:
               notification.error({
                   message: '登录凭证过期, 重新登录',

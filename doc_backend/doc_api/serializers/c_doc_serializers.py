@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from doc_api.models import CollectedDoc, CollectedDocUser, CollectedDocTeam, CollectedDocTeamUser, User
+from doc_api.models import CollectedDoc, CollectedDocUser, CollectedDocTeam, CollectedDocTeamUser, CollectedDocSetting, User
 from doc_api.serializers.user_serializers import UserBaseSerializer
 from doc_api.serializers.team_serializers import TeamGroupBaseSerializer
 
@@ -129,7 +129,7 @@ class CollectedDocTeamDetailSerializer(serializers.ModelSerializer):
         return obj.team_group.members.count()
 
     def get_members(self, obj):
-        return CollectedDocTeamUserBaseSerializer(obj.team_group.members, many=True).data
+        return CollectedDocTeamUserBaseSerializer(obj.c_doc_team_users.all(), many=True).data
 
     class Meta:
         model = CollectedDocTeam
@@ -137,11 +137,11 @@ class CollectedDocTeamDetailSerializer(serializers.ModelSerializer):
 
 
 def update_team_members(instance, members):
-    team_members = instance.team_group.members
+    team_members = instance.team_group.members.all()
     if not members:
-        members = [{'user': team_member.id,  'perm': 10} for team_member in team_members]
+        members = [{'id': team_member.id,  'perm': 10} for team_member in team_members]
     for member in members:
-        user_id = int(member['user'])
+        user_id = int(member['id'])
         perm = int(member['perm'])
         if not perm:
             perm = 10
@@ -150,6 +150,7 @@ def update_team_members(instance, members):
             c_doc_team_user = CollectedDocTeamUser.objects.filter(c_doc_team=instance, user=user).first()
             if c_doc_team_user:
                 c_doc_team_user.perm = perm
+                c_doc_team_user.save()
             else:
                 CollectedDocTeamUser.objects.create(c_doc_team=instance, user=user, perm=perm)
 
@@ -158,6 +159,7 @@ class CollectedDocTeamActionSerializer(serializers.ModelSerializer):
     created_time = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S', read_only=True)
     modified_time = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S', read_only=True)
     creator = UserBaseSerializer(read_only=True)
+    members = serializers.JSONField(required=False, write_only=True)
 
     def create(self, validated_data):
         members = validated_data.pop('members', None)
@@ -177,3 +179,21 @@ class CollectedDocTeamActionSerializer(serializers.ModelSerializer):
         model = CollectedDocTeam
         fields = '__all__'
 
+
+class CollectedDocSettingSerializer(serializers.ModelSerializer):
+    id = serializers.SerializerMethodField(read_only=True)
+    name = serializers.SerializerMethodField(read_only=True)
+    intro = serializers.SerializerMethodField(read_only=True)
+
+    def get_id(self, obj):
+        return obj.c_doc.id
+
+    def get_name(self, obj):
+        return obj.c_doc.name
+
+    def get_intro(self, obj):
+        return obj.c_doc.intro
+
+    class Meta:
+        model = CollectedDocSetting
+        fields = ('id', 'name', 'intro', 'allow_epub', 'allow_pdf', 'allow_doc', 'allow_markdown')

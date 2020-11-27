@@ -317,9 +317,9 @@ class FormElement extends Component {
             }
         }
 
-        if (!('allowClear' in others)) {
-            others.allowClear = true;
-        }
+        // if (!('allowClear' in others)) {
+        //     others.allowClear = true;
+        // }
 
         rules = this.getRules(rules, isInputLikeElement(type) ? `请输入${label}` : `请选择${label}`);
 

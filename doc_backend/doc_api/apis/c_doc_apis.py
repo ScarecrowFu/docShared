@@ -2,12 +2,12 @@ from rest_framework import viewsets, mixins, filters, status
 from rest_framework import permissions
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from doc_api.models import CollectedDoc, CollectedDocUser, CollectedDocTeam
+from doc_api.models import CollectedDoc, CollectedDocUser, CollectedDocTeam, CollectedDocSetting, User
 from doc_api.serializers.c_doc_serializers import CollectedDocListSerializer, CollectedDocDetailSerializer, \
     CollectedDocActionSerializer
 from doc_api.serializers.c_doc_serializers import CollectedDocUserListSerializer, CollectedDocUserDetailSerializer, \
     CollectedDocUserActionSerializer
-from doc_api.serializers.c_doc_serializers import CollectedDocTeamListSerializer, CollectedDocTeamDetailSerializer,\
+from doc_api.serializers.c_doc_serializers import CollectedDocTeamListSerializer, CollectedDocTeamDetailSerializer, \
     CollectedDocTeamActionSerializer
 from doc_api.settings.conf import CollectedDocPermissions, CollectedDocMembersPermissions
 from doc_api.filters.c_doc_filters import CollectedDocOrderingFilter, CollectedDocParameterFilter
@@ -110,42 +110,50 @@ class CollectedDocViewSet(viewsets.ModelViewSet):
         result = {'success': True, 'messages': f'获取文集成员权限分类:', 'results': CollectedDocMembersPermissions}
         return Response(result, status=status.HTTP_200_OK)
 
-    # @action(methods=['GET', 'POST'], detail=True)
-    # def members(self, request, *args, **kwargs):
-    #     instance = self.get_object()
-    #     if request.method == 'GET':
-    #         users = instance.users.all()
-    #         teams = instance.teams.all()
-    #         users_serializer = CollectedDocUserSerializer(users, many=True)
-    #         teams_serializer = CollectedDocTeamSerializer(teams, many=True)
-    #         result = {'success': True, 'messages': f'获取文集成员:',
-    #                   'results': {'id': instance.id, 'name': instance.name, 'intro': instance.intro,
-    #                               'users': users_serializer.data, 'teams': teams_serializer.data}}
-    #         return Response(result, status=status.HTTP_200_OK)
-    #     if request.method == 'POST':
-    #         print(request.data)
-    #         members_type = request.data.get('members_type', None)
-    #         c_doc_user = request.data.get('user', {})
-    #         c_doc_team = request.data.get('team', [])
-    #         if members_type == 'user':
-    #             user = User.objects.get(pk=int(c_doc_user['user']))
-    #             c_doc_user_obj = CollectedDocUser.objects.filter(c_doc=instance, user=user).first()
-    #             print(c_doc_user)
-    #             print(c_doc_user_obj)
-    #             if c_doc_user_obj:
-    #                 c_doc_user_obj.perm = c_doc_user['perm']
-    #                 c_doc_user_obj.save()
-    #             else:
-    #                 c_doc_user_obj = CollectedDocUser.objects.create(c_doc=instance, user=user, perm=c_doc_user['perm'])
-    #             serializer = CollectedDocUserSerializer(c_doc_user_obj)
-    #             result = {'success': True, 'messages': f'成功保存成员权限:', 'results': serializer.data}
-    #             return Response(result, status=status.HTTP_200_OK)
-    #         elif members_type == 'team':
-    #             result = {'success': True, 'messages': f'成功保存成员权限:', 'results': {}}
-    #             return Response(result, status=status.HTTP_200_OK)
-    #         else:
-    #             result = {'success': True, 'messages': f'成功保存成员权限:', 'results': {}}
-    #             return Response(result, status=status.HTTP_200_OK)
+    @action(methods=['GET', 'POST'], detail=True)
+    def export_set(self, request, *args, **kwargs):
+        instance = self.get_object()
+        c_doc_set = CollectedDocSetting.objects.filter(c_doc=instance).first()
+        if request.method == 'GET':
+            export_set = []
+            if c_doc_set:
+                print(c_doc_set)
+                if c_doc_set.allow_epub: export_set.append('allow_epub')
+                if c_doc_set.allow_pdf: export_set.append('allow_pdf')
+                if c_doc_set.allow_doc: export_set.append('allow_doc')
+                if c_doc_set.allow_markdown: export_set.append('allow_markdown')
+            results = {'id': instance.id, 'name': instance.name, 'intro': instance.intro,
+                       'export_set': export_set}
+            result = {'success': True, 'messages': f'获取文集设置:', 'results':results}
+            return Response(result, status=status.HTTP_200_OK)
+        if request.method == 'POST':
+            if c_doc_set:
+                CollectedDocSetting.objects.filter(c_doc=instance).update(**request.data)
+            else:
+                CollectedDocSetting.objects.create(c_doc=instance, **request.data)
+            result = {'success': True, 'messages': f'修改文集设置:'}
+            return Response(result, status=status.HTTP_200_OK)
+
+    @action(methods=['POST'], detail=True)
+    def export_file(self, request, *args, **kwargs):
+        # todo
+        result = {'success': True, 'messages': f'导出文集:'}
+        return Response(result, status=status.HTTP_200_OK)
+
+    @action(methods=['POST'], detail=True)
+    def transfer(self, request, *args, **kwargs):
+        instance = self.get_object()
+        transfer_user_id = request.data.get('transfer_user', None)
+        password = request.data.get('password', None)
+        if request.user.check_password(password):
+            transfer_user = User.objects.get(pk=int(transfer_user_id))
+            instance.creator = transfer_user
+            instance.save()
+            result = {'success': True, 'messages': f'转让当前文集给:{transfer_user.nickname}'}
+            return Response(result, status=status.HTTP_200_OK)
+        else:
+            result = {'success': False, 'messages': f'当前密码不正确, 无法转让'}
+            return Response(result, status=status.HTTP_400_BAD_REQUEST)
 
     def get_serializer_class(self):
         if self.action == 'list':
@@ -271,6 +279,12 @@ class CollectedDocTeamViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        c_doc_id = request.data.get('c_doc', False)
+        team_group_id = request.data.get('team_group', False)
+        c_doc_team = CollectedDocTeam.objects.filter(c_doc__id=int(c_doc_id), team_group__id=int(team_group_id)).first()
+        if c_doc_team:
+            result = {'success': False, 'messages': f'文集团队成员:{c_doc_team.__str__()}已经存在, 请勿重复创建'}
+            return Response(result, status=status.HTTP_400_BAD_REQUEST)
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         instance = CollectedDocTeam.objects.get(pk=int(serializer.data['id']))
@@ -307,7 +321,11 @@ class CollectedDocTeamViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         query_params = self.request.query_params
         not_page = query_params.get('not_page', False)
+        c_doc_id = query_params.get('c_doc', False)
         queryset = self.filter_queryset(self.get_queryset())
+        if c_doc_id:
+            c_doc = CollectedDoc.objects.get(pk=c_doc_id)
+            queryset = queryset.filter(c_doc=c_doc)
         queryset = queryset.distinct()
         if not_page and not_page.lower() != 'false':
             serializer = self.get_serializer(queryset, many=True)

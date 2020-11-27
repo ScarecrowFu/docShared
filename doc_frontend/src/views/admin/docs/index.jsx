@@ -9,11 +9,6 @@ import Table from 'src/library/Table';
 import Operator from 'src/library/Operator';
 import Pagination from 'src/library/Pagination';
 import batchDeleteConfirm from 'src/components/BatchDeleteConfirm';
-import EditModal from './EditModal';
-import EditPermModal from './EditPermModal';
-import EditMemberModal from './EditMemberModal';
-import EditSettingModal from './EditSettingModal';
-import EditTransferModal from './EditTransferModal';
 import {bulkDeleteCDoc, deleteCDoc, getCDocList, getCDocPermissionTypes} from 'src/apis/c_doc';
 import {getUserList} from 'src/apis/user';
 import {messageDuration} from "src/config/settings";
@@ -21,9 +16,9 @@ import {messageDuration} from "src/config/settings";
 
 
 @config({
-    path: '/admin/c_docs',
-    title: {text: '文集管理', icon: 'folder'},
-    breadcrumbs: [{key: 'c_doc', text: '文集管理', icon: 'folder'}],
+    path: '/admin/docs/docs',
+    title: {text: '文档管理', icon: 'file'},
+    breadcrumbs: [{key: 'doc', text: '文档管理', icon: 'file'}],
 })
 class CDoc extends Component {
     state = {
@@ -45,7 +40,6 @@ class CDoc extends Component {
         perm_options: [],           // 权限选项
         user_options: [],           // 用户选项
     };
-
 
     columns = [
         { title: '名称', dataIndex: 'name', sorter: true, width: 200 },
@@ -260,12 +254,6 @@ class CDoc extends Component {
             total,
             pageNum,
             pageSize,
-            visible,
-            visiblePerm,
-            visibleMember,
-            visibleSetting,
-            visibleTransfer,
-            id,
         } = this.state;
 
         const formProps = {
@@ -336,38 +324,6 @@ class CDoc extends Component {
                     pageSize={pageSize}
                     onPageNumChange={pageNum => this.setState({ pageNum }, () => this.handleSubmit())}
                     onPageSizeChange={pageSize => this.setState({ pageSize, pageNum: 1 })}
-                />
-
-                <EditModal
-                    visible={visible}
-                    id={id}
-                    isEdit={id !== null}
-                    onOk={() => this.setState({ visible: false }, () => this.handleSubmit())}
-                    onCancel={() => this.setState({ visible: false })}
-                />
-                <EditPermModal
-                    visible={visiblePerm}
-                    id={id}
-                    onOk={() => this.setState({ visiblePerm: false }, () => this.handleSubmit())}
-                    onCancel={() => this.setState({ visiblePerm: false })}
-                />
-                <EditMemberModal
-                    visible={visibleMember}
-                    id={id}
-                    onOk={() => this.setState({ visibleMember: false }, () => this.handleSubmit())}
-                    onCancel={() => this.setState({ visibleMember: false })}
-                />
-                <EditSettingModal
-                    visible={visibleSetting}
-                    id={id}
-                    onOk={() => this.setState({ visibleSetting: false }, () => this.handleSubmit())}
-                    onCancel={() => this.setState({ visibleSetting: false })}
-                />
-                <EditTransferModal
-                    visible={visibleTransfer}
-                    id={id}
-                    onOk={() => this.setState({ visibleTransfer: false }, () => this.handleSubmit())}
-                    onCancel={() => this.setState({ visibleTransfer: false })}
                 />
             </PageContent>
         );
