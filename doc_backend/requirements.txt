@@ -1,0 +1,14 @@
+asgiref==3.2.10
+Django==3.1.2
+django-cors-headers==3.5.0
+django-filter==2.4.0
+djangorestframework==3.12.1
+djangorestframework-jwt==1.11.0
+importlib-metadata==2.0.0
+Markdown==3.3.1
+Pillow==8.0.0
+pkg-resources==0.0.0
+PyJWT==1.7.1
+pytz==2020.1
+sqlparse==0.4.1
+zipp==3.3.0
