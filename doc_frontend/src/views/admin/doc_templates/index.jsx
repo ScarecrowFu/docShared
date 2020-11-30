@@ -18,8 +18,8 @@ import EditModal from "./EditModal"
 
 @config({
     path: '/admin/docs/templates',
-    title: {text: '文档模板管理', icon: 'file-unknown'},
-    breadcrumbs: [{key: 'template', text: '文档管理', icon: 'file-unknown'}],
+    title: {text: '模板管理', icon: 'file-unknown'},
+    breadcrumbs: [{key: 'template', text: '模板管理', icon: 'file-unknown'}],
 })
 class DocTemplate extends Component {
     state = {
