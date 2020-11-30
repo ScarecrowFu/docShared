@@ -344,30 +344,35 @@ class CDoc extends Component {
                     isEdit={id !== null}
                     onOk={() => this.setState({ visible: false }, () => this.handleSubmit())}
                     onCancel={() => this.setState({ visible: false })}
+                    width='60%'
                 />
                 <EditPermModal
                     visible={visiblePerm}
                     id={id}
                     onOk={() => this.setState({ visiblePerm: false }, () => this.handleSubmit())}
                     onCancel={() => this.setState({ visiblePerm: false })}
+                    width='60%'
                 />
                 <EditMemberModal
                     visible={visibleMember}
                     id={id}
                     onOk={() => this.setState({ visibleMember: false }, () => this.handleSubmit())}
                     onCancel={() => this.setState({ visibleMember: false })}
+                    width='60%'
                 />
                 <EditSettingModal
                     visible={visibleSetting}
                     id={id}
                     onOk={() => this.setState({ visibleSetting: false }, () => this.handleSubmit())}
                     onCancel={() => this.setState({ visibleSetting: false })}
+                    width='60%'
                 />
                 <EditTransferModal
                     visible={visibleTransfer}
                     id={id}
                     onOk={() => this.setState({ visibleTransfer: false }, () => this.handleSubmit())}
                     onCancel={() => this.setState({ visibleTransfer: false })}
+                    width='60%'
                 />
             </PageContent>
         );

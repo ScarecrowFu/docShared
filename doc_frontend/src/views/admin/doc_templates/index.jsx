@@ -9,7 +9,7 @@ import Table from 'src/library/Table';
 import Operator from 'src/library/Operator';
 import Pagination from 'src/library/Pagination';
 import batchDeleteConfirm from 'src/components/BatchDeleteConfirm';
-import {bulkDeleteDoc, deleteDoc, getDocList, getDocStatus} from 'src/apis/doc';
+import {bulkDeleteDocTemplate, deleteDocTemplate, getDocTemplateList } from 'src/apis/doc';
 import {getUserList} from 'src/apis/user';
 import {messageDuration} from "src/config/settings";
 import EditModal from "./EditModal"
@@ -17,11 +17,11 @@ import EditModal from "./EditModal"
 
 
 @config({
-    path: '/admin/docs/docs',
-    title: {text: '文档管理', icon: 'file'},
-    breadcrumbs: [{key: 'doc', text: '文档管理', icon: 'file'}],
+    path: '/admin/docs/templates',
+    title: {text: '文档模板管理', icon: 'file-unknown'},
+    breadcrumbs: [{key: 'template', text: '文档管理', icon: 'file-unknown'}],
 })
-class CDoc extends Component {
+class DocTemplate extends Component {
     state = {
         loading: false,     // 表格加载数据loading
         dataSource: [],     // 表格数据
@@ -33,27 +33,11 @@ class CDoc extends Component {
         visible: false,     // 添加、修改弹框
         id: null,           // 需要修改的数据id
         ordering: null,           // 排序
-        statusTypes: {},
-        status_options: [],           // 状态选项
         user_options: [],           // 用户选项
     };
 
     columns = [
-        { title: '文档标题', dataIndex: 'title', sorter: true, width: 100 },
-        { title: '所属文集', dataIndex: 'c_doc', sorter: true, width: 100,
-            render: (value, record) => {
-                return value.name;
-            }
-        },
-        { title: '上级文档', dataIndex: 'parent_doc', sorter: true, width: 100,
-            render: (value, record) => {
-                if (value) {
-                    return value.title;
-                }
-                return '无上级文档'
-
-            }
-        },
+        { title: '模板名称', dataIndex: 'name', sorter: true, width: 100 },
         {
             title: '用户', dataIndex: 'creator', sorter: true, width: 100,
             render: (value, record) => {
@@ -61,7 +45,6 @@ class CDoc extends Component {
             }
         },
         { title: '创建时间', dataIndex: 'created_time', sorter: true, width: 100 },
-        { title: '文档状态', dataIndex: 'status', sorter: true, width: 100 },
         {
             title: '操作', dataIndex: 'operator', width: 120,
             render: (value, record) => {
@@ -85,21 +68,6 @@ class CDoc extends Component {
         },
     ];
 
-    handleStatusTypes = () => {
-        getDocStatus()
-            .then(res => {
-                const data = res.data;
-                this.setState({ statusTypes: data.results });
-                const status_options = [];
-                Object.keys(data.results).forEach(function(key) {
-                    status_options.push({'value': key, 'label': data.results[key]});
-                });
-                this.setState({ status_options: status_options });
-            }, error => {
-                console.log(error.response);
-            })
-    }
-
     // todo 整理为分页获取选项
     handleUserOptions = () => {
         getUserList({'not_page': true})
@@ -116,7 +84,6 @@ class CDoc extends Component {
     }
 
     componentDidMount() {
-        this.handleStatusTypes();
         this.handleUserOptions();
         this.handleSubmit();
     }
@@ -146,7 +113,7 @@ class CDoc extends Component {
             params['ordering'] = this.state.ordering;
         }
         this.setState({ loading: true });
-        getDocList(params)
+        getDocTemplateList(params)
             .then(res => {
                 const data = res.data;
                 const dataSource = data?.results || [];
@@ -179,7 +146,7 @@ class CDoc extends Component {
     handleDelete = (id) => {
         if (this.state.deleting) return;
         this.setState({ deleting: true });
-        deleteDoc(id)
+        deleteDocTemplate(id)
             .then(res => {
                 const data = res.data;
                 notification.success({
@@ -201,7 +168,7 @@ class CDoc extends Component {
         const { selectedRowKeys } = this.state;
         batchDeleteConfirm(selectedRowKeys.length)
             .then(() => {
-                bulkDeleteDoc({'deleted_objects': selectedRowKeys})
+                bulkDeleteDocTemplate({'deleted_objects': selectedRowKeys})
                     .then(res => {
                         const data = res.data;
                         notification.success({
@@ -244,14 +211,7 @@ class CDoc extends Component {
                                 {...formProps}
                                 label="关键字"
                                 name="search"
-                                placeholder="标题"
-                            />
-                            <FormElement
-                                {...formProps}
-                                type="select"
-                                label="状态"
-                                name="status"
-                                options={this.state.status_options}
+                                placeholder="名称"
                             />
                             <FormElement
                                 {...formProps}
@@ -313,4 +273,4 @@ class CDoc extends Component {
     }
 }
 
-export default CDoc;
+export default DocTemplate;

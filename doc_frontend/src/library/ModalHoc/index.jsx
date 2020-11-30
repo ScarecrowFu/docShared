@@ -24,7 +24,7 @@ export default (options) => WrappedComponent => {
         static displayName = `WithModal(${componentName})`;
 
         render() {
-            const {visible, onCancel} = this.props;
+            const {visible, onCancel, width} = this.props;
             let title;
 
             let others = {};
@@ -57,7 +57,7 @@ export default (options) => WrappedComponent => {
                 <Modal
                     className={className}
                     destroyOnClose
-                    width="800px"
+                    width={width}
                     bodyStyle={{padding: 0}}
                     style={{top}}
                     footer={null}
