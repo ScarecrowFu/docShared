@@ -1,6 +1,6 @@
 from django.conf.urls import url, include
 from rest_framework import routers
-from doc_api.apis import auth_apis, user_apis, c_doc_apis, doc_apis
+from doc_api.apis import auth_apis, user_apis, c_doc_apis, doc_apis, file_apis
 
 router = routers.DefaultRouter()
 
@@ -13,6 +13,10 @@ router.register('collected_doc_teams', c_doc_apis.CollectedDocTeamViewSet, basen
 
 router.register('docs', doc_apis.DocViewSet, basename='docs')
 router.register('doc_templates', doc_apis.DocTemplateViewSet, basename='doc_templates')
+router.register('doc_tags', doc_apis.DocTagViewSet, basename='doc_tags')
+
+router.register('file_attachments', file_apis.FileAttachmentViewSet, basename='file_attachments')
+router.register('file_groups', file_apis.FileGroupViewSet, basename='file_groups')
 
 
 urlpatterns = [

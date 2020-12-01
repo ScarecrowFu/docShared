@@ -5,6 +5,8 @@ from doc_api.utils.base_helpers import dict_for_model_choices
 
 class FileGroup(models.Model):
     name = models.CharField(max_length=255, verbose_name='分组名称')
+    # 10表示附件, 20表示图片
+    group_type = models.IntegerField(default=10, choices=dict_for_model_choices(FileType), verbose_name="分组类型")
     creator = models.ForeignKey('User', null=True, blank=True, on_delete=models.SET_NULL, verbose_name='创建者',
                                 related_name='created_file_groups')
     created_time = models.DateTimeField(auto_now_add=True, verbose_name='创建日期')

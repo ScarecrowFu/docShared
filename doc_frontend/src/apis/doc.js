@@ -108,3 +108,57 @@ export function bulkDeleteDocTemplate(data) {
     data,
   });
 }
+
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+export function getDocTagList(params) {
+  return request({
+    url: "/api/doc_tags/",
+    method: "get",
+    params,
+  });
+}
+
+export function retrieveDocTag(instance_id) {
+  return request({
+    url: `/api/doc_tags/${instance_id}/`,
+    method: "get",
+  });
+}
+
+export function createDocTag(data) {
+  return request({
+    url: "/api/doc_tags/",
+    method: "post",
+    data,
+  });
+}
+
+export function deleteDocTag(instance_id, data) {
+  return request({
+    url: `/api/doc_tags/${instance_id}/`,
+    method: "delete",
+    data,
+  });
+}
+
+export function updateDocTag(instance_id, data, method = "put") {
+  return request({
+    url: `/api/doc_tags/${instance_id}/`,
+    method: method,
+    data,
+  });
+}
+
+export function bulkDeleteDocTag(data) {
+  return request({
+    url: `/api/doc_tags/bulk_delete/`,
+    method: "post",
+    data,
+  });
+}
