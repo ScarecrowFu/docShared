@@ -12,7 +12,8 @@ from django.core.files.storage import default_storage
 from django.conf import settings
 from django.core.files.base import ContentFile
 import os
-from doc_api.utils.base_helpers import check_md5_sum
+import shutil
+from doc_api.utils.base_helpers import check_md5_sum, create_or_get_directory
 from doc_api.settings.conf import FileType
 
 
@@ -120,6 +121,9 @@ class FileAttachmentViewSet(viewsets.ModelViewSet):
     permission_classes = (permissions.IsAuthenticated, )
 
     def create(self, request, *args, **kwargs):
+        """
+        简化版大文件上传接口, 同时可处理大文件上传, 但不支持断点续传
+        """
         chunk_file = request.data.get('chunk_file', None)  # 分块文件
         chunk_md5 = request.data.get('chunk_md5', None)  # 分块文件MD5
         chunk_index = request.data.get('chunk_index', None)  # 分块文件顺序
@@ -128,43 +132,73 @@ class FileAttachmentViewSet(viewsets.ModelViewSet):
         file_md5 = request.data.get('file_md5', None)  # 完整文件的文件md5,用于确定文件合并后是否正确
         group_id = request.data.get('group', None)
         file_type = request.data.get('file_type', None)
+        print(request.data)
         if not chunk_file or not chunk_index or not chunks_num or not file_name:
             result = {'success': False,
                       'messages': '上传失败, 缺少指定参数值: chunk_file/chunk_index/chunks_num/file_name'}
             return Response(result, status=status.HTTP_400_BAD_REQUEST)
 
         file_type_name = FileType.get(int(file_type), 'default')
-        if group_id:
+        try:
             group = FileGroup.objects.get(pk=int(group_id))
             group_name = group.name
-        else:
+        except:
+            group = None
             group_name = 'None'
-        base_save_path = f'{settings.MEDIA_ROOT}/{file_type_name}/{request.user.username}/{group_name}'
-        save_path = os.path.join(base_save_path, f'{file_name}.part{chunk_index}')
+        file_path = f'{file_type_name}/{request.user.username}/{group_name}'
+        base_path = create_or_get_directory(f'{settings.MEDIA_ROOT}/{file_path}')
+        base_chunk_path = create_or_get_directory(f'{base_path}/tmp')
+        chunk_path = os.path.join(base_chunk_path, f'{file_name}.part{chunk_index}')
         # default_storage不会覆盖文件, 若文件存在, 删除后重新上传
-        if default_storage.exists(save_path):
-            default_storage.delete(save_path)
+        if default_storage.exists(chunk_path):
+            default_storage.delete(chunk_path)
         # 保存
-        chunk_file_path = default_storage.save(save_path, ContentFile(chunk_file.read()))
-        chunk_file_path = os.path.join(settings.MEDIA_ROOT, chunk_file_path)
+        default_storage.save(chunk_path, ContentFile(chunk_file.read()))
         # 验证分块MD5是否正确
         if chunk_md5:
-            chunk_file_md5 = check_md5_sum(file_name=chunk_file_path)
+            chunk_file_md5 = check_md5_sum(file_name=chunk_path)
             # 保存的分块文件内容不一致
             if chunk_file_md5 != chunk_md5:
                 result = {'success': False, 'messages': '文件上传发生错误, md5值不一致',
                           'results': {'upload_md5': chunk_md5, 'save_md5': chunk_file_md5}}
                 return Response(result, status=status.HTTP_400_BAD_REQUEST)
-
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        instance = FileAttachment.objects.get(pk=int(serializer.data['id']))
-        # todo 记录操作日志
-        result = {'success': True, 'messages': f'新增素材:{instance.__str__()}',
-                  'results': serializer.data}
-        return Response(result, status=status.HTTP_200_OK, headers=headers)
+        if int(chunk_index) == int(chunks_num):
+            uploaded = True
+            save_file_path = os.path.join(base_path, file_name)
+            with open(save_file_path, 'wb') as uploaded_file:
+                for index in range(int(chunks_num)):
+                    chunk_file = os.path.join(base_chunk_path, f'{file_name}.part{index + 1}')
+                    try:
+                        chunk_file = open(chunk_file, 'rb')  # 按序打开每个分片
+                        uploaded_file.write(chunk_file.read())  # 读取分片内容写入新文件
+                        chunk_file.close()
+                    except Exception as error:
+                        print(f'合并文件:{file_name} form {base_chunk_path}失败:{error}')
+                        uploaded = False
+                        # 检查合并后的MD5
+            uploaded_file_md5 = check_md5_sum(save_file_path)
+            if uploaded_file_md5 != file_md5:
+                uploaded = False
+            if uploaded:
+                attachment = FileAttachment.objects.create(group=group, file_name=file_name,
+                                                           file_path=os.path.join(file_path, file_name),
+                                                           file_size=os.path.getsize(save_file_path),
+                                                           file_type=file_type)
+                shutil.rmtree(base_chunk_path)
+                # todo 记录操作日志
+                serializer = self.get_serializer(attachment)
+                results = serializer.data
+                results['uploaded'] = True
+                result = {'success': True, 'messages': f'新增素材:{attachment.__str__()}', 'results': results}
+                return Response(result, status=status.HTTP_200_OK)
+            else:
+                result = {'success': False, 'messages': '合并文件失败, 请重新上传!'}
+                return Response(result, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            result = {'success': True, 'messages': f'成功上传文件:{file_name}, 分块:{chunk_index}!',
+                      'results': {'uploaded': False, 'chunk_index': chunk_index, 'file_name': file_name, }
+                      }
+            return Response(result, status=status.HTTP_200_OK)
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -212,6 +246,12 @@ class FileAttachmentViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
+        file_path = instance.file_path
+        file_save_path = os.path.join(settings.MEDIA_ROOT, file_path)
+        try:
+            os.remove(file_save_path)
+        except:
+            pass
         self.perform_destroy(instance)
         # todo 记录操作日志
         result = {'success': True, 'messages': f'删除素材:{instance.__str__()}'}

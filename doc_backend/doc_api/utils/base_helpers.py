@@ -1,4 +1,6 @@
 import os
+import hashlib
+
 
 def list_for_model_choices(value_list):
     # 将列表转为数据模型可用选项
@@ -27,3 +29,11 @@ def check_model_field(model, field_name, field_ype):
             return None
     except:
         return None
+
+
+def check_md5_sum(file_name, hash_factory=hashlib.md5, chunk_num_blocks=128):
+    h = hash_factory()
+    with open(file_name, 'rb') as f:
+        for chunk in iter(lambda: f.read(chunk_num_blocks*h.block_size), b''):
+            h.update(chunk)
+    return h.hexdigest()

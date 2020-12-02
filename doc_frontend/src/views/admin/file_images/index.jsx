@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {Button, Form, notification, Tag, Upload} from 'antd';
+import {Button, Form, notification, Tag, Upload, Modal} from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
 import PageContent from 'src/layouts/PageContent';
 import config from 'src/utils/Hoc/configHoc';
@@ -8,12 +8,11 @@ import FormRow from 'src/library/FormRow';
 import FormElement from 'src/library/FormElement';
 import { PlusOutlined } from '@ant-design/icons';
 import Pagination from 'src/library/Pagination';
-import batchDeleteConfirm from 'src/components/BatchDeleteConfirm';
-import {bulkDeleteFileAttachment, deleteFileAttachment, getFileAttachmentList, getFileGroupList } from 'src/apis/file';
+import { getFileGroupList, createFileAttachment, getFileAttachmentList } from 'src/apis/file';
 import {getUserList} from 'src/apis/user';
-import {messageDuration} from "src/config/settings";
+import {messageDuration, baseURL} from "src/config/settings";
+import {computeMD5, getBase64} from 'src/utils/md5'
 import './style.less'
-
 
 
 @config({
@@ -33,10 +32,12 @@ class FileImages extends Component {
         visible: false,     // 添加、修改弹框
         id: null,           // 需要修改的数据id
         ordering: null,           // 排序
+        previewVisible: null,           // 查看大图
+        previewTitle: null,           // 大图名称
+        previewImage: null,           // 大图URL
         user_options: [],           // 用户选项
         group_options: [{'value': 'all', 'label': '全部'}, {'value': 'None', 'label': '无分组'}],           // 分组选项
         selectedGroups: [],  // 选择的分组
-
     };
 
     // todo 整理为分页获取选项
@@ -81,43 +82,200 @@ class FileImages extends Component {
         this.setState({ selectedGroups: selectedGroups });
     }
 
+    fetchData = () => {
+        if (this.state.loading) return;
+        const {id} = this.props;
+        this.setState({loading: true});
+        getFileAttachmentList(id)
+            .then(res => {
+                const data = res.data;
+                let dataSource = []
+                data.results.forEach(function (item) {
+                    dataSource.push(
+                        {
+                            uid: item.id, // 注意，这个uid一定不能少，否则上传失败
+                            name: item.file_name,
+                            status: 'done',
+                            url: `${baseURL}media/${item.file_path}`,
+                        }
+                    )
+                });
+                this.setState({dataSource: dataSource});
+            }, error => {
+                console.log(error.response);
+            })
+            .finally(() => this.setState({loading: false}));
+    };
+
     componentDidMount() {
         this.handleUserOptions();
         this.handleGroupOptions();
+        this.fetchData();
+    }
+
+    // 方法：图片预览
+    handlePreview = async (file) => {
+        console.log('handlePreview:' + JSON.stringify(file));
+        if (!file.url && !file.preview) {
+            file.preview = await getBase64(file.originFileObj);
+        }
+        this.setState({
+            previewImage: file.url || file.preview,
+            previewVisible: true,
+            previewTitle: file.name || file.url.substring(file.url.lastIndexOf('/') + 1),
+        });
+    };
+
+    // 上传前处理, 相关限制
+    handleBeforeUpload = (file) => {
+        console.log('handleBeforeUpload file:' + JSON.stringify(file));
+        console.log('handleBeforeUpload file.file:' + JSON.stringify(file.file));
+        console.log('handleBeforeUpload file type:' + JSON.stringify(file.type));
+        //限制图片 格式、size、分辨率
+        const isJPG = file.type === 'image/jpeg';
+        const isJPEG = file.type === 'image/jpeg';
+        const isGIF = file.type === 'image/gif';
+        const isPNG = file.type === 'image/png';
+        const isLt2M = file.size / 1024 / 1024 < 10;
+        if (!(isJPG || isJPEG || isPNG || isGIF)) {
+            notification.error({
+                message: '文件格式错误',
+                description: '只能上传JPG、JPEG、PNG、GIF 格式的图片',
+                duration: messageDuration,
+            });
+        } else if (!isLt2M) {
+            notification.error({
+                message: '文件大小错误',
+                description: '图片超过10M限制，不允许上传',
+                duration: messageDuration,
+            });
+        }
+        return (isJPG || isJPEG || isPNG) && isLt2M;
+    };
+
+
+    handleChange = ({ file, fileList }) => {
+        console.log('handleChange file:' + JSON.stringify(file));
+        console.log('handleChange fileList:' + JSON.stringify(fileList));
+        console.log('file.status', file.status);
+        if (file.status === 'removed') {
+            this.setState({
+                dataSource: [],
+            });
+        }
+    };
+
+    // 图片上传
+    handleImgUpload = async (options) => {
+        const { onProgress, onError, onSuccess, data, filename, file, withCredentials, action, headers } = options;
+        const file_md5_info = await computeMD5(file);
+        const {file_name, file_md5, chunks_info, chunks_num} = file_md5_info;
+        console.log('file_md5_info', file_md5_info);
+        const file_id = file.uid;
+        // 新建图片对象
+        const image = {
+            uid: file.uid, // 注意，这个uid一定不能少，否则上传失败
+            name: file_name,
+            status: 'uploading',
+            url: '',
+            percent: 1, // 注意不要写100。100表示上传完成
+        };
+
+        let dataSource = this.state.dataSource;
+        dataSource.push(image)
+        this.setState({ dataSource: dataSource });
+
+        const reader = new FileReader();
+        reader.readAsDataURL(file); // 读取图片文件
+        reader.onload = (file) => {
+            console.log('reader.onload');
+            const _that = this;
+            chunks_info.forEach(function (item) {
+                let percent = item.chunk_index / chunks_num;
+                const fmData = new FormData();
+                const chunk_file = new Blob([item.chunk_file], {type: 'application/octet-stream'})
+                fmData.append("group", null);
+                fmData.append("file_type", 20);
+                fmData.append("chunk_file", chunk_file);
+                fmData.append("chunk_md5", item.chunk_md5);
+                fmData.append("chunk_index", item.chunk_index);
+                fmData.append("chunks_num", chunks_num);
+                fmData.append("file_name", file_name);
+                fmData.append("file_md5", file_md5);
+                createFileAttachment(fmData,  { "content-type": "multipart/form-data" })
+                    .then(res => {
+                        const data = res.data;
+                        const {uploaded, file_path} = data.results;
+                        let image = {
+                            uid: file_id,
+                            name: file_name,
+                            status: 'uploading',
+                            url: '',
+                            percent: percent,
+                        };
+                        if (uploaded) {
+                            _that.fetchData();
+                            // image = {
+                            //     uid: file_id,
+                            //     name: file_name,
+                            //     status: 'done',
+                            //     url: `${baseURL}media/${file_path}`,
+                            //     percent: percent,
+                            // };
+                        }
+                        dataSource = dataSource.filter(function( obj ) {
+                            return obj.uid !== file_id;
+                        });
+                        dataSource.push(image)
+                        _that.setState({ dataSource: dataSource });
+                    }, error => {
+                        dataSource = dataSource.filter(function( obj ) {
+                            return obj.uid !== file_id;
+                        });
+                        _that.setState({ dataSource: dataSource });
+                        console.log(error.response);
+                        onError({ error });
+                    });
+            });
+        };
+    };
+
+    handlePreviewCancel = () => this.setState({ previewVisible: false });
+
+    handlePreviewDownload = () => {
+        const {
+            previewTitle,
+            previewImage,
+        } = this.state;
+        let link = document.createElement("a");
+        link.setAttribute("href", previewImage);
+        link.setAttribute("download", previewTitle);
+        link.setAttribute("target", '_blank');
+        link.style.display = "none";
+        document.body.appendChild(link);
+        link.click();
+        URL.revokeObjectURL(previewImage); // 释放URL 对象
+        document.body.removeChild(link);
     }
 
 
     render() {
         const {
-            loading,
-            deleting,
-            dataSource,
-            selectedRowKeys,
             total,
             pageNum,
             pageSize,
-            visible,
-            id,
             group_options,
             selectedGroups,
+            dataSource,
+            previewVisible,
+            previewTitle,
+            previewImage,
         } = this.state;
-
         const formProps = {
             width: 200,
         };
-        const disabledDelete = !selectedRowKeys?.length;
 
         const { CheckableTag } = Tag;
-
-        const imagesData = [
-            {
-                uid: '-1',
-                name: 'image.png',
-                status: 'done',
-                url: 'https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png',
-            }
-            ];
-
         const uploadButton = (
             <div>
                 <PlusOutlined />
@@ -152,7 +310,12 @@ class FileImages extends Component {
                             <FormElement layout>
                                 <Button type="primary" htmlType="submit">搜索</Button>
                                 <Button onClick={() => this.form.resetFields()}>重置</Button>
-                                <Upload><Button type="primary" icon={<UploadOutlined />}>上传图片</Button></Upload>
+                                <Upload
+                                    customRequest={this.handleImgUpload}
+                                    onPreview={this.handlePreview}
+                                    beforeUpload={this.handleBeforeUpload}
+                                    onChange={this.handleChange}
+                                ><Button type="primary" icon={<UploadOutlined />}>上传图片</Button></Upload>
                                 <Button type="dashed" onClick={() => this.form.resetFields()}>添加分组</Button>
                                 <Button onClick={() => this.form.resetFields()}>分组管理</Button>
                             </FormElement>
@@ -180,13 +343,32 @@ class FileImages extends Component {
 
                 <Upload
                     className="image-uploader"
-                    action="https://www.mocky.io/v2/5cc8019d300000980a055e76"
                     listType="picture-card"
-                    fileList={imagesData}
+                    fileList={dataSource}
+                    customRequest={this.handleImgUpload}
+                    onPreview={this.handlePreview}
+                    beforeUpload={this.handleBeforeUpload}
+                    onChange={this.handleChange}
                 >
                     {uploadButton}
                 </Upload>
 
+                <Modal
+                    visible={previewVisible}
+                    title={previewTitle}
+                    onCancel={this.handlePreviewCancel}
+                    footer={[
+                        <Button key="previewDownload" onClick={this.handlePreviewDownload}>
+                            下载
+                        </Button>,
+                        <Button key="PreviewCancel" onClick={this.handlePreviewCancel}>
+                            取消
+                        </Button>
+                    ]}
+                    width={"60%"}
+                >
+                    <img alt="preview" style={{ width: '100%' }} src={previewImage} />
+                </Modal>
 
                 <Pagination
                     total={total}
@@ -195,7 +377,6 @@ class FileImages extends Component {
                     onPageNumChange={pageNum => this.setState({ pageNum }, () => this.handleSubmit())}
                     onPageSizeChange={pageSize => this.setState({ pageSize, pageNum: 1 })}
                 />
-
             </PageContent>
         );
     }

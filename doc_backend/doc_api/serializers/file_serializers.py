@@ -71,7 +71,7 @@ class FileAttachmentListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = FileAttachment
-        fields = ('id', 'group', 'file_name', 'file_path', 'file_source', 'file_url', 'file_type', 'creator', 'created_time')
+        fields = ('id', 'group', 'file_name', 'file_path', 'file_source', 'file_type', 'file_size', 'creator', 'created_time')
 
 
 class FileAttachmentActionSerializer(serializers.ModelSerializer):

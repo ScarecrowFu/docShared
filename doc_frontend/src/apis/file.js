@@ -70,10 +70,11 @@ export function retrieveFileAttachment(instance_id) {
   });
 }
 
-export function createFileAttachment(data) {
+export function createFileAttachment(data, headers = { "Content-Type": "application/json;charset=UTF-8" }) {
   return request({
     url: "/api/file_attachments/",
     method: "post",
+    headers: headers,
     data,
   });
 }

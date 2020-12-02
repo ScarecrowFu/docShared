@@ -26,10 +26,11 @@ class FileAttachment(models.Model):
                               related_name='files')
     file_name = models.CharField(max_length=250, verbose_name='素材名称')
     file_path = models.CharField(max_length=250, verbose_name='素材路径')
+    file_size = models.CharField(max_length=250, null=True, blank=True, verbose_name='素材大小')
     # 10表示上传  20表示离线下载  30表示系统生成
     file_source = models.IntegerField(default=10, choices=dict_for_model_choices(FileSource), verbose_name="素材来源")
     # 离线下载时记录链接
-    file_url = models.CharField(max_length=250, null=True, blank=True, verbose_name='素材路径')
+    download_url = models.CharField(max_length=250, null=True, blank=True, verbose_name='素材链接')
     # 10表示附件, 20表示图片
     file_type = models.IntegerField(default=10, choices=dict_for_model_choices(FileType), verbose_name="素材类型")
     creator = models.ForeignKey('User', null=True, blank=True, on_delete=models.SET_NULL, verbose_name='创建者',
