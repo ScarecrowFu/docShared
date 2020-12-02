@@ -116,7 +116,7 @@ class FileAttachmentViewSet(viewsets.ModelViewSet):
     filter_backends = (filters.OrderingFilter, filters.SearchFilter, FileAttachmentParameterFilter)
     search_fields = ('file_name',)
     ordering_fields = ('group', 'file_name', 'file_path', 'file_source', 'file_url', 'file_type', 'creator', 'created_time')
-    filterset_fields = ('group',  'creator', 'created_time')
+    filterset_fields = ('group', 'file_type', 'creator', 'created_time')
     queryset = FileAttachment.objects.order_by('-id').all()
     permission_classes = (permissions.IsAuthenticated, )
 
@@ -183,7 +183,7 @@ class FileAttachmentViewSet(viewsets.ModelViewSet):
                 attachment = FileAttachment.objects.create(group=group, file_name=file_name,
                                                            file_path=os.path.join(file_path, file_name),
                                                            file_size=os.path.getsize(save_file_path),
-                                                           file_type=file_type)
+                                                           file_type=file_type, creator=request.user)
                 shutil.rmtree(base_chunk_path)
                 # todo 记录操作日志
                 serializer = self.get_serializer(attachment)

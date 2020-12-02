@@ -8,10 +8,12 @@ import FormRow from 'src/library/FormRow';
 import FormElement from 'src/library/FormElement';
 import { PlusOutlined } from '@ant-design/icons';
 import Pagination from 'src/library/Pagination';
-import { getFileGroupList, createFileAttachment, getFileAttachmentList } from 'src/apis/file';
+import { getFileGroupList, createFileAttachment, getFileAttachmentList, deleteFileAttachment } from 'src/apis/file';
 import {getUserList} from 'src/apis/user';
 import {messageDuration, baseURL} from "src/config/settings";
-import {computeMD5, getBase64} from 'src/utils/md5'
+import {computeMD5, getBase64} from 'src/utils/md5';
+import AddGroupModal from './AddGroupModal';
+import GroupIndexModal from './GroupIndexModal';
 import './style.less'
 
 
@@ -23,21 +25,23 @@ import './style.less'
 class FileImages extends Component {
     state = {
         loading: false,     // 表格加载数据loading
+        file_type: 20,     // 素材类型
         dataSource: [],     // 表格数据
         selectedRowKeys: [],// 表格中选中行keys
         total: 0,           // 分页中条数
         pageNum: 1,         // 分页当前页
-        pageSize: 10,       // 分页每页显示条数
+        pageSize: 20,       // 分页每页显示条数
         deleting: false,    // 批量删除中loading
-        visible: false,     // 添加、修改弹框
         id: null,           // 需要修改的数据id
         ordering: null,           // 排序
+        groupIndexVisible: null,           // 分组管理
+        addGroupVisible: null,           // 添加分组
         previewVisible: null,           // 查看大图
         previewTitle: null,           // 大图名称
         previewImage: null,           // 大图URL
         user_options: [],           // 用户选项
         group_options: [{'value': 'all', 'label': '全部'}, {'value': 'None', 'label': '无分组'}],           // 分组选项
-        selectedGroups: [],  // 选择的分组
+        selected_group: 'all',  // 选择的分组
     };
 
     // todo 整理为分页获取选项
@@ -48,48 +52,72 @@ class FileImages extends Component {
                 const user_options = [];
                 data.results.forEach(function (item) {
                     user_options.push({'value': item.id, 'label': item.nickname})
-                })
+                });
                 this.setState({ user_options: user_options });
             }, error => {
                 console.log(error.response);
             })
-    }
+    };
 
     handleGroupOptions = () => {
-        getFileGroupList({'not_page': true})
+        getFileGroupList({'not_page': true, 'group_type': this.state.file_type})
             .then(res => {
                 const data = res.data;
                 const group_options = [{'value': 'all', 'label': '全部'}, {'value': 'None', 'label': '无分组'}];
                 data.results.forEach(function (item) {
                     group_options.push({'value': item.id, 'label': item.name})
-                })
+                });
                 this.setState({ group_options: group_options });
             }, error => {
                 console.log(error.response);
             })
-    }
+    };
 
     handleSelectedGroup = (group, checked) => {
-        const selectedGroups = this.state.selectedGroups;
+        let selected_group = this.state.selected_group;
         if (checked) {
-            selectedGroups.push(group.value)
+            selected_group = group.value;
         }else {
-            const index = selectedGroups.indexOf(group.value);
-            if (index > -1) {
-                selectedGroups.splice(index, 1);
+            selected_group = 'all';
+        }
+        this.setState({ selected_group: selected_group });
+        this.handleSubmit();
+    };
+
+    handleSubmit = async () => {
+        if (this.state.loading) return;
+        const values = await this.form.validateFields();
+        if ('created_time' in values) {
+            const created_time = values.created_time;
+            if (created_time !== undefined && created_time.length === 2) {
+                let min_created_time = created_time[0];
+                let max_created_time = created_time[1];
+                min_created_time = min_created_time.format('YYYY-MM-DD');
+                max_created_time = max_created_time.format('YYYY-MM-DD');
+                delete values.created_time;
+                values.min_created_time = min_created_time;
+                values.max_created_time = max_created_time;
             }
         }
-        this.setState({ selectedGroups: selectedGroups });
-    }
-
-    fetchData = () => {
-        if (this.state.loading) return;
-        const {id} = this.props;
-        this.setState({loading: true});
-        getFileAttachmentList(id)
+        let group_value = this.state.selected_group;
+        let params = {
+            ...values,
+            group: group_value,
+            file_type: this.state.file_type,
+            page: this.state.pageNum,
+            page_size: this.state.pageSize,
+        };
+        if (group_value === 'all') {
+            delete params['group'];
+        }
+        if (this.state.ordering) {
+            params['ordering'] = this.state.ordering;
+        }
+        this.setState({ loading: true });
+        getFileAttachmentList(params)
             .then(res => {
                 const data = res.data;
-                let dataSource = []
+                let dataSource = [];
                 data.results.forEach(function (item) {
                     dataSource.push(
                         {
@@ -100,17 +128,19 @@ class FileImages extends Component {
                         }
                     )
                 });
+                const total = data?.all_count || 0;
                 this.setState({dataSource: dataSource});
+                this.setState({total: total});
             }, error => {
                 console.log(error.response);
             })
-            .finally(() => this.setState({loading: false}));
+            .finally(() => this.setState({ loading: false }));
     };
 
     componentDidMount() {
         this.handleUserOptions();
         this.handleGroupOptions();
-        this.fetchData();
+        this.handleSubmit();
     }
 
     // 方法：图片预览
@@ -158,16 +188,40 @@ class FileImages extends Component {
         console.log('handleChange file:' + JSON.stringify(file));
         console.log('handleChange fileList:' + JSON.stringify(fileList));
         console.log('file.status', file.status);
-        if (file.status === 'removed') {
-            this.setState({
-                dataSource: [],
-            });
-        }
+    };
+
+    handleRemove = (file)=>{
+        console.log('remove', file);
+        const {confirm} = Modal;
+        return new Promise((resolve, reject) => {
+            confirm({
+                title: '是否确定删除该图片?',
+                onOk: () => {
+                    deleteFileAttachment(file.uid)
+                        .then(res => {
+                            const data = res.data;
+                            notification.success({
+                                message: '删除图片',
+                                description: data.messages,
+                                duration: messageDuration,
+                            });
+                            this.handleSubmit();
+                        }, error => {
+                            console.log(error.response);
+                        })
+                        .finally(() => this.setState({ deleting: false }));
+                    resolve(true);
+                },
+                onCancel: () =>{
+                    resolve(false);
+                }
+            })
+        })
     };
 
     // 图片上传
     handleImgUpload = async (options) => {
-        const { onProgress, onError, onSuccess, data, filename, file, withCredentials, action, headers } = options;
+        const { onError, file, } = options;
         const file_md5_info = await computeMD5(file);
         const {file_name, file_md5, chunks_info, chunks_num} = file_md5_info;
         console.log('file_md5_info', file_md5_info);
@@ -182,9 +236,13 @@ class FileImages extends Component {
         };
 
         let dataSource = this.state.dataSource;
-        dataSource.push(image)
+        dataSource.push(image);
         this.setState({ dataSource: dataSource });
 
+        let group_value = this.state.selected_group;
+        if (group_value === 'all' || group_value === 'None') {
+            group_value = null;
+        }
         const reader = new FileReader();
         reader.readAsDataURL(file); // 读取图片文件
         reader.onload = (file) => {
@@ -193,9 +251,9 @@ class FileImages extends Component {
             chunks_info.forEach(function (item) {
                 let percent = item.chunk_index / chunks_num;
                 const fmData = new FormData();
-                const chunk_file = new Blob([item.chunk_file], {type: 'application/octet-stream'})
-                fmData.append("group", null);
-                fmData.append("file_type", 20);
+                const chunk_file = new Blob([item.chunk_file], {type: 'application/octet-stream'});
+                fmData.append("group", group_value);
+                fmData.append("file_type", _that.state.file_type);
                 fmData.append("chunk_file", chunk_file);
                 fmData.append("chunk_md5", item.chunk_md5);
                 fmData.append("chunk_index", item.chunk_index);
@@ -205,7 +263,7 @@ class FileImages extends Component {
                 createFileAttachment(fmData,  { "content-type": "multipart/form-data" })
                     .then(res => {
                         const data = res.data;
-                        const {uploaded, file_path} = data.results;
+                        const {uploaded} = data.results;
                         let image = {
                             uid: file_id,
                             name: file_name,
@@ -214,19 +272,12 @@ class FileImages extends Component {
                             percent: percent,
                         };
                         if (uploaded) {
-                            _that.fetchData();
-                            // image = {
-                            //     uid: file_id,
-                            //     name: file_name,
-                            //     status: 'done',
-                            //     url: `${baseURL}media/${file_path}`,
-                            //     percent: percent,
-                            // };
+                            _that.handleSubmit();
                         }
                         dataSource = dataSource.filter(function( obj ) {
                             return obj.uid !== file_id;
                         });
-                        dataSource.push(image)
+                        dataSource.push(image);
                         _that.setState({ dataSource: dataSource });
                     }, error => {
                         dataSource = dataSource.filter(function( obj ) {
@@ -256,7 +307,7 @@ class FileImages extends Component {
         link.click();
         URL.revokeObjectURL(previewImage); // 释放URL 对象
         document.body.removeChild(link);
-    }
+    };
 
 
     render() {
@@ -265,8 +316,10 @@ class FileImages extends Component {
             pageNum,
             pageSize,
             group_options,
-            selectedGroups,
+            selected_group,
             dataSource,
+            groupIndexVisible,
+            addGroupVisible,
             previewVisible,
             previewTitle,
             previewImage,
@@ -311,13 +364,14 @@ class FileImages extends Component {
                                 <Button type="primary" htmlType="submit">搜索</Button>
                                 <Button onClick={() => this.form.resetFields()}>重置</Button>
                                 <Upload
+                                    fileList={[]}
                                     customRequest={this.handleImgUpload}
                                     onPreview={this.handlePreview}
                                     beforeUpload={this.handleBeforeUpload}
                                     onChange={this.handleChange}
                                 ><Button type="primary" icon={<UploadOutlined />}>上传图片</Button></Upload>
-                                <Button type="dashed" onClick={() => this.form.resetFields()}>添加分组</Button>
-                                <Button onClick={() => this.form.resetFields()}>分组管理</Button>
+                                <Button type="dashed" onClick={() => this.setState({ addGroupVisible: true })}>添加分组</Button>
+                                <Button onClick={() => this.setState({ groupIndexVisible: true })}>分组管理</Button>
                             </FormElement>
                         </FormRow>
                     </Form>
@@ -330,7 +384,7 @@ class FileImages extends Component {
                                 {group_options.map(group => (
                                     <CheckableTag
                                         key={group.value}
-                                        checked={selectedGroups.indexOf(group.value) > -1}
+                                        checked={selected_group === group.value}
                                         onChange={checked => this.handleSelectedGroup(group, checked)}
                                     >
                                         {group.label}
@@ -349,6 +403,7 @@ class FileImages extends Component {
                     onPreview={this.handlePreview}
                     beforeUpload={this.handleBeforeUpload}
                     onChange={this.handleChange}
+                    onRemove={this.handleRemove}
                 >
                     {uploadButton}
                 </Upload>
@@ -369,13 +424,27 @@ class FileImages extends Component {
                 >
                     <img alt="preview" style={{ width: '100%' }} src={previewImage} />
                 </Modal>
-
                 <Pagination
                     total={total}
                     pageNum={pageNum}
                     pageSize={pageSize}
                     onPageNumChange={pageNum => this.setState({ pageNum }, () => this.handleSubmit())}
                     onPageSizeChange={pageSize => this.setState({ pageSize, pageNum: 1 })}
+                />
+
+                <AddGroupModal
+                    visible={addGroupVisible}
+                    group_type={this.state.file_type}
+                    onOk={() => this.setState({ addGroupVisible: false }, () => this.handleGroupOptions())}
+                    onCancel={() => this.setState({ addGroupVisible: false })}
+                />
+
+                <GroupIndexModal
+                    visible={groupIndexVisible}
+                    group_type={this.state.file_type}
+                    onOk={() => this.setState({ groupIndexVisible: false }, () => this.handleGroupOptions())}
+                    onCancel={() => this.setState({ groupIndexVisible: false })}
+                    width={'60%'}
                 />
             </PageContent>
         );

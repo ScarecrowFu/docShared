@@ -44,6 +44,9 @@ class FileAttachmentParameterFilter(BaseParameterFilter):
         for key, value in query_parameters.items():
             queries = []
             parameter_key, parameter_values = self.change_field_to_valid(FileAttachment, key, value)
+            if key == 'group' and value == 'None':
+                parameter_key = 'group'
+                parameter_values = [None]
             for parameter_value in parameter_values:
                 queries.append(models.Q(**{parameter_key: parameter_value}))
             if queries:
