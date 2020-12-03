@@ -3,24 +3,26 @@ import {Form, notification} from 'antd';
 import FormElement from 'src/library/FormElement';
 import config from 'src/utils/Hoc/configHoc';
 import ModalContent from 'src/library/ModalHoc/ModalContent';
-import { createDocTag, retrieveDocTag, updateDocTag } from 'src/apis/doc';
+import { createFileGroup, retrieveFileGroup, updateFileGroup } from 'src/apis/file';
 import {messageDuration} from "src/config/settings"
 
 
 @config({
     modal: {
-        title: props => props.isEdit ? '修改标签' : '添加标签',
+        title: props => props.isEdit ? '修改分组' : '添加分组',
         maskClosable: true
     },
 })
-class EditModal extends Component {
+class GroupEditModal extends Component {
     state = {
         loading: false, // 页面加载loading
+        group_type: 10,       // 分组类型
         data: {},       // 回显数据
     };
 
     componentDidMount() {
-        const {isEdit} = this.props;
+        const {group_type, isEdit} = this.props;
+        this.setState({group_type: group_type});
         if (isEdit) {
             this.fetchData();
         }
@@ -30,11 +32,10 @@ class EditModal extends Component {
         if (this.state.loading) return;
         const {id} = this.props;
         this.setState({loading: true});
-        retrieveDocTag(id)
+        retrieveFileGroup(id)
             .then(res => {
                 const data = res.data;
                 this.setState({data: data.results});
-                this.setState({content: data.results.content});
                 this.form.setFieldsValue(data.results);
             }, error => {
                 console.log(error.response);
@@ -43,14 +44,15 @@ class EditModal extends Component {
     };
 
     handleSubmit = (values) => {
+
         if (this.state.loading) return;
         const {isEdit} = this.props;
         const {id} = this.props;
         const successTip = isEdit ? '修改成功！' : '添加成功！';
         this.setState({loading: true});
-        values['content'] = this.state.content
+        values['group_type'] = this.state.group_type;
         if (isEdit){
-            updateDocTag(id, values)
+            updateFileGroup(id, values)
                 .then(res => {
                     const data = res.data;
                     const {onOk} = this.props;
@@ -65,7 +67,7 @@ class EditModal extends Component {
                 })
                 .finally(() => this.setState({loading: false}));
         } else {
-            createDocTag(values)
+            createFileGroup(values)
                 .then(res => {
                     const data = res.data;
                     const {onOk} = this.props;
@@ -80,7 +82,6 @@ class EditModal extends Component {
                 })
                 .finally(() => this.setState({loading: false}));
         }
-
     };
 
     render() {
@@ -117,4 +118,4 @@ class EditModal extends Component {
     }
 }
 
-export default EditModal;
+export default GroupEditModal;

@@ -4,8 +4,9 @@ import SparkMD5 from "spark-md5"
  * 计算文件md5
  * @param file
  * @param chunk_size
+ * @param is_chunk_md5
  */
-export function computeMD5(file, chunk_size=1024 * 1024) {
+export function computeMD5(file, chunk_size=1024 * 1024, is_chunk_md5=true) {
     return new Promise((resolve)=>{
         let fileReader = new FileReader();
         let blobSlice =
@@ -23,11 +24,15 @@ export function computeMD5(file, chunk_size=1024 * 1024) {
             complete_file_spark.append(e.target.result);
             if (currentChunk < chunks) {
                 // 每一个分片需要包含的信息
-                chunks_info.push({
+                const chunk_item = {
                     chunk_file: e.target.result,
                     chunk_index: currentChunk + 1,
-                    chunk_md5: spark.end(),
-                })
+                }
+                if (is_chunk_md5){
+                    chunk_item['chunk_md5'] = spark.end();
+                }
+                console.log('chunk_item', chunk_item);
+                chunks_info.push(chunk_item)
                 currentChunk++;
                 loadNext();
             } else {

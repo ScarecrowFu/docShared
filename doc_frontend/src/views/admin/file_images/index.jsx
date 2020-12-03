@@ -12,7 +12,7 @@ import { getFileGroupList, createFileAttachment, getFileAttachmentList, deleteFi
 import {getUserList} from 'src/apis/user';
 import {messageDuration, baseURL} from "src/config/settings";
 import {computeMD5, getBase64} from 'src/utils/md5';
-import AddGroupModal from './AddGroupModal';
+import GroupEditModal from './GroupEditModal';
 import GroupIndexModal from './GroupIndexModal';
 import './style.less'
 
@@ -264,20 +264,16 @@ class FileImages extends Component {
                     .then(res => {
                         const data = res.data;
                         const {uploaded} = data.results;
-                        let image = {
-                            uid: file_id,
-                            name: file_name,
-                            status: 'uploading',
-                            url: '',
-                            percent: percent,
-                        };
                         if (uploaded) {
                             _that.handleSubmit();
+                        } else {
+                            dataSource = dataSource.filter(function( obj ) {
+                                if (obj.uid === file_id) {
+                                    obj.percent = percent
+                                }
+                                return obj;
+                            });
                         }
-                        dataSource = dataSource.filter(function( obj ) {
-                            return obj.uid !== file_id;
-                        });
-                        dataSource.push(image);
                         _that.setState({ dataSource: dataSource });
                     }, error => {
                         dataSource = dataSource.filter(function( obj ) {
@@ -432,7 +428,7 @@ class FileImages extends Component {
                     onPageSizeChange={pageSize => this.setState({ pageSize, pageNum: 1 })}
                 />
 
-                <AddGroupModal
+                <GroupEditModal
                     visible={addGroupVisible}
                     group_type={this.state.file_type}
                     onOk={() => this.setState({ addGroupVisible: false }, () => this.handleGroupOptions())}
@@ -443,7 +439,7 @@ class FileImages extends Component {
                     visible={groupIndexVisible}
                     group_type={this.state.file_type}
                     onOk={() => this.setState({ groupIndexVisible: false }, () => this.handleGroupOptions())}
-                    onCancel={() => this.setState({ groupIndexVisible: false })}
+                    onCancel={() => this.setState({ groupIndexVisible: false }, () => this.handleGroupOptions())}
                     width={'60%'}
                 />
             </PageContent>
