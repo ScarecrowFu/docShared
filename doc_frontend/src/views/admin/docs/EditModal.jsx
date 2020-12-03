@@ -143,7 +143,8 @@ class EditModal extends Component {
             >
                 <div styleName="flex-container">
                     <div styleName="flex-item-left">
-                        <Menu>
+                        <Menu
+                            inlineCollapsed={false}>
                             <div styleName='flex-item'>
                                 <Text type="secondary">导入模板:</Text>
                             </div>
@@ -237,7 +238,6 @@ class EditModal extends Component {
                                 title3,
                             ]}
                         />
-
                     </div>
                 </div>
             </ModalContent>

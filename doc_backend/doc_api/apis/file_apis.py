@@ -15,6 +15,7 @@ import os
 import shutil
 from doc_api.utils.base_helpers import check_md5_sum, create_or_get_directory
 from doc_api.settings.conf import FileType
+import time
 
 
 class FileGroupViewSet(viewsets.ModelViewSet):
@@ -147,7 +148,7 @@ class FileAttachmentViewSet(viewsets.ModelViewSet):
             group_name = 'None'
         file_path = f'{file_type_name}/{request.user.username}/{group_name}'
         base_path = create_or_get_directory(f'{settings.MEDIA_ROOT}/{file_path}')
-        base_chunk_path = create_or_get_directory(f'{base_path}/tmp')
+        base_chunk_path = create_or_get_directory(f'{base_path}/{file_name}-tmp')
         chunk_path = os.path.join(base_chunk_path, f'{file_name}.part{chunk_index}')
         # default_storage不会覆盖文件, 若文件存在, 删除后重新上传
         if default_storage.exists(chunk_path):
@@ -165,6 +166,9 @@ class FileAttachmentViewSet(viewsets.ModelViewSet):
         if int(chunk_index) == int(chunks_num):
             uploaded = True
             save_file_path = os.path.join(base_path, file_name)
+            # 文件已经存在, 添加时间戳
+            if os.path.exists(save_file_path):
+                save_file_path = os.path.join(base_path, f'{int(time.time())}-{file_name}')
             with open(save_file_path, 'wb') as uploaded_file:
                 for index in range(int(chunks_num)):
                     chunk_file = os.path.join(base_chunk_path, f'{file_name}.part{index + 1}')
@@ -265,6 +269,13 @@ class FileAttachmentViewSet(viewsets.ModelViewSet):
         deleted_objects_names = []
         for deleted_object_id in deleted_objects_ids:
             instance = FileAttachment.objects.get(pk=int(deleted_object_id))
+            file_path = instance.file_path
+            file_save_path = os.path.join(settings.MEDIA_ROOT, file_path)
+            try:
+                os.remove(file_save_path)
+            except:
+                pass
+            self.perform_destroy(instance)
             deleted_objects_names.append(instance.__str__())
         deleted_objects = queryset.filter(id__in=deleted_objects_ids).all()
         deleted_objects.delete()
