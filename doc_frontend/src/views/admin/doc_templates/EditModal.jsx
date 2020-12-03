@@ -40,7 +40,7 @@ class EditModal extends Component {
                 const template_options = [];
                 data.results.forEach(function (item) {
                     template_options.push({'value': item.id, 'label': item.name})
-                })
+                });
                 this.setState({ template_options: template_options });
             }, error => {
                 console.log(error.response);
@@ -83,7 +83,7 @@ class EditModal extends Component {
         const {id} = this.props;
         const successTip = isEdit ? '修改成功！' : '添加成功！';
         this.setState({loading: true});
-        values['content'] = this.state.content
+        values['content'] = this.state.content;
         if (isEdit){
             updateDocTemplate(id, values)
                 .then(res => {
@@ -181,7 +181,7 @@ class EditModal extends Component {
                     title="选择文档模板"
                     visible={this.state.visible}
                     onOk={this.handleTemplateOptionOk}
-                    onClick={() => this.setState({ visible: false})}
+                    onCancel={() => this.setState({ visible: false})}
                 >
                     <Form
                         ref={templateForm => this.templateForm = templateForm}
