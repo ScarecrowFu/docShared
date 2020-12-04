@@ -5,6 +5,7 @@ import config from 'src/utils/Hoc/configHoc';
 import ModalContent from 'src/library/ModalHoc/ModalContent';
 import { createUser, retrieveUser, updateUser } from 'src/apis/user';
 import {messageDuration} from "src/config/settings"
+import validationRule from 'src/utils/validationRule'
 
 @config({
     modal: {
@@ -41,7 +42,8 @@ class EditModal extends Component {
             .finally(() => this.setState({loading: false}));
     };
 
-    handleSubmit = (values) => {
+    handleSubmit = async () => {
+        const values = await this.form.validateFields();
         if (this.state.loading) return;
         const {isEdit} = this.props;
         const {id} = this.props;
@@ -127,6 +129,7 @@ class EditModal extends Component {
                         name="email"
                         required
                         noSpace
+                        rules={[validationRule.email()]}
                     />
                     <FormElement
                         {...formProps}
@@ -134,6 +137,7 @@ class EditModal extends Component {
                         label="手机号码"
                         name="phone"
                         noSpace
+                        rules={[validationRule.mobile()]}
                     />
                     <FormElement
                         {...formProps}

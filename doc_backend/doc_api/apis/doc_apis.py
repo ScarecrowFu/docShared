@@ -16,7 +16,7 @@ class DocViewSet(viewsets.ModelViewSet):
     filter_backends = (filters.OrderingFilter, filters.SearchFilter, DocParameterFilter)
     search_fields = ('c_doc__name', 'title',)
     ordering_fields = ('c_doc__name', 'title',)
-    filterset_fields = ('creator', 'created_time', 'c_doc')
+    filterset_fields = ('creator', 'created_time', 'c_doc', 'status', 'is_deleted')
     queryset = Doc.objects.order_by('-id').all()
     permission_classes = (permissions.IsAuthenticated, )
 
@@ -81,7 +81,9 @@ class DocViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        self.perform_destroy(instance)
+        instance.is_deleted = True
+        instance.save()
+        # self.perform_destroy(instance)
         # todo 记录操作日志
         result = {'success': True, 'messages': f'删除文档:{instance.__str__()}'}
         return Response(result, status=status.HTTP_200_OK)
@@ -95,8 +97,8 @@ class DocViewSet(viewsets.ModelViewSet):
         for deleted_object_id in deleted_objects_ids:
             instance = Doc.objects.get(pk=int(deleted_object_id))
             deleted_objects_names.append(instance.__str__())
-        deleted_objects = queryset.filter(id__in=deleted_objects_ids).all()
-        deleted_objects.delete()
+        deleted_objects = queryset.filter(id__in=deleted_objects_ids)
+        deleted_objects.update(is_deleted=True)
         # todo 记录操作日志
         result = {'success': True, 'messages': f'批量删除文档:{deleted_objects_names}'}
         return Response(result, status=status.HTTP_200_OK)
@@ -104,6 +106,31 @@ class DocViewSet(viewsets.ModelViewSet):
     @action(methods=['GET'], detail=False)
     def doc_status(self, request, *args, **kwargs):
         result = {'success': True, 'messages': f'获取文档状态类别:', 'results': DocStatus}
+        return Response(result, status=status.HTTP_200_OK)
+
+    @action(methods=['POST'], detail=True)
+    def recover(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.is_deleted = False
+        instance.save()
+        # self.perform_destroy(instance)
+        # todo 记录操作日志
+        result = {'success': True, 'messages': f'还原文档:{instance.__str__()}'}
+        return Response(result, status=status.HTTP_200_OK)
+
+    @action(methods=['POST'], detail=False)
+    def bulk_recover(self, request, *args, **kwargs):
+        # 批量删除
+        recover_objects_ids = request.data.get('recover_objects', [])
+        queryset = self.get_queryset()
+        recover_objects_names = []
+        for recover_objects_id in recover_objects_ids:
+            instance = Doc.objects.get(pk=int(recover_objects_id))
+            recover_objects_names.append(instance.__str__())
+        recover_objects = queryset.filter(id__in=recover_objects_ids)
+        recover_objects.update(is_deleted=False)
+        # todo 记录操作日志
+        result = {'success': True, 'messages': f'批量还原文档:{recover_objects_names}'}
         return Response(result, status=status.HTTP_200_OK)
 
     def get_serializer_class(self):

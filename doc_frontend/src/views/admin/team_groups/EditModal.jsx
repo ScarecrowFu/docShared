@@ -28,7 +28,6 @@ class EditModal extends Component {
         }
     }
 
-    // todo 整理为分页获取选项
     handleUserOptions = () => {
         getUserList({'not_page': true})
             .then(res => {
@@ -50,8 +49,13 @@ class EditModal extends Component {
         retrieveTeamGroup(id)
             .then(res => {
                 const data = res.data;
-                this.setState({data: res});
-                this.form.setFieldsValue(data.results);
+                const members = [];
+                data.results.members.forEach(function (item) {
+                    members.push(item.id)
+                })
+                const results = {'id': data.results.id, 'name': data.results.name, 'members': members}
+                this.setState({data: results});
+                this.form.setFieldsValue(results);
             }, error => {
                 console.log(error.response);
             })

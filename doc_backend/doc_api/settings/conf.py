@@ -14,7 +14,6 @@ CollectedDocMembersPermissions = {
 DocStatus = {
     10: '草稿',
     20: '发布',
-    30: '删除',
 }
 
 FileSource = {

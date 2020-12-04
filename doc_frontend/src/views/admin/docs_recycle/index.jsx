@@ -9,17 +9,15 @@ import Table from 'src/library/Table';
 import Operator from 'src/library/Operator';
 import Pagination from 'src/library/Pagination';
 import batchDeleteConfirm from 'src/components/BatchDeleteConfirm';
-import {bulkDeleteDoc, deleteDoc, getDocList, getDocStatus} from 'src/apis/doc';
+import {recoverDoc, getDocList, getDocStatus, bulkRecoverDoc} from 'src/apis/doc';
 import {getUserList} from 'src/apis/user';
 import {messageDuration} from "src/config/settings";
-import EditModal from "./EditModal"
-
 
 
 @config({
-    path: '/admin/docs/docs',
-    title: {text: '文档管理', icon: 'file'},
-    breadcrumbs: [{key: 'doc', text: '文档管理', icon: 'file'}],
+    path: '/admin/docs/recycle',
+    title: {text: '回收站管理', icon: 'file-protect'},
+    breadcrumbs: [{key: 'recycle', text: '回收站管理', icon: 'file-protect'}],
 })
 class CDoc extends Component {
     state = {
@@ -75,15 +73,11 @@ class CDoc extends Component {
                 const { id, title } = record;
                 const items = [
                     {
-                        label: '编辑',
-                        onClick: () => this.setState({ visible: true, id }),
-                    },
-                    {
-                        label: '删除',
-                        color: 'red',
+                        label: '还原',
+                        color: 'blue',
                         confirm: {
-                            title: `您确定删除"${title}"?`,
-                            onConfirm: () => this.handleDelete(id),
+                            title: `您确定还原"${title}"?`,
+                            onConfirm: () => this.handleRecover(id),
                         },
                     },
                 ];
@@ -146,7 +140,7 @@ class CDoc extends Component {
         }
         let params = {
             ...values,
-            is_deleted: false,
+            is_deleted: true,
             page: this.state.pageNum,
             page_size: this.state.pageSize,
         };
@@ -184,14 +178,14 @@ class CDoc extends Component {
         }
     };
 
-    handleDelete = (id) => {
+    handleRecover = (id) => {
         if (this.state.deleting) return;
         this.setState({ deleting: true });
-        deleteDoc(id)
+        recoverDoc(id)
             .then(res => {
                 const data = res.data;
                 notification.success({
-                    message: '删除文档',
+                    message: '还原文档',
                     description: data.messages,
                     duration: messageDuration,
                 });
@@ -203,17 +197,17 @@ class CDoc extends Component {
     };
 
 
-    handleBatchDelete = () => {
+    handleBatchRecover = () => {
         if (this.state.deleting) return;
         this.setState({ deleting: true });
         const { selectedRowKeys } = this.state;
         batchDeleteConfirm(selectedRowKeys.length)
             .then(() => {
-                bulkDeleteDoc({'deleted_objects': selectedRowKeys})
+                bulkRecoverDoc({'recover_objects': selectedRowKeys})
                     .then(res => {
                         const data = res.data;
                         notification.success({
-                            message: '批量删除文档',
+                            message: '批量还原文档',
                             description: data.messages,
                             duration: messageDuration,
                         });
@@ -242,8 +236,6 @@ class CDoc extends Component {
             total,
             pageNum,
             pageSize,
-            visible,
-            id,
         } = this.state;
 
         const formProps = {
@@ -284,8 +276,7 @@ class CDoc extends Component {
                             <FormElement layout>
                                 <Button type="primary" htmlType="submit">搜索</Button>
                                 <Button onClick={() => this.form.resetFields()}>重置</Button>
-                                <Button type="primary" onClick={() => this.setState({ visible: true, id: null })}>添加</Button>
-                                <Button danger loading={deleting} disabled={disabledDelete} onClick={this.handleBatchDelete}>删除</Button>
+                                <Button danger loading={deleting} disabled={disabledDelete} onClick={this.handleBatchRecover}>还原</Button>
                             </FormElement>
                         </FormRow>
                     </Form>
@@ -313,15 +304,6 @@ class CDoc extends Component {
                     pageSize={pageSize}
                     onPageNumChange={pageNum => this.setState({ pageNum }, () => this.handleSubmit())}
                     onPageSizeChange={pageSize => this.setState({ pageSize, pageNum: 1 })}
-                />
-
-                <EditModal
-                    visible={visible}
-                    id={id}
-                    isEdit={id !== null}
-                    onOk={() => this.setState({ visible: false }, () => this.handleSubmit())}
-                    onCancel={() => this.setState({ visible: false })}
-                    width='80%'
                 />
             </PageContent>
         );

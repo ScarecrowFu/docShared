@@ -38,6 +38,7 @@ class Doc(models.Model):
     modified_time = models.DateTimeField(auto_now=True, verbose_name='修改日期')
     # 10表示草稿状态，20表示发布状态，30表示删除状态
     status = models.IntegerField(default=10, choices=dict_for_model_choices(DocStatus), verbose_name='文档状态')
+    is_deleted = models.BooleanField(default=False, verbose_name='已删除')
 
     class Meta:
         db_table = 'doc'

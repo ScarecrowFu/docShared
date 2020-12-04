@@ -32,6 +32,14 @@ export function deleteDoc(instance_id, data) {
   });
 }
 
+export function recoverDoc(instance_id, data) {
+  return request({
+    url: `/api/docs/${instance_id}/recover/`,
+    method: "post",
+    data,
+  });
+}
+
 export function updateDoc(instance_id, data, method = "put") {
   return request({
     url: `/api/docs/${instance_id}/`,
@@ -43,6 +51,14 @@ export function updateDoc(instance_id, data, method = "put") {
 export function bulkDeleteDoc(data) {
   return request({
     url: `/api/docs/bulk_delete/`,
+    method: "post",
+    data,
+  });
+}
+
+export function bulkRecoverDoc(data) {
+  return request({
+    url: `/api/docs/bulk_recover/`,
     method: "post",
     data,
   });
