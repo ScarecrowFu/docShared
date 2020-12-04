@@ -14,7 +14,7 @@ import { getTeamGroupList, deleteTeamGroup, bulkDeleteTeamGroup } from 'src/apis
 import {messageDuration} from "src/config/settings"
 
 @config({
-    path: '/admin/teams',
+    path: '/admin/users/teams',
     title: {text: '团队管理', icon: 'team'},
     breadcrumbs: [{key: 'user', text: '团队管理', icon: 'team'}],
 })

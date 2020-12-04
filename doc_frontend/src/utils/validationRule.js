@@ -8,6 +8,12 @@ export default {
             message,
         };
     },
+    link(message = '请输入正确的URL地址！') {
+        return {
+            pattern: regexps.link,
+            message,
+        };
+    },
     port(message = '请输入正确的端口号！') {
         return {
             pattern: regexps.port,

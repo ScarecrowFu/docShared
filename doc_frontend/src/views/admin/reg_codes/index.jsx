@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, {Component} from 'react';
 import {Button, Form, notification} from 'antd';
 import PageContent from 'src/layouts/PageContent';
 import config from 'src/utils/Hoc/configHoc';
@@ -9,18 +9,19 @@ import Table from 'src/library/Table';
 import Operator from 'src/library/Operator';
 import Pagination from 'src/library/Pagination';
 import batchDeleteConfirm from 'src/components/BatchDeleteConfirm';
-import EditModal from './EditModal';
-import { getUserList, deleteUser, bulkDeleteUser, activationUser } from 'src/apis/user';
-import { yesOrNoTag } from 'src/utils/tagRender';
-import {getLoginUser} from 'src/utils/userAuth';
-import {messageDuration} from "src/config/settings"
+import {bulkDeleteRegisterCode, deleteRegisterCode, getRegisterCodeList } from 'src/apis/reg_code';
+import {getUserList} from 'src/apis/user';
+import {messageDuration} from "src/config/settings";
+import EditModal from "./EditModal"
+
+
 
 @config({
-    path: '/admin/users/users',
-    title: {text: '用户管理', icon: 'user'},
-    breadcrumbs: [{key: 'user', text: '用户管理', icon: 'user'}],
+    path: '/admin/system/reg_codes',
+    title: {text: '注册码管理', icon: 'codepen'},
+    breadcrumbs: [{key: 'reg_code', text: '注册码管理', icon: 'codepen'}],
 })
-class UserCenter extends Component {
+class RegisterCode extends Component {
     state = {
         loading: false,     // 表格加载数据loading
         dataSource: [],     // 表格数据
@@ -32,83 +33,83 @@ class UserCenter extends Component {
         visible: false,     // 添加、修改弹框
         id: null,           // 需要修改的数据id
         ordering: null,           // 排序
+        user_options: [],           // 用户选项
     };
 
     columns = [
-        { title: '账号', dataIndex: 'username', sorter: true, width: 200 },
-        { title: '名称', dataIndex: 'nickname', sorter: true, width: 200 },
-        { title: '邮箱', dataIndex: 'email', sorter: true, width: 200 },
-        { title: '电话', dataIndex: 'phone', sorter: true, width: 100 },
-        { title: '性别', dataIndex: 'gender', sorter: true, width: 100 },
-        { title: '职称', dataIndex: 'title', sorter: true, width: 100 },
+        { title: '注册邀请码', dataIndex: 'code', sorter: true, width: 100 },
+        { title: '有效注册数量', dataIndex: 'all_cnt', sorter: true, width: 100 },
+        { title: '已使用数量', dataIndex: 'used_cnt', sorter: true, width: 100 },
+        { title: '注册码状态', dataIndex: 'status', sorter: true, width: 100 },
         {
-            title: '管理员', dataIndex: 'is_admin', sorter: true, width: 100,
-            render: (value, record)  => {
-                return yesOrNoTag(value)
-            },
+            title: '用户', dataIndex: 'creator', sorter: true, width: 100,
+            render: (value, record) => {
+                if (value) {
+                    return value.nickname;
+                }
+                return '';
+
+            }
         },
+        { title: '创建时间', dataIndex: 'created_time', sorter: true, width: 100 },
         {
             title: '操作', dataIndex: 'operator', width: 120,
             render: (value, record) => {
-                const { id, nickname, is_active } = record;
-                const authInfo = getLoginUser()
-                const authUserID = authInfo.id;
+                const { id, code } = record;
                 const items = [
                     {
                         label: '编辑',
                         onClick: () => this.setState({ visible: true, id }),
                     },
-                ];
-                if (authUserID !== id) {
-                    items.push(
-                        {
-                            label: '删除',
-                            color: 'red',
-                            confirm: {
-                                title: `您确定删除"${nickname}"?`,
-                                onConfirm: () => this.handleDelete(id),
-                            },
+                    {
+                        label: '删除',
+                        color: 'red',
+                        confirm: {
+                            title: `您确定删除"${code}"?`,
+                            onConfirm: () => this.handleDelete(id),
                         },
-                    )
-                    if (is_active) {
-                        items.push(
-                            {
-                                label: '禁用',
-                                color: 'gray',
-                                confirm: {
-                                    title: `您确定禁用"${nickname}"?`,
-                                    onConfirm: () => this.handleActivation(id, false),
-                                },
-                            },
-                        )
-                    }
-                    else {
-                        items.push(
-                            {
-                                label: '启用',
-                                color: 'blue',
-                                confirm: {
-                                    title: `您确定启用"${nickname}"?`,
-                                    onConfirm: () => this.handleActivation(id, true),
-                                },
-                            },
-                        )
-                    }
-                }
+                    },
+                ];
                 return <Operator items={items}/>;
             },
         },
     ];
 
+    handleUserOptions = () => {
+        getUserList({'not_page': true})
+            .then(res => {
+                const data = res.data;
+                const user_options = [];
+                data.results.forEach(function (item) {
+                    user_options.push({'value': item.id, 'label': item.nickname})
+                })
+                this.setState({ user_options: user_options });
+            }, error => {
+                console.log(error.response);
+            })
+    }
+
     componentDidMount() {
+        this.handleUserOptions();
         this.handleSubmit();
     }
 
+
     handleSubmit = async () => {
         if (this.state.loading) return;
-
         const values = await this.form.validateFields();
-
+        if ('created_time' in values) {
+            const created_time = values.created_time;
+            if (created_time !== undefined && created_time.length === 2) {
+                let min_created_time = created_time[0];
+                let max_created_time = created_time[1];
+                min_created_time = min_created_time.format('YYYY-MM-DD');
+                max_created_time = max_created_time.format('YYYY-MM-DD');
+                delete values.created_time;
+                values.min_created_time = min_created_time;
+                values.max_created_time = max_created_time;
+            }
+        }
         let params = {
             ...values,
             page: this.state.pageNum,
@@ -117,9 +118,8 @@ class UserCenter extends Component {
         if (this.state.ordering) {
             params['ordering'] = this.state.ordering;
         }
-
         this.setState({ loading: true });
-        getUserList(params)
+        getRegisterCodeList(params)
             .then(res => {
                 const data = res.data;
                 const dataSource = data?.results || [];
@@ -152,7 +152,7 @@ class UserCenter extends Component {
     handleDelete = (id) => {
         if (this.state.deleting) return;
         this.setState({ deleting: true });
-        deleteUser(id)
+        deleteRegisterCode(id)
             .then(res => {
                 const data = res.data;
                 notification.success({
@@ -167,22 +167,6 @@ class UserCenter extends Component {
             .finally(() => this.setState({ deleting: false }));
     };
 
-    handleActivation = (id, active=true) => {
-        const activeText = active ? '启用！' : '禁用';
-        activationUser(id, {'active': active})
-            .then(res => {
-                const data = res.data;
-                notification.success({
-                    message: `${activeText}用户`,
-                    description: data.messages,
-                    duration: messageDuration,
-                });
-                this.handleSubmit();
-            }, error => {
-                console.log(error.response);
-            })
-            .finally(() => this.setState({ deleting: false }));
-    };
 
     handleBatchDelete = () => {
         if (this.state.deleting) return;
@@ -190,7 +174,7 @@ class UserCenter extends Component {
         const { selectedRowKeys } = this.state;
         batchDeleteConfirm(selectedRowKeys.length)
             .then(() => {
-                bulkDeleteUser({'deleted_objects': selectedRowKeys})
+                bulkDeleteRegisterCode({'deleted_objects': selectedRowKeys})
                     .then(res => {
                         const data = res.data;
                         notification.success({
@@ -203,8 +187,15 @@ class UserCenter extends Component {
                     }, error => {
                         console.log(error.response);
                     })
+                    .catch(function (error) {
+                        console.log(error);
+                    })
                     .finally(() => this.setState({ deleting: false }));
-            });
+            })
+            .catch(function (error) {
+                console.log(error);
+            })
+            .finally(() => this.setState({ deleting: false }));
     };
 
     render() {
@@ -233,39 +224,20 @@ class UserCenter extends Component {
                                 {...formProps}
                                 label="关键字"
                                 name="search"
-                                placeholder="账号/昵称/邮箱"
+                                placeholder="注册邀请码"
                             />
                             <FormElement
                                 {...formProps}
                                 type="select"
-                                label="性别"
-                                name="gender"
-                                options={[
-                                    { value: '男', label: '男' },
-                                    { value: '女', label: '女' },
-                                ]}
+                                label="用户"
+                                name="creator"
+                                options={this.state.user_options}
                             />
                             <FormElement
-                                {...formProps}
-                                type="select"
-                                label="管理员"
-                                placeholder="是否管理员"
-                                name="is_admin"
-                                options={[
-                                    { value: true, label: '是' },
-                                    { value: false, label: '否' },
-                                ]}
-                            />
-                            <FormElement
-                                {...formProps}
-                                type="select"
-                                label="可用"
-                                name="is_active"
-                                placeholder="是否可用"
-                                options={[
-                                    { value: true, label: '是' },
-                                    { value: false, label: '否' },
-                                ]}
+                                width={300}
+                                type="date-range"
+                                label="创建时间"
+                                name="created_time"
                             />
                             <FormElement layout>
                                 <Button type="primary" htmlType="submit">搜索</Button>
@@ -313,4 +285,4 @@ class UserCenter extends Component {
     }
 }
 
-export default UserCenter;
+export default RegisterCode;

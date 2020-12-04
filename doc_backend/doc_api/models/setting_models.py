@@ -1,6 +1,7 @@
 from django.db import models
 from doc_api.settings.conf import SettingType, VerificationType
 from doc_api.utils.base_helpers import dict_for_model_choices
+import random
 
 
 class SystemSetting(models.Model):
@@ -44,7 +45,7 @@ class EmailVerificationCode(models.Model):
 
 
 class RegisterCode(models.Model):
-    code = models.CharField(max_length=10, unique=True, verbose_name='注册邀请码')
+    code = models.CharField(max_length=10, unique=True, null=True, blank=True, verbose_name='注册邀请码')
     # 注册码的有效注册数量，表示注册码最多能够被使用多少次，默认为1
     all_cnt = models.IntegerField(default=1, verbose_name='有效注册数量')
     # 注册码的已使用数量，其值小于等于有效注册数量，默认为0
@@ -55,6 +56,23 @@ class RegisterCode(models.Model):
                                 related_name='created_register_codes')
     created_time = models.DateTimeField(auto_now_add=True, verbose_name='创建日期')
     modified_time = models.DateTimeField(auto_now=True, verbose_name='修改日期')
+
+    def save(self, *args, **kwargs):
+        if not self.id:
+            code_str = '0123456789qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM'
+            random_code = ''.join(random.sample(code_str, k=10))
+            random_code_used = RegisterCode.objects.filter(code=random_code).count()
+            if random_code_used > 0:  # 已存在此注册码，继续生成一个注册码
+                is_code = False
+                while is_code is False:
+                    random_code = ''.join(random.sample(code_str, k=10))
+                    random_code_used = RegisterCode.objects.filter(code=random_code).count()
+                    if random_code_used > 0:  # 已存在此注册码，继续生成一个注册码
+                        is_code = False
+                    else:  # 数据库中不存在此注册码，跳出循环
+                        is_code = True
+            self.code = random_code
+        super(RegisterCode, self).save(*args, **kwargs)
 
     def __str__(self):
         return self.code

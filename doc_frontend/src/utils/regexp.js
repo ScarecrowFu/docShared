@@ -33,3 +33,6 @@ export const positiveInteger = /^[1-9]\d*$/;
 
 // 数字、保存两位小数
 export const numberWithTwoDecimal = /^(0|[1-9]\d*)(\.\d{1,2})?$/;
+
+export const link =  /(https?:\/\/[^\s]+)/g;
+
