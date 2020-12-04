@@ -17,10 +17,18 @@ import { ImportOutlined, PlusOutlined } from '@ant-design/icons';
 import FormElement from 'src/library/FormElement';
 import config from 'src/utils/Hoc/configHoc';
 import ModalContent from 'src/library/ModalHoc/ModalContent';
-import {createDoc, getDocTemplateList, retrieveDoc, retrieveDocTemplate, updateDoc} from 'src/apis/doc';
+import {
+    createDoc,
+    getDocTemplateList,
+    retrieveDoc,
+    retrieveDocTemplate,
+    updateDoc,
+    getDocTagList,
+    getDocList} from 'src/apis/doc';
 import { getCDocList } from 'src/apis/c_doc';
 import {messageDuration} from "src/config/settings"
 import ADDCDocModal from 'src/views/admin/c_docs/EditModal'
+import ImageModal from './ImageModal'
 import './style.less';
 
 
@@ -35,37 +43,16 @@ class EditModal extends Component {
         loading: false, // 页面加载loading
         data: {},       // 回显数据
         importTemplateVisible: false,  // 导入模板
+        insertImageVisible: false,  // 插入图片
         addCDocVisible: false,  // 新增文集
         template_options: [],  // 模板选项
+        tags_options: [],  // 标签选项
         c_doc_options: [],       // 文集数据
+        doc_options: [],       // 上级文档
+        status: 10, // 文档状态
         content: '',  // 内容
     };
 
-    componentDidMount() {
-        const {isEdit} = this.props;
-        this.handleCDocOptions();
-        this.handleTemplateOptions();
-        if (isEdit) {
-            this.fetchData();
-        }
-    }
-
-    fetchData = () => {
-        if (this.state.loading) return;
-        const {id} = this.props;
-        this.setState({loading: true});
-        retrieveDoc(id)
-            .then(res => {
-                const data = res.data;
-                this.setState({data: data.results});
-                this.form.setFieldsValue(data.results);
-            }, error => {
-                console.log(error.response);
-            })
-            .finally(() => this.setState({loading: false}));
-    };
-
-    // todo 整理为分页获取选项
     handleCDocOptions = () => {
         getCDocList({'not_page': true})
             .then(res => {
@@ -75,49 +62,41 @@ class EditModal extends Component {
                     c_doc_options.push({'value': item.id, 'label': item.name})
                 });
                 this.setState({ c_doc_options: c_doc_options });
+
             }, error => {
                 console.log(error.response);
             })
     };
 
-    handleSubmit = (values) => {
-        if (this.state.loading) return;
-        const {isEdit} = this.props;
-        const {id} = this.props;
-        const successTip = isEdit ? '修改成功！' : '添加成功！';
-        this.setState({loading: true});
-        if (isEdit){
-            updateDoc(id, values)
-                .then(res => {
-                    const data = res.data;
-                    const {onOk} = this.props;
-                    onOk && onOk();
-                    notification.success({
-                        message: successTip,
-                        description: data.messages,
-                        duration: messageDuration,
-                    });
-                }, error => {
-                    console.log(error.response);
-                })
-                .finally(() => this.setState({loading: false}));
-        } else {
-            createDoc(values)
-                .then(res => {
-                    const data = res.data;
-                    const {onOk} = this.props;
-                    onOk && onOk();
-                    notification.success({
-                        message: successTip,
-                        description: data.messages,
-                        duration: messageDuration,
-                    });
-                }, error => {
-                    console.log(error.response);
-                })
-                .finally(() => this.setState({loading: false}));
-        }
+    handleCreatedCDoc = (id) => {
+        this.form.setFieldsValue({'c_doc': id});
+    };
 
+    getDocOptions = (doc_data) => {
+        let doc_options = []
+        const _that = this;
+        doc_data.forEach(function (item) {
+            let doc = {'label': item.title, 'value': item.id, 'children': []};
+            const child_docs = item.child_docs;
+            if (child_docs.length > 0) {
+                doc['children'] = _that.getDocOptions(child_docs);
+            }
+            doc_options.push(doc)
+        })
+        return doc_options
+    };
+
+    handleCDocSelect = (value) => {
+        getDocList({'not_page': true, 'c_doc': value, 'tree': true})
+            .then(res => {
+                const data = res.data;
+                const doc_options = this.getDocOptions(data.results);
+                console.log('doc_options', doc_options);
+                this.setState({ doc_options: doc_options });
+
+            }, error => {
+                console.log(error.response);
+            })
     };
 
     handleTemplateOptions = () => {
@@ -148,35 +127,169 @@ class EditModal extends Component {
         this.setState({importTemplateVisible: false});
     };
 
+    handleTagOptions = () => {
+        getDocTagList({'not_page': true})
+            .then(res => {
+                const data = res.data;
+                const tags_options = [];
+                data.results.forEach(function (item) {
+                    tags_options.push({'value': item.name, 'label': item.name})
+                });
+                this.setState({ tags_options: tags_options });
+            }, error => {
+                console.log(error.response);
+            })
+    };
+
+    handleTagsChange = (value) => {
+        console.log('handleTagsChange', value);
+    };
+
+    handleTagsDeselect = (value) => {
+        console.log('handleTagsDeselect', value);
+    };
+
+    handleTagsSelect = (value) => {
+        console.log('handleTagsSelect', value);
+    };
+
+
+    fetchData = () => {
+        if (this.state.loading) return;
+        const {id} = this.props;
+        this.setState({loading: true});
+        retrieveDoc(id)
+            .then(res => {
+                const data = res.data;
+                this.setState({data: data.results});
+                let formData = {
+                    'id': data.results.id,
+                    'c_doc': data.results.c_doc.id,
+                    'title': data.results.title,
+                    'sort': data.results.sort,
+                }
+                if (data.results.parent_doc) {
+                    this.handleCDocSelect(data.results.c_doc.id);
+                    formData.parent_doc = data.results.parent_doc.id;
+                }
+                if (data.results.tags) {
+                    let tags = [];
+                    data.results.tags.forEach(function (item) {
+                        tags.push(item.name);
+                    })
+                    formData.tags = tags;
+                }
+                this.form.setFieldsValue(formData);
+                this.setState({content: data.results.content});
+                this.setState({status: data.results.status});
+            }, error => {
+                console.log(error.response);
+            })
+            .finally(() => this.setState({loading: false}));
+    };
+
+
+    componentDidMount() {
+        const {isEdit} = this.props;
+        this.handleCDocOptions();
+        this.handleTemplateOptions();
+        this.handleTagOptions();
+        if (isEdit) {
+            this.fetchData();
+        }
+    }
+
+    handleSubmit = async () => {
+        if (this.state.loading) return;
+        const values = await this.form.validateFields();
+        console.log('doc_status', this.state.status);
+        console.log('values', values);
+        const {isEdit} = this.props;
+        const {id} = this.props;
+        const successTip = isEdit ? '修改成功！' : '添加成功！';
+        this.setState({loading: true});
+        let params = {
+            ...values,
+            content: this.state.content,
+            status: this.state.status
+        }
+        if (isEdit){
+            updateDoc(id, params)
+                .then(res => {
+                    const data = res.data;
+                    const {onOk} = this.props;
+                    onOk && onOk();
+                    notification.success({
+                        message: successTip,
+                        description: data.messages,
+                        duration: messageDuration,
+                    });
+                }, error => {
+                    console.log(error.response);
+                })
+                .finally(() => this.setState({loading: false}));
+        } else {
+            createDoc(params)
+                .then(res => {
+                    const data = res.data;
+                    const {onOk} = this.props;
+                    onOk && onOk();
+                    notification.success({
+                        message: successTip,
+                        description: data.messages,
+                        duration: messageDuration,
+                    });
+                }, error => {
+                    console.log(error.response);
+                })
+                .finally(() => this.setState({loading: false}));
+        }
+
+    };
+
+    handleDraftSubmit = () => {
+        console.log('handleDraftSubmit');
+        this.setState({ status: 10 });
+    };
+
+    handlePublicSubmit = () => {
+        console.log('handlePublicSubmit');
+        this.setState({ status: 20 });
+    };
+
+    handleContentChange = (values) => {
+        this.setState({content: values});
+    };
+
+
+
     render() {
         const {isEdit, onCancel} = this.props;
-        const {loading } = this.state;
+        const {loading, doc_options } = this.state;
         const formProps = {
-            labelWidth: 100,
+            labelWidth: 80,
+        };
+        // todo 增加 插入图片与插入附件功能
+        const insertImages: ICommand = {
+            name: '插入图片',
+            keyCommand: 'insertImages',
+            buttonProps: { 'aria-label': 'Insert title3' },
+            icon: (
+                <svg width="12" height="12" viewBox="0 0 20 20">
+                    <path fill="currentColor" d="M15 9c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm4-7H1c-.55 0-1 .45-1 1v14c0 .55.45 1 1 1h18c.55 0 1-.45 1-1V3c0-.55-.45-1-1-1zm-1 13l-6-5-2 2-4-5-4 8V4h16v11z" />
+                </svg>
+            ),
+            execute: (state: TextState, api: TextApi) => {
+                // let modifyText = `### ${state.selectedText}\n`;
+                // if (!state.selectedText) {
+                //     modifyText = `### `;
+                // }
+                // api.replaceSelection(modifyText);
+                this.setState({insertImageVisible: true});
+            },
         };
 
-        // const title3: ICommand = {
-        //     name: 'title3',
-        //     keyCommand: 'title3',
-        //     buttonProps: { 'aria-label': 'Insert title3' },
-        //     icon: (
-        //         <svg width="12" height="12" viewBox="0 0 520 520">
-        //             <path fill="currentColor" d="M15.7083333,468 C7.03242448,468 0,462.030833 0,454.666667 L0,421.333333 C0,413.969167 7.03242448,408 15.7083333,408 L361.291667,408 C369.967576,408 377,413.969167 377,421.333333 L377,454.666667 C377,462.030833 369.967576,468 361.291667,468 L15.7083333,468 Z M21.6666667,366 C9.69989583,366 0,359.831861 0,352.222222 L0,317.777778 C0,310.168139 9.69989583,304 21.6666667,304 L498.333333,304 C510.300104,304 520,310.168139 520,317.777778 L520,352.222222 C520,359.831861 510.300104,366 498.333333,366 L21.6666667,366 Z M136.835938,64 L136.835937,126 L107.25,126 L107.25,251 L40.75,251 L40.75,126 L-5.68434189e-14,126 L-5.68434189e-14,64 L136.835938,64 Z M212,64 L212,251 L161.648438,251 L161.648438,64 L212,64 Z M378,64 L378,126 L343.25,126 L343.25,251 L281.75,251 L281.75,126 L238,126 L238,64 L378,64 Z M449.047619,189.550781 L520,189.550781 L520,251 L405,251 L405,64 L449.047619,64 L449.047619,189.550781 Z" />
-        //         </svg>
-        //     ),
-        //     execute: (state: TextState, api: TextApi) => {
-        //         let modifyText = `### ${state.selectedText}\n`;
-        //         if (!state.selectedText) {
-        //             modifyText = `### `;
-        //         }
-        //         api.replaceSelection(modifyText);
-        //     },
-        // };
-
         const { Text } = Typography;
-        const { TreeNode } = TreeSelect;
-
-
         return (
             <ModalContent
                 loading={loading}
@@ -189,84 +302,115 @@ class EditModal extends Component {
             >
                 <Form
                     ref={form => this.form = form}
+                    onFinish={this.handleSubmit}
                 >
+                    {isEdit ? <FormElement {...formProps} type="hidden" name="id"/> : null}
                     <div styleName="flex-container">
                         <div styleName="flex-item-left">
-                            <Menu
-                                inlineCollapsed={false}>
-                                <div styleName='flex-item'>
-                                    <Text type="secondary">导入模板:</Text>
-                                </div>
-                                <Tooltip title="导入模板">
-                                    <Button type="primary" shape="circle" icon={<ImportOutlined />} onClick={() => this.setState({ importTemplateVisible: true})} />
-                                </Tooltip>
-                                <Divider dashed />
-                                <div styleName='flex-item'>
-                                    <Text type="secondary"><span style={{ color: 'red' }}>*</span>选择文集:</Text>
-                                </div>
-                                <Select
-                                    styleName='flex-item'
-                                    placeholder="选择文集"
-                                    options={this.state.c_doc_options}
-                                    required
-                                    dropdownRender={menu => (
-                                        <div>
-                                            {menu}
-                                            <Divider style={{ margin: '4px 0' }} />
-                                            <div style={{ display: 'flex', flexWrap: 'nowrap', padding: 8 }}>
-                                                <a
-                                                    style={{ flex: 'none', padding: '8px', display: 'block', cursor: 'pointer' }}
-                                                    onClick={() => this.setState({ addCDocVisible: true})}
+                            <div styleName='flex-item'>
+                                <Text type="secondary">导入模板:</Text>
+                            </div>
+                            <Tooltip title="导入模板">
+                                <Button type="primary" shape="circle" icon={<ImportOutlined />} onClick={() => this.setState({ importTemplateVisible: true})} />
+                            </Tooltip>
+                            <Divider dashed />
 
-                                                >
-                                                    <PlusOutlined /> 新增文集
-                                                </a>
-                                            </div>
+                            <div styleName='flex-item'>
+                                <Text type="secondary"><span style={{ color: 'red' }}>*</span>选择文集:</Text>
+                            </div>
+                            <FormElement
+                                showSearch
+                                type="select"
+                                styleName='flex-item'
+                                placeholder="选择文集"
+                                label="文集"
+                                showLabel={false}
+                                name="c_doc"
+                                options={this.state.c_doc_options}
+                                required
+                                width={'90%'}
+                                dropdownRender={menu => (
+                                    <div>
+                                        {menu}
+                                        <Divider style={{ margin: '4px 0' }} />
+                                        <div style={{ display: 'flex', flexWrap: 'nowrap', padding: 8 }}>
+                                            <a
+                                                style={{ flex: 'none', padding: '8px', display: 'block', cursor: 'pointer' }}
+                                                onClick={() => this.setState({ addCDocVisible: true})}
+
+                                            >
+                                                <PlusOutlined /> 新增文集
+                                            </a>
                                         </div>
-                                    )}
-                                >
-                                </Select>
-                                <Divider dashed />
-                                <div styleName='flex-item'>
-                                    <Text type="secondary">上级文档:</Text>
-                                </div>
-                                <TreeSelect
-                                    showSearch
-                                    styleName='flex-item'
-                                    value={this.state.value}
-                                    dropdownStyle={{ maxHeight: 400, overflow: 'auto' }}
-                                    placeholder="Please select"
-                                    allowClear
-                                    treeDefaultExpandAll
-                                    onChange={this.onChange}
-                                >
-                                    <TreeNode value="parent 1" title="parent 1">
-                                        <TreeNode value="parent 1-0" title="parent 1-0">
-                                            <TreeNode value="leaf1" title="my leaf" />
-                                            <TreeNode value="leaf2" title="your leaf" />
-                                        </TreeNode>
-                                        <TreeNode value="parent 1-1" title="parent 1-1">
-                                            <TreeNode value="sss" title={<b style={{ color: '#08c' }}>sss</b>} />
-                                        </TreeNode>
-                                    </TreeNode>
-                                </TreeSelect>
-                                <Divider dashed />
-                                <div styleName='flex-item'>
-                                    <Text type="secondary">文档标签:</Text>
-                                </div>
-                                <div styleName='flex-item'>
-                                    <Select  mode="tags" style={{ width: '100%' }} placeholder="Tags Mode">
-                                    </Select>
-                                </div>
-                                <Divider dashed />
-                                <div styleName='flex-item'>
-                                    <Text type="secondary">文档排序:</Text>
-                                </div>
-                                <InputNumber styleName='flex-item' placeholder="文档排序值, 默认为99"/>
-                                <Divider dashed />
-                                <Button styleName="form-button" onClick={() => this.setState({ visible: true, id: null })}>保存</Button>
-                                <Button styleName="form-button" type="primary" onClick={() => this.setState({ visible: true, id: null })}>发表</Button>
-                            </Menu>
+                                    </div>
+                                )}
+                                onSelect={this.handleCDocSelect}
+                            />
+                            {/*<Divider dashed />*/}
+
+                            <div styleName='flex-item'>
+                                <Text type="secondary">上级文档:</Text>
+                            </div>
+                            <FormElement
+                                showSearch
+                                type="select-tree"
+                                styleName='flex-item'
+                                placeholder="上级文档"
+                                label="上级文档"
+                                showLabel={false}
+                                name="parent_doc"
+                                dropdownStyle={{ maxHeight: 400, overflow: 'auto' }}
+                                allowClear
+                                treeDefaultExpandAll
+                                options={doc_options}
+                            />
+
+                            <div styleName='flex-item'>
+                                <Text type="secondary">文档标签:</Text>
+                            </div>
+                            <FormElement
+                                showSearch
+                                type="select"
+                                styleName='flex-item'
+                                placeholder="文档标签"
+                                name="tags"
+                                mode="tags"
+                                width={'90%'}
+                                options={this.state.tags_options}
+                                onChange={this.handleTagsChange}
+                                onDeselect={this.handleTagsDeselect}
+                                onSelect={this.handleTagsSelect}
+                            />
+                            {/*<Divider dashed />*/}
+
+                            <div styleName='flex-item'>
+                                <Text type="secondary">文档排序:</Text>
+                            </div>
+                            <FormElement
+                                type="number"
+                                styleName='flex-item'
+                                placeholder="文档排序值, 默认为99"
+                                name="sort"
+                                width={'90%'}
+                            />
+                            <Divider dashed />
+                            {isEdit ?
+                                (this.state.status === 10
+                                        ? <Button styleName="form-button" htmlType="submit" onClick={this.handleDraftSubmit}>保存</Button>
+                                        : null
+                                )
+                                :
+                                <Button styleName="form-button" htmlType="submit" onClick={this.handleDraftSubmit}>保存</Button>
+                            }
+                            {isEdit?
+                                (this.state.status === 20
+                                        ? <Button styleName="form-button" htmlType="submit"  type="primary" onClick={this.handlePublicSubmit}>修改</Button>
+                                        : <Button styleName="form-button" htmlType="submit"  type="primary" onClick={this.handlePublicSubmit}>发表</Button>
+                                )
+                                :
+                                <Button styleName="form-button" htmlType="submit"  type="primary" onClick={this.handlePublicSubmit}>发表</Button>
+                            }
+
 
                         </div>
                         <div styleName="flex-item-right">
@@ -286,8 +430,10 @@ class EditModal extends Component {
                                     commands.unorderedListCommand, commands.orderedListCommand, commands.checkedListCommand,
                                     commands.codeEdit, commands.codeLive, commands.codePreview, commands.fullscreen,
                                     // Custom Toolbars here
-                                    // title3,
+                                    insertImages,
+
                                 ]}
+                                onChange={this.handleContentChange}
                             />
                         </div>
                     </div>
@@ -316,9 +462,16 @@ class EditModal extends Component {
                 <ADDCDocModal
                     visible={this.state.addCDocVisible}
                     isEdit={false}
+                    handleCreatedCDoc={this.handleCreatedCDoc}
                     onOk={() => this.setState({ addCDocVisible: false }, () => this.handleCDocOptions())}
                     onCancel={() => this.setState({ addCDocVisible: false })}
                     width='60%'
+                />
+
+                <ImageModal
+                    visible={this.state.insertImageVisible}
+                    onOk={() => this.setState({ insertImageVisible: false })}
+                    onCancel={() => this.setState({ insertImageVisible: false })}
                 />
 
             </ModalContent>

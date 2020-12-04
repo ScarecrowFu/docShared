@@ -113,27 +113,58 @@ class DocDetailSerializer(serializers.ModelSerializer):
 
 
 class DocListSerializer(serializers.ModelSerializer):
+    c_doc = CollectedDocBaseSerializer(read_only=True)
+    parent_doc = DocBaseSerializer(read_only=True)
     created_time = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S', read_only=True)
     creator = UserBaseSerializer(read_only=True)
+    child_docs = serializers.SerializerMethodField(read_only=True)
+
+    def get_child_docs(self, obj):
+        child = []
+        for child_doc in Doc.objects.filter(parent_doc=obj):
+            child_doc_item = {'id': child_doc.id, 'title': child_doc.title, 'child_docs': []}
+            _child_docs = self.get_child_docs(child_doc)
+            if len(_child_docs) > 0:
+                child_doc_item['child_docs'] = _child_docs
+            child.append(child_doc_item)
+        return child
 
     class Meta:
         model = Doc
-        fields = ('id', 'c_doc', 'parent_doc', 'title', 'created_time', 'status', 'creator')
+        fields = ('id', 'c_doc', 'parent_doc', 'child_docs', 'title', 'created_time', 'status', 'creator')
 
 
 class DocActionSerializer(serializers.ModelSerializer):
     created_time = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S', read_only=True)
     modified_time = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S', read_only=True)
     creator = UserBaseSerializer(read_only=True)
+    tags = serializers.ListField(write_only=True, required=False)
 
     def create(self, validated_data):
+        user = self.context['request'].user
+        tags = validated_data.pop('tags', [])
         instance = super().create(validated_data)
-        instance.creator = self.context['request'].user
+        instance.creator = user
+        for tag_name in tags:
+            tag = DocTag.objects.filter(name=tag_name, creator=user).first()
+            if not tag:
+                DocTag.objects.create(name=tag_name, creator=user)
+            instance.tags.add(tag)
         instance.save()
+        return instance
+
+    def update(self, instance, validated_data):
+        user = self.context['request'].user
+        tags = validated_data.pop('tags', [])
+        instance = super().update(instance, validated_data)
+        instance.tags.clear()
+        for tag_name in tags:
+            tag = DocTag.objects.filter(name=tag_name, creator=user).first()
+            if not tag:
+                DocTag.objects.create(name=tag_name, creator=user)
+            instance.tags.add(tag)
         return instance
 
     class Meta:
         model = Doc
         fields = '__all__'
-
-

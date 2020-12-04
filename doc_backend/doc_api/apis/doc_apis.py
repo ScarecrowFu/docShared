@@ -16,7 +16,7 @@ class DocViewSet(viewsets.ModelViewSet):
     filter_backends = (filters.OrderingFilter, filters.SearchFilter, DocParameterFilter)
     search_fields = ('c_doc__name', 'title',)
     ordering_fields = ('c_doc__name', 'title',)
-    filterset_fields = ('creator', 'created_time')
+    filterset_fields = ('creator', 'created_time', 'c_doc')
     queryset = Doc.objects.order_by('-id').all()
     permission_classes = (permissions.IsAuthenticated, )
 
@@ -59,11 +59,10 @@ class DocViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         query_params = self.request.query_params
         not_page = query_params.get('not_page', False)
-        c_doc_id = query_params.get('c_doc', False)
+        tree = query_params.get('tree', False)
         queryset = self.filter_queryset(self.get_queryset())
-        if c_doc_id:
-            c_doc = Doc.objects.get(pk=c_doc_id)
-            queryset = queryset.filter(c_doc=c_doc)
+        if tree:
+            queryset = queryset.filter(parent_doc=None)
         queryset = queryset.distinct()
         if not_page and not_page.lower() != 'false':
             serializer = self.get_serializer(queryset, many=True)
@@ -221,6 +220,11 @@ class DocTagViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        name = request.data.get('name', False)
+        doc_tag = DocTag.objects.filter(name=name, creator=request.user).first()
+        if doc_tag:
+            result = {'success': False, 'messages': f'你已创建标签:{doc_tag.__str__()} 请勿重复创建'}
+            return Response(result, status=status.HTTP_400_BAD_REQUEST)
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         instance = DocTag.objects.get(pk=int(serializer.data['id']))

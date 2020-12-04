@@ -57,15 +57,22 @@ class CDoc extends Component {
         {
             title: '用户', dataIndex: 'creator', sorter: true, width: 100,
             render: (value, record) => {
-                return value.nickname;
+                if (value) {
+                    return value.nickname;
+                }
+                return '';
             }
         },
         { title: '创建时间', dataIndex: 'created_time', sorter: true, width: 100 },
-        { title: '文档状态', dataIndex: 'status', sorter: true, width: 100 },
+        { title: '文档状态', dataIndex: 'status', sorter: true, width: 100,
+            render: (value, record) => {
+                return this.state.statusTypes[value];
+            }
+        },
         {
             title: '操作', dataIndex: 'operator', width: 120,
             render: (value, record) => {
-                const { id, name } = record;
+                const { id, title } = record;
                 const items = [
                     {
                         label: '编辑',
@@ -75,7 +82,7 @@ class CDoc extends Component {
                         label: '删除',
                         color: 'red',
                         confirm: {
-                            title: `您确定删除"${name}"?`,
+                            title: `您确定删除"${title}"?`,
                             onConfirm: () => this.handleDelete(id),
                         },
                     },
@@ -183,7 +190,7 @@ class CDoc extends Component {
             .then(res => {
                 const data = res.data;
                 notification.success({
-                    message: '删除用户',
+                    message: '删除文档',
                     description: data.messages,
                     duration: messageDuration,
                 });
@@ -205,7 +212,7 @@ class CDoc extends Component {
                     .then(res => {
                         const data = res.data;
                         notification.success({
-                            message: '批量删除用户',
+                            message: '批量删除文档',
                             description: data.messages,
                             duration: messageDuration,
                         });

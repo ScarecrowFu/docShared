@@ -43,7 +43,7 @@ class EditModal extends Component {
 
     handleSubmit = (values) => {
         if (this.state.loading) return;
-        const {isEdit} = this.props;
+        const {isEdit, handleCreatedCDoc} = this.props;
         const {id} = this.props;
         const successTip = isEdit ? '修改成功！' : '添加成功！';
         this.setState({loading: true});
@@ -73,10 +73,14 @@ class EditModal extends Component {
                         description: data.messages,
                         duration: messageDuration,
                     });
+                    if (handleCreatedCDoc) {
+                        handleCreatedCDoc(data.results.id)
+                    }
                 }, error => {
                     console.log(error.response);
                 })
                 .finally(() => this.setState({loading: false}));
+
         }
 
     };
