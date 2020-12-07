@@ -20,6 +20,7 @@ router.register('file_groups', file_apis.FileGroupViewSet, basename='file_groups
 
 router.register('announcements', sys_manage_apis.AnnouncementViewSet, basename='announcements')
 router.register('reg_codes', sys_manage_apis.RegisterCodeViewSet, basename='reg_codes')
+router.register('sys_set', sys_manage_apis.SystemSettingViewSet, basename='sys_set')
 
 
 urlpatterns = [

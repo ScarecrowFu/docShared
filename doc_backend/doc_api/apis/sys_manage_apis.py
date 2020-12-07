@@ -2,12 +2,15 @@ from rest_framework import viewsets, mixins, filters, status
 from rest_framework import permissions
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from doc_api.models import Announcement, RegisterCode
+from doc_api.models import Announcement, RegisterCode, SystemSetting
 from doc_api.filters.sys_manage_filters import AnnouncementParameterFilter, RegisterCodeParameterFilter
-from doc_api.serializers.sys_manage_serializers import AnnouncementActionSerializer, AnnouncementDetailSerializer,\
+from doc_api.serializers.sys_manage_serializers import AnnouncementActionSerializer, AnnouncementDetailSerializer, \
     AnnouncementListSerializer
-from doc_api.serializers.sys_manage_serializers import RegisterCodeActionSerializer, RegisterCodeDetailSerializer,\
+from doc_api.serializers.sys_manage_serializers import RegisterCodeActionSerializer, RegisterCodeDetailSerializer, \
     RegisterCodeListSerializer
+from doc_api.serializers.sys_manage_serializers import SystemSettingActionSerializer, SystemSettingDetailSerializer, \
+    SystemSettingListSerializer
+from doc_api.settings.conf import WebsiteSet, BaseSet, EmailSet
 
 
 class AnnouncementViewSet(viewsets.ModelViewSet):
@@ -104,6 +107,9 @@ class AnnouncementViewSet(viewsets.ModelViewSet):
         return AnnouncementActionSerializer
 
 
+#################################################################################
+
+
 class RegisterCodeViewSet(viewsets.ModelViewSet):
     """注册码管理"""
     filter_backends = (filters.OrderingFilter, filters.SearchFilter, RegisterCodeParameterFilter)
@@ -196,3 +202,86 @@ class RegisterCodeViewSet(viewsets.ModelViewSet):
         elif self.action == 'retrieve':
             return RegisterCodeDetailSerializer
         return RegisterCodeActionSerializer
+
+
+##################################################################################
+
+
+class SystemSettingViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.RetrieveModelMixin):
+    """
+    系统设置
+    """
+    filter_backends = (filters.OrderingFilter, filters.SearchFilter,)
+    search_fields = ('key', 'name', 'value', 'set_type',)
+    ordering_fields = ('key', 'name', 'value', 'set_type', 'creator', 'created_time' )
+    queryset = SystemSetting.objects.filter(is_deleted=False).order_by('-id').all()
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def list(self, request, *args, **kwargs):
+        query_params = self.request.query_params
+        not_page = query_params.get('not_page', False)
+        queryset = self.filter_queryset(self.get_queryset())
+        queryset = queryset.distinct()
+        if not_page and not_page.lower() != 'false':
+            serializer = self.get_serializer(queryset, many=True)
+            result = {'success': True, 'messages': '获取系统设置',
+                      'results': serializer.data}
+            return Response(result, status=status.HTTP_200_OK)
+        else:
+            page = self.paginate_queryset(queryset)
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
+
+            serializer = self.get_serializer(queryset, many=True)
+            result = {'success': True, 'messages': '获取系统设置',
+                      'results': serializer.data}
+            return Response(result, status=status.HTTP_200_OK)
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        result = {'success': True, 'messages': '获取系统设置信息:{}!'.format(instance.__str__()),
+                  'results': serializer.data}
+        return Response(result, status=status.HTTP_200_OK)
+
+    @action(methods=['GET', 'POST'], detail=False)
+    def specify_set(self, request, *args, **kwargs):
+        """获取个人操作日志"""
+        if request.method == 'GET':
+            query_params = self.request.query_params
+            set_type = query_params.get('set_type', 'WebsiteSet')
+            saving_settings = []
+            if set_type == 'set_type':
+                saving_settings = WebsiteSet
+            if set_type == 'BaseSet':
+                saving_settings = BaseSet
+            if set_type == 'BaseSet':
+                saving_settings = EmailSet
+            result = {'success': True, 'messages': '获取系统设置信息:{}!',  'results': saving_settings}
+            return Response(result, status=status.HTTP_200_OK)
+        else:
+            saving_settings = request.data.get('settings', [])
+            for saving_setting in saving_settings:
+                system_setting = SystemSetting.objects.filter(key=saving_setting['key']).first()
+                if system_setting:
+                    SystemSetting.objects.filter(key=saving_setting['key']).update(value=saving_setting['value'],
+                                                                                   name=saving_setting['name'],
+                                                                                   set_type=saving_setting['set_type'],
+                                                                                   )
+                else:
+                    SystemSetting.objects.create(key=saving_setting['key'],
+                                                 name=saving_setting['name'],
+                                                 value=saving_setting['value'],
+                                                 set_type=saving_setting['set_type'],
+                                                 )
+            result = {'success': True, 'messages': '保存系統设置'}
+            return Response(result, status=status.HTTP_200_OK)
+
+    def get_serializer_class(self):
+        if self.action == 'retrieve':
+            return SystemSettingDetailSerializer
+        if self.action == 'list':
+            return SystemSettingListSerializer
+        return SystemSettingActionSerializer
+
