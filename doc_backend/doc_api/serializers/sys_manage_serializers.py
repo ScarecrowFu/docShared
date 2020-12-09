@@ -105,6 +105,27 @@ class SystemSettingDetailSerializer(serializers.ModelSerializer):
     created_time = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S', read_only=True)
     modified_time = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S', read_only=True)
     creator = UserBaseSerializer(read_only=True)
+    value = serializers.CharField(read_only=True)
+
+    def get_value(self, obj):
+        try:
+            if obj.set_type == 30:
+                return int(obj.value)
+            if obj.set_type == 40:
+                return round(float(obj.value))
+            if obj.set_type == 50:
+                return list(obj.value)
+            if obj.set_type == 60:
+                if obj.lower() == 'true':
+                    return True
+                else:
+                    return False
+            if obj.set_type == 70:
+                return dict(obj.value)
+            return obj.value
+        except Exception as error:
+            print(error)
+            return obj.value
 
     class Meta:
         model = SystemSetting
@@ -114,6 +135,29 @@ class SystemSettingDetailSerializer(serializers.ModelSerializer):
 class SystemSettingListSerializer(serializers.ModelSerializer):
     created_time = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S', read_only=True)
     creator = UserBaseSerializer(read_only=True)
+    value = serializers.CharField(read_only=True)
+
+    def get_value(self, obj):
+        try:
+            print(obj.set_type)
+            print(obj.value)
+            if obj.set_type == 30:
+                return int(obj.value)
+            if obj.set_type == 40:
+                return round(float(obj.value))
+            if obj.set_type == 50:
+                return list(obj.value)
+            if obj.set_type == 60:
+                if obj.value.lower() == 'true':
+                    return True
+                else:
+                    return False
+            if obj.set_type == 70:
+                return dict(obj.value)
+            return obj.value
+        except Exception as error:
+            print(error)
+            return obj.value
 
     class Meta:
         model = SystemSetting

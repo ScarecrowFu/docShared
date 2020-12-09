@@ -214,7 +214,7 @@ class SystemSettingViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixin
     filter_backends = (filters.OrderingFilter, filters.SearchFilter,)
     search_fields = ('key', 'name', 'value', 'set_type',)
     ordering_fields = ('key', 'name', 'value', 'set_type', 'creator', 'created_time' )
-    queryset = SystemSetting.objects.filter(is_deleted=False).order_by('-id').all()
+    queryset = SystemSetting.objects.order_by('-id').all()
     permission_classes = (permissions.IsAuthenticated,)
 
     def list(self, request, *args, **kwargs):
@@ -250,32 +250,35 @@ class SystemSettingViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixin
         """获取个人操作日志"""
         if request.method == 'GET':
             query_params = self.request.query_params
-            set_type = query_params.get('set_type', 'WebsiteSet')
+            set_classify = query_params.get('set_classify', 'WebsiteSet')
             saving_settings = []
-            if set_type == 'set_type':
+            if set_classify == 'WebsiteSet':
                 saving_settings = WebsiteSet
-            if set_type == 'BaseSet':
+            if set_classify == 'BaseSet':
                 saving_settings = BaseSet
-            if set_type == 'BaseSet':
+            if set_classify == 'EmailSet':
                 saving_settings = EmailSet
-            result = {'success': True, 'messages': '获取系统设置信息:{}!',  'results': saving_settings}
-            return Response(result, status=status.HTTP_200_OK)
-        else:
-            saving_settings = request.data.get('settings', [])
+            return_settings = []
             for saving_setting in saving_settings:
                 system_setting = SystemSetting.objects.filter(key=saving_setting['key']).first()
                 if system_setting:
-                    SystemSetting.objects.filter(key=saving_setting['key']).update(value=saving_setting['value'],
-                                                                                   name=saving_setting['name'],
-                                                                                   set_type=saving_setting['set_type'],
-                                                                                   )
+                    saving_setting['value'] = system_setting.value
                 else:
-                    SystemSetting.objects.create(key=saving_setting['key'],
-                                                 name=saving_setting['name'],
-                                                 value=saving_setting['value'],
-                                                 set_type=saving_setting['set_type'],
-                                                 )
-            result = {'success': True, 'messages': '保存系統设置'}
+                    system_setting = SystemSetting.objects.create(key=saving_setting['key'],
+                                                                  name=saving_setting['name'],
+                                                                  value=saving_setting['value'],
+                                                                  set_type=saving_setting['set_type'],
+                                                                  )
+                return_settings.append(system_setting)
+            result = {'success': True, 'messages': '获取系统设置信息!',  'results': SystemSettingListSerializer(return_settings, many=True).data}
+            return Response(result, status=status.HTTP_200_OK)
+        else:
+            saving_settings = request.data.get('settings', {})
+            for key, value in saving_settings.items():
+                system_setting = SystemSetting.objects.filter(key=key).first()
+                if system_setting:
+                    SystemSetting.objects.filter(key=key).update(value=value)
+            result = {'success': True, 'messages': '保存系统设置'}
             return Response(result, status=status.HTTP_200_OK)
 
     def get_serializer_class(self):
