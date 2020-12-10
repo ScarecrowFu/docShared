@@ -5,9 +5,9 @@ import DocTagBase from "src/views/base/doc_tags"
 
 
 @config({
-    path: '/admin/docs/tags',
-    title: {text: '标签管理', icon: 'tag'},
-    breadcrumbs: [{key: 'tag', text: '标签管理', icon: 'tag'}],
+    path: '/personal/docs/tags',
+    title: {text: '我的标签', icon: 'tag'},
+    breadcrumbs: [{key: 'tag', text: '我的标签', icon: 'tag'}],
 })
 class DocTag extends Component {
     state = {

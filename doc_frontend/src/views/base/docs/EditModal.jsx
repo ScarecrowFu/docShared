@@ -4,12 +4,8 @@ import {
     Button,
     notification,
     Tooltip,
-    Menu,
-    Select,
     Divider,
     Typography,
-    TreeSelect,
-    InputNumber,
     Form,
     Modal
 } from 'antd';
@@ -27,7 +23,7 @@ import {
     getDocList} from 'src/apis/doc';
 import { getCDocList } from 'src/apis/c_doc';
 import {messageDuration} from "src/config/settings"
-import ADDCDocModal from 'src/views/admin/c_docs/EditModal'
+import ADDCDocModal from 'src/views/base/c_docs/EditModal'
 import ImageModal from './ImageModal'
 import './style.less';
 
@@ -54,7 +50,7 @@ class EditModal extends Component {
     };
 
     handleCDocOptions = () => {
-        getCDocList({'not_page': true})
+        getCDocList({'not_page': true, 'options': true})
             .then(res => {
                 const data = res.data;
                 const c_doc_options = [];
@@ -100,7 +96,7 @@ class EditModal extends Component {
     };
 
     handleTemplateOptions = () => {
-        getDocTemplateList({'not_page': true})
+        getDocTemplateList({'not_page': true, 'options': true})
             .then(res => {
                 const data = res.data;
                 const template_options = [];
@@ -128,7 +124,7 @@ class EditModal extends Component {
     };
 
     handleTagOptions = () => {
-        getDocTagList({'not_page': true})
+        getDocTagList({'not_page': true, 'options': true})
             .then(res => {
                 const data = res.data;
                 const tags_options = [];

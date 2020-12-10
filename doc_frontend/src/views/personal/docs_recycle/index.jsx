@@ -4,9 +4,9 @@ import DocRecycleBase from "../../base/docs_recycle"
 
 
 @config({
-    path: '/admin/docs/recycle',
-    title: {text: '回收站管理', icon: 'file-protect'},
-    breadcrumbs: [{key: 'recycle', text: '回收站管理', icon: 'file-protect'}],
+    path: '/personal/docs/recycle',
+    title: {text: '文档回收站', icon: 'file-protect'},
+    breadcrumbs: [{key: 'recycle', text: '文档回收站', icon: 'file-protect'}],
 })
 class DocRecycle extends Component {
     state = {

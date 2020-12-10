@@ -5,13 +5,13 @@ import DocBase from "src/views/base/docs"
 
 
 @config({
-    path: '/admin/docs/docs',
-    title: {text: '文档管理', icon: 'file'},
-    breadcrumbs: [{key: 'doc', text: '文档管理', icon: 'file'}],
+    path: '/personal/docs/docs',
+    title: {text: '我的文档', icon: 'file'},
+    breadcrumbs: [{key: 'doc', text: '我的文档', icon: 'file'}],
 })
-class CDoc extends Component {
+class Doc extends Component {
     state = {
-        personal: false,  // 是否个人中心
+        personal: true,  // 是否个人中心
     };
     render() {
         const {
@@ -24,4 +24,4 @@ class CDoc extends Component {
     }
 }
 
-export default CDoc;
+export default Doc;

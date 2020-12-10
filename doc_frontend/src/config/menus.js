@@ -43,10 +43,13 @@ export default function getMenus(userId, menuType='front') {
     const personalMenu = [
         {key: 'personal', text: '个人中心', icon: 'home', path: '/personal', order: 2000},
 
-        {key: 'c_doc', text: '我的文集', icon: 'file-word', path: '/personal/c_docs', order: 1900},
+        {key: 'c_doc_manage', text: '我的文集', icon: 'file-word', order: 1900},
+        {key: 'c_doc', parentKey: 'c_doc_manage', text: '我的文集', icon: 'file-word', path: '/personal/c_docs/c_docs', order: 1900},
+        {key: 'cooperate_c_doc', parentKey: 'c_doc_manage', text: '协作文集', icon: 'file-exclamation', path: '/personal/c_docs/cooperate_c_docs', order: 1900},
 
         {key: 'doc_manage', text: '我的文档', icon: 'file', order: 1800},
         {key: 'doc', parentKey: 'doc_manage', text: '我的文档', icon: 'file', path: '/personal/docs/docs', order: 1800},
+        {key: 'cooperate_doc', parentKey: 'doc_manage', text: '协作文档', icon: 'file-text', path: '/personal/docs/cooperate_docs', order: 1800},
         {key: 'template', parentKey: 'doc_manage', text: '我的模板', icon: 'file-unknown', path: '/personal/docs/templates', order: 1800},
         {key: 'tag', parentKey: 'doc_manage', text: '我的标签', icon: 'tag', path: '/personal/docs/tags', order: 1800},
         {key: 'recycle', parentKey: 'doc_manage', text: '文档回收站', icon: 'file-protect', path: '/personal/docs/recycle', order: 1800},

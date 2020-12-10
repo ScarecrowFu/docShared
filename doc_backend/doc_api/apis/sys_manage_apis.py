@@ -270,7 +270,9 @@ class SystemSettingViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixin
                                                                   set_type=saving_setting['set_type'],
                                                                   )
                 return_settings.append(system_setting)
-            result = {'success': True, 'messages': '获取系统设置信息!',  'results': SystemSettingListSerializer(return_settings, many=True).data}
+            serializer = self.get_serializer(return_settings, many=True)
+            result = {'success': True, 'messages': '获取系统设置信息!',
+                      'results': serializer.data}
             return Response(result, status=status.HTTP_200_OK)
         else:
             saving_settings = request.data.get('settings', {})
@@ -284,7 +286,7 @@ class SystemSettingViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixin
     def get_serializer_class(self):
         if self.action == 'retrieve':
             return SystemSettingDetailSerializer
-        if self.action == 'list':
+        if self.action == 'list' or self.action == 'specify_set':
             return SystemSettingListSerializer
         return SystemSettingActionSerializer
 

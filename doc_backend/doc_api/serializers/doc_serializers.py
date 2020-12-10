@@ -119,19 +119,35 @@ class DocListSerializer(serializers.ModelSerializer):
     creator = UserBaseSerializer(read_only=True)
     child_docs = serializers.SerializerMethodField(read_only=True)
 
+    member_perm = serializers.SerializerMethodField(read_only=True)
+
     def get_child_docs(self, obj):
         child = []
         for child_doc in Doc.objects.filter(parent_doc=obj):
-            child_doc_item = {'id': child_doc.id, 'title': child_doc.title, 'child_docs': []}
             _child_docs = self.get_child_docs(child_doc)
             if len(_child_docs) > 0:
-                child_doc_item['child_docs'] = _child_docs
-            child.append(child_doc_item)
+                child_doc_item = {'id': child_doc.id, 'title': child_doc.title, 'child_docs':  _child_docs}
+                child.append(child_doc_item)
         return child
+
+    def get_member_perm(self, obj):
+        user = self.context['request'].user
+        if obj.creator == user or user.is_admin:
+            return 30  # 文集管理员
+        perms = [10]
+        user_perms = obj.c_doc.users.filter(user=user).values_list('perm', flat=True)
+        if user_perms:
+            perms.append(max(user_perms))
+        user_member_teams = obj.c_doc.teams.filter(c_doc_team_users__user=user).all()
+        for user_member_team in user_member_teams:
+            team_perms = user_member_team.c_doc_team_users.filter(user=user).values_list('perm', flat=True)
+            if team_perms:
+                perms.append(max(team_perms))
+        return max(perms)
 
     class Meta:
         model = Doc
-        fields = ('id', 'c_doc', 'parent_doc', 'child_docs', 'title', 'created_time', 'status', 'creator')
+        fields = ('id', 'c_doc', 'parent_doc', 'child_docs', 'title', 'created_time', 'status', 'creator', 'member_perm')
 
 
 class DocActionSerializer(serializers.ModelSerializer):
@@ -148,7 +164,7 @@ class DocActionSerializer(serializers.ModelSerializer):
         for tag_name in tags:
             tag = DocTag.objects.filter(name=tag_name, creator=user).first()
             if not tag:
-                DocTag.objects.create(name=tag_name, creator=user)
+                tag = DocTag.objects.create(name=tag_name, creator=user)
             instance.tags.add(tag)
         instance.save()
         return instance
@@ -161,8 +177,9 @@ class DocActionSerializer(serializers.ModelSerializer):
         for tag_name in tags:
             tag = DocTag.objects.filter(name=tag_name, creator=user).first()
             if not tag:
-                DocTag.objects.create(name=tag_name, creator=user)
+                tag = DocTag.objects.create(name=tag_name, creator=user)
             instance.tags.add(tag)
+        instance.save()
         return instance
 
     class Meta:

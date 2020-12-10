@@ -231,6 +231,7 @@ class EditMemberTeamModal extends Component {
                     {isEdit ? <FormElement {...formProps} type="hidden" name="id"/> : null}
                     <FormElement
                         {...formProps}
+                        showSearch
                         type="select"
                         label="团队"
                         name="team_group"

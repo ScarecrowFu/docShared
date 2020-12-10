@@ -135,7 +135,7 @@ class SystemSettingDetailSerializer(serializers.ModelSerializer):
 class SystemSettingListSerializer(serializers.ModelSerializer):
     created_time = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S', read_only=True)
     creator = UserBaseSerializer(read_only=True)
-    value = serializers.CharField(read_only=True)
+    value = serializers.SerializerMethodField(read_only=True)
 
     def get_value(self, obj):
         try:

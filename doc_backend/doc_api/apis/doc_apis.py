@@ -9,10 +9,14 @@ from doc_api.serializers.doc_serializers import DocTemplateListSerializer, DocTe
     DocTemplateActionSerializer
 from doc_api.settings.conf import DocStatus
 from doc_api.filters.doc_filters import DocParameterFilter, DocTagParameterFilter, DocTemplateParameterFilter
+from django.db.models import Q
 
 
 class DocViewSet(viewsets.ModelViewSet):
-    """文档管理"""
+    """
+    文档管理
+    # todo: 编辑器选择图片/附件
+    """
     filter_backends = (filters.OrderingFilter, filters.SearchFilter, DocParameterFilter)
     search_fields = ('c_doc__name', 'title',)
     ordering_fields = ('c_doc__name', 'title',)
@@ -58,11 +62,18 @@ class DocViewSet(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         query_params = self.request.query_params
-        not_page = query_params.get('not_page', False)
-        tree = query_params.get('tree', False)
+        not_page = query_params.get('not_page', '')
+        tree = query_params.get('tree', '')
+        personal = query_params.get('personal', '')
+        cooperate = query_params.get('cooperate', '')
         queryset = self.filter_queryset(self.get_queryset())
-        if tree:
+        if tree.lower() == 'true':
             queryset = queryset.filter(parent_doc=None)
+        if personal.lower() == 'true':
+            queryset = queryset.filter(creator=request.user)
+        if cooperate.lower() == 'true':
+            queryset = queryset.exclude(creator=request.user).\
+                filter(Q(c_doc__users__user=request.user) | Q(c_doc__teams__team_group__members=request.user))
         queryset = queryset.distinct()
         if not_page and not_page.lower() != 'false':
             serializer = self.get_serializer(queryset, many=True)
@@ -190,6 +201,12 @@ class DocTemplateViewSet(viewsets.ModelViewSet):
         query_params = self.request.query_params
         not_page = query_params.get('not_page', False)
         queryset = self.filter_queryset(self.get_queryset())
+        personal = query_params.get('personal', '')
+        options = query_params.get('options', '')
+        if personal.lower() == 'true':
+            queryset = queryset.filter(creator=request.user)
+        if options.lower() == 'true' and not request.user.is_admin:
+            queryset = queryset.filter(creator=request.user)
         if not_page and not_page.lower() != 'false':
             serializer = self.get_serializer(queryset, many=True)
             result = {'success': True, 'messages': '获取文档模板不分页数据!',
@@ -289,6 +306,12 @@ class DocTagViewSet(viewsets.ModelViewSet):
         query_params = self.request.query_params
         not_page = query_params.get('not_page', False)
         queryset = self.filter_queryset(self.get_queryset())
+        personal = query_params.get('personal', '')
+        options = query_params.get('options', '')
+        if personal.lower() == 'true':
+            queryset = queryset.filter(creator=request.user)
+        if options.lower() == 'true' and not request.user.is_admin:
+            queryset = queryset.filter(creator=request.user)
         if not_page and not_page.lower() != 'false':
             serializer = self.get_serializer(queryset, many=True)
             result = {'success': True, 'messages': '获取文档标签不分页数据!',

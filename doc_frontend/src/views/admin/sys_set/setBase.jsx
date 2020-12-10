@@ -64,7 +64,7 @@ export default class SetBase extends Component {
         } else if (item.set_type === 40) {
             return <InputNumber name={item.key} placeholder={item.description}/>;
         } else if (item.set_type === 60) {
-            return  <Switch name={item.key} placeholder={item.description}/>;
+            return  <Switch name={item.key} defaultChecked={item.value} placeholder={item.description}/>;
         } else {
             return <Input name={item.key} placeholder={item.description} />;
         }

@@ -11,10 +11,14 @@ from doc_api.serializers.c_doc_serializers import CollectedDocTeamListSerializer
     CollectedDocTeamActionSerializer
 from doc_api.settings.conf import CollectedDocPermissions, CollectedDocMembersPermissions
 from doc_api.filters.c_doc_filters import CollectedDocOrderingFilter, CollectedDocParameterFilter
+from django.db.models import Q
 
 
 class CollectedDocViewSet(viewsets.ModelViewSet):
-    """文集管理"""
+    """
+    文集管理
+    todo: 导出/导入
+    """
     filter_backends = (CollectedDocOrderingFilter, filters.SearchFilter, CollectedDocParameterFilter)
     search_fields = ('name', )
     ordering_fields = ('name', 'intro', 'perm', 'creator', 'created_time', 'docs_cnt')
@@ -61,7 +65,19 @@ class CollectedDocViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         query_params = self.request.query_params
         not_page = query_params.get('not_page', False)
+        personal = query_params.get('personal', '')
+        cooperate = query_params.get('cooperate', '')
+        options = query_params.get('options', '')
         queryset = self.filter_queryset(self.get_queryset())
+        if personal.lower() == 'true':
+            queryset = queryset.filter(creator=request.user)
+        if cooperate.lower() == 'true':
+            queryset = queryset.exclude(creator=request.user).\
+                filter(Q(users__user=request.user) | Q(teams__team_group__members=request.user))
+        if options.lower() == 'true' and not request.user.is_admin:
+            queryset = queryset.filter(Q(users__user=request.user) |
+                                       Q(teams__team_group__members=request.user) |
+                                       Q(creator=request.user))
         queryset = queryset.distinct()
         if not_page and not_page.lower() != 'false':
             serializer = self.get_serializer(queryset, many=True)

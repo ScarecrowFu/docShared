@@ -60,7 +60,6 @@ BaseSet = [
     {'key': 'use_reg_code', 'name': '启用注册码', 'value': True, 'set_type': 60, 'description': '开启此选项, 用户需要使用注册码才能注册'},
     {'key': 'site_wide_login', 'name': '全站登录', 'value': False, 'set_type': 60, 'description': '开启此选项, 所有页面均需要登录'},
     {'key': 'can_download', 'name': '文集下载', 'value': False, 'set_type': 60, 'description': '开启此选项, 文集允许导出文件以供下载，文集拥有者可进行进一步控制特定文集是否开放导出'},
-    {'key': 'can_download', 'name': '文集下载', 'value': False, 'set_type': 60, 'description': '开启此选项, 文集允许导出文件以供下载，文集拥有者可进行进一步控制特定文集是否开放导出'},
     {'key': 'enable_email', 'name': '启用邮箱', 'value': False, 'set_type': 60, 'description': '开启此选项, 重要信息将以邮箱通知（开启此选项后还需进行邮箱信息配置）'},
     {'key': 'max_image_size', 'name': '最大图片上传', 'value': 1024*10, 'set_type': 40, 'description': '请输入最大文件上传限制, 为空则表示不限制, 单位为KB'},
     {'key': 'max_upload_size', 'name': '最大附件上传', 'value': 1024*200, 'set_type': 40, 'description': '请输入最大文件上传限制, 为空则表示不限制, 单位为KB'},

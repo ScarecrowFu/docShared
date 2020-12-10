@@ -5,9 +5,9 @@ import DocTemplateBase from "../../base/doc_templates"
 
 
 @config({
-    path: '/admin/docs/templates',
-    title: {text: '模板管理', icon: 'file-unknown'},
-    breadcrumbs: [{key: 'template', text: '模板管理', icon: 'file-unknown'}],
+    path: '/personal/docs/templates',
+    title: {text: '我的模板', icon: 'file-unknown'},
+    breadcrumbs: [{key: 'template', text: '我的模板', icon: 'file-unknown'}],
 })
 class DocTemplate extends Component {
     state = {

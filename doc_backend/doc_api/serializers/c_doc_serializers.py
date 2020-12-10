@@ -25,13 +25,29 @@ class CollectedDocListSerializer(serializers.ModelSerializer):
     created_time = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S', read_only=True)
     creator = UserBaseSerializer(read_only=True)
     docs_cnt = serializers.SerializerMethodField(read_only=True)
+    member_perm = serializers.SerializerMethodField(read_only=True)
 
     def get_docs_cnt(self, obj):
         return obj.docs.count()
 
+    def get_member_perm(self, obj):
+        user = self.context['request'].user
+        if obj.creator == user or user.is_admin:
+            return 30  # 文集管理员
+        perms = [10]
+        user_perms = obj.users.filter(user=user).values_list('perm', flat=True)
+        if user_perms:
+            perms.append(max(user_perms))
+        user_member_teams = obj.teams.filter(c_doc_team_users__user=user).all()
+        for user_member_team in user_member_teams:
+            team_perms = user_member_team.c_doc_team_users.filter(user=user).values_list('perm', flat=True)
+            if team_perms:
+                perms.append(max(team_perms))
+        return max(perms)
+
     class Meta:
         model = CollectedDoc
-        fields = ('id', 'name', 'intro', 'docs_cnt', 'perm', 'created_time', 'creator')
+        fields = ('id', 'name', 'intro', 'docs_cnt', 'perm', 'created_time', 'creator', 'member_perm')
 
 
 class CollectedDocActionSerializer(serializers.ModelSerializer):

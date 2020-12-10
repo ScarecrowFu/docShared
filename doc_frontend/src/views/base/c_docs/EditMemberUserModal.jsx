@@ -45,7 +45,6 @@ class EditMemberUserModal extends Component {
             .finally(() => this.setState({loading: false}));
     };
 
-    // todo 整理为分页获取选项
     handleUserOptions = () => {
         getUserList({'not_page': true})
             .then(res => {
@@ -152,6 +151,7 @@ class EditMemberUserModal extends Component {
 
                     <FormElement
                         {...formProps}
+                        showSearch
                         type="select"
                         label="用户"
                         name="user"
@@ -161,6 +161,7 @@ class EditMemberUserModal extends Component {
                     <FormElement
                         {...formProps}
                         type="select"
+                        showSearch
                         label="权限"
                         name="perm"
                         required
