@@ -4,13 +4,13 @@ import FileImagesBase from "src/views/base/file_images"
 
 
 @config({
-    path: '/admin/attachments/images',
-    title: {text: '图片管理', icon: 'picture'},
-    breadcrumbs: [{key: 'image', text: '图片管理', icon: 'picture'}],
+    path: '/personal/attachments/images',
+    title: {text: '我的图片', icon: 'picture'},
+    breadcrumbs: [{key: 'image', text: '我的图片', icon: 'picture'}],
 })
 class FileImages extends Component {
     state = {
-        personal: false,  // 是否个人中心
+        personal: true,  // 是否个人中心
     };
     render() {
         const {

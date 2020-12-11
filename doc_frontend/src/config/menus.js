@@ -63,8 +63,8 @@ export default function getMenus(userId, menuType='front') {
         {key: 'password_set', parentKey: 'personal_setting', text: '修改密码', icon: 'gateway', path: '/personal/setting/password_set', order: 1600},
         {key: 'token_set', parentKey: 'personal_setting', text: '账号token', icon: 'gold', path: '/personal/setting/token_set', order: 1600},
 
-        {key: 'config_help', text: '配置手册', icon: 'file-word', path: '/personal/config_help', order: 1500},
-        {key: 'use_help', text: '使用手册', icon: 'file-word', path: '/personal/use_help', order: 1500},
+        {key: 'config_help', text: '配置手册', icon: 'gift', path: '/personal/config_help', order: 1500},
+        {key: 'use_help', text: '使用手册', icon: 'shop', path: '/personal/use_help', order: 1500},
     ]
 
     if (menuType === 'admin') {

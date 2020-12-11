@@ -96,3 +96,27 @@ export function resetPasswordUser(instance_id, data) {
     data,
   });
 }
+
+export function passwordUser(data) {
+  return request({
+    url: `/api/users/password/`,
+    method: "post",
+    data,
+  });
+}
+
+export function getTokenUser(data) {
+  return request({
+      url: `/api/users/token/`,
+    method: "get",
+    data,
+  });
+}
+
+export function refreshTokenUser(data) {
+  return request({
+    url: `/api/users/token/`,
+    method: "post",
+    data,
+  });
+}

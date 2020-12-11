@@ -7,6 +7,7 @@ from doc_api.serializers.user_serializers import UserListSerializer, UserActionS
 from doc_api.serializers.team_serializers import TeamGroupDetailSerializer, TeamGroupActionSerializer, \
     TeamGroupListSerializer
 from doc_api.filters.user_filters import UserParameterFilter
+from doc_api.utils.auth_helpers import get_jwt_token
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -171,6 +172,18 @@ class UserViewSet(viewsets.ModelViewSet):
         # todo 记录操作日志
         result = {'success': True, 'messages': f'批量删除用户:{deleted_objects_names}'}
         return Response(result, status=status.HTTP_200_OK)
+
+    @action(methods=['get', 'post'], detail=False)
+    def token(self, request, *args, **kwargs):
+        if request.method == 'GET':
+            token = get_jwt_token(request.user)
+            result = {'success': True, 'messages': f'获取用户个人token', 'results': {'token': token}}
+            return Response(result, status=status.HTTP_200_OK)
+        if request.method == 'POST':
+            # todo
+            token = get_jwt_token(request.user)
+            result = {'success': True, 'messages': f'更新用户个人token', 'results': {'token': token}}
+            return Response(result, status=status.HTTP_200_OK)
 
     def get_serializer_class(self):
         if self.action == 'list':

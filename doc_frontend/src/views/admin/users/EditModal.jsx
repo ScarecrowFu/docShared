@@ -34,7 +34,7 @@ class EditModal extends Component {
         retrieveUser(id)
             .then(res => {
                 const data = res.data;
-                this.setState({data: res});
+                this.setState({data: data.results});
                 this.form.setFieldsValue(data.results);
             }, error => {
                 console.log(error.response);

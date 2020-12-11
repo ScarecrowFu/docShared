@@ -4,3 +4,34 @@
     align-items: center;
     justify-content: center;
 }
+
+
+.page-loading {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    background: hsla(0, 0%, 100%, .3);
+    z-index: 99999;
+    cursor: not-allowed;
+    text-align: center;
+    display: none;
+    left: 0;
+    top: 85px;
+}
+
+
+.page-content-root {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    flex: 1 1;
+}
+
+.page-content {
+    flex: 1 1;
+    margin: 8px;
+    background: #fff;
+    //display: flex;
+    padding-top: 50px;
+    justify-content: center;
+}
