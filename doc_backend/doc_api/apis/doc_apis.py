@@ -66,6 +66,7 @@ class DocViewSet(viewsets.ModelViewSet):
         tree = query_params.get('tree', '')
         personal = query_params.get('personal', '')
         cooperate = query_params.get('cooperate', '')
+        show_content = query_params.get('show_content', '')
         queryset = self.filter_queryset(self.get_queryset())
         if tree.lower() == 'true':
             queryset = queryset.filter(parent_doc=None)
@@ -76,16 +77,25 @@ class DocViewSet(viewsets.ModelViewSet):
                 filter(Q(c_doc__users__user=request.user) | Q(c_doc__teams__team_group__members=request.user))
         queryset = queryset.distinct()
         if not_page and not_page.lower() != 'false':
-            serializer = self.get_serializer(queryset, many=True)
+            if show_content.lower() == 'true':
+                serializer = DocActionSerializer(queryset, many=True)
+            else:
+                serializer = self.get_serializer(queryset, many=True)
             result = {'success': True, 'messages': '获取文档不分页数据!',
                       'results': serializer.data}
             return Response(result, status=status.HTTP_200_OK)
         else:
             page = self.paginate_queryset(queryset)
             if page is not None:
-                serializer = self.get_serializer(page, many=True)
+                if show_content.lower() == 'true':
+                    serializer = DocActionSerializer(page, many=True)
+                else:
+                    serializer = self.get_serializer(page, many=True)
                 return self.get_paginated_response(serializer.data)
-            serializer = self.get_serializer(queryset, many=True)
+            if show_content.lower() == 'true':
+                serializer = DocActionSerializer(queryset, many=True)
+            else:
+                serializer = self.get_serializer(queryset, many=True)
             result = {'success': True, 'messages': '获取文档不分页数据!',
                       'results': serializer.data}
             return Response(result, status=status.HTTP_200_OK)

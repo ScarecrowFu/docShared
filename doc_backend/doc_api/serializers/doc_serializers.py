@@ -118,15 +118,18 @@ class DocListSerializer(serializers.ModelSerializer):
     created_time = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S', read_only=True)
     creator = UserBaseSerializer(read_only=True)
     child_docs = serializers.SerializerMethodField(read_only=True)
-
     member_perm = serializers.SerializerMethodField(read_only=True)
 
     def get_child_docs(self, obj):
         child = []
         for child_doc in Doc.objects.filter(parent_doc=obj):
+            print(f'{obj} has chind_doc :{child_doc}')
             _child_docs = self.get_child_docs(child_doc)
             if len(_child_docs) > 0:
-                child_doc_item = {'id': child_doc.id, 'title': child_doc.title, 'child_docs':  _child_docs}
+                child_doc_item = {'id': child_doc.id, 'title': child_doc.title, 'child_docs':  _child_docs, 'created_time': child_doc.created_time.strftime('%Y-%m-%d %H:%M:%S')}
+                child.append(child_doc_item)
+            else:
+                child_doc_item = {'id': child_doc.id, 'title': child_doc.title, 'child_docs': [], 'created_time': child_doc.created_time.strftime('%Y-%m-%d %H:%M:%S')}
                 child.append(child_doc_item)
         return child
 
