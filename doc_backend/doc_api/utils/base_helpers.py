@@ -1,5 +1,7 @@
 import os
 import hashlib
+import markdown
+from bs4 import BeautifulSoup
 
 
 def list_for_model_choices(value_list):
@@ -37,3 +39,9 @@ def check_md5_sum(file_name, hash_factory=hashlib.md5, chunk_num_blocks=128):
         for chunk in iter(lambda: f.read(chunk_num_blocks*h.block_size), b''):
             h.update(chunk)
     return h.hexdigest()
+
+
+def md_to_text(md):
+    html = markdown.markdown(md)
+    soup = BeautifulSoup(html, features='html.parser')
+    return soup.get_text()

@@ -2,6 +2,7 @@ from rest_framework import serializers
 from doc_api.models import Doc, DocTag, DocTemplate
 from doc_api.serializers.user_serializers import UserBaseSerializer
 from doc_api.serializers.c_doc_serializers import CollectedDocBaseSerializer
+from doc_api.utils.base_helpers import md_to_text
 
 
 class DocTemplateBaseSerializer(serializers.ModelSerializer):
@@ -119,6 +120,7 @@ class DocListSerializer(serializers.ModelSerializer):
     creator = UserBaseSerializer(read_only=True)
     child_docs = serializers.SerializerMethodField(read_only=True)
     member_perm = serializers.SerializerMethodField(read_only=True)
+    content_text = serializers.SerializerMethodField(read_only=True)
 
     def get_child_docs(self, obj):
         child = []
@@ -148,9 +150,12 @@ class DocListSerializer(serializers.ModelSerializer):
                 perms.append(max(team_perms))
         return max(perms)
 
+    def get_content_text(self, obj):
+        return md_to_text(obj.content)
+
     class Meta:
         model = Doc
-        fields = ('id', 'c_doc', 'parent_doc', 'child_docs', 'title', 'created_time', 'status', 'creator', 'member_perm')
+        fields = ('id', 'c_doc', 'parent_doc', 'child_docs', 'title', 'created_time', 'status', 'creator', 'member_perm', 'content_text')
 
 
 class DocActionSerializer(serializers.ModelSerializer):

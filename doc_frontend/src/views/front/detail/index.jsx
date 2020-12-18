@@ -1,17 +1,24 @@
 import React, {Component} from 'react';
 import config from 'src/utils/Hoc/configHoc';
 import './style.less';
-import {Button, Form, Divider, Card, Col, Row, Tooltip, Tabs, Tree, Input, Timeline, Select, Descriptions, Badge} from "antd"
+import {Button, Form, Divider, Card, Col, Row, Tooltip, Tabs, Tree, Space, Timeline, Anchor, Descriptions, Typography} from "antd"
 import FormRow from "src/library/FormRow"
 import FormElement from "src/library/FormElement"
 import {getLoginUser} from "src/utils/userAuth"
 import Pagination from "src/library/Pagination"
 import {getCDocList, retrieveCDoc} from "src/apis/c_doc"
-import {getDocList, recoverDoc} from "src/apis/doc"
+import {getDocList, retrieveDoc} from "src/apis/doc"
 import { SmileTwoTone, FieldTimeOutlined } from '@ant-design/icons';
 import Footer from "src/layouts/Footer"
 import { renderToString } from 'react-dom/server'
 import ReactMarkdown from 'react-markdown'
+import {Prism as SyntaxHighlighter} from 'react-syntax-highlighter'
+import {dark} from 'react-syntax-highlighter/dist/esm/styles/prism'
+import gfm from 'remark-gfm'
+import math from 'remark-math'
+
+
+
 
 
 
@@ -30,6 +37,7 @@ class Home extends Component {
         c_id: null,           // 当前文集ID
         doc_options: [],  // 文集下的文档选项
         current_doc: null,  //当前展示的文档
+        current_doc_toc: [],  //当前展示的文档目录
         latest_docs: [] // 最新文档
     };
 
@@ -82,7 +90,7 @@ class Home extends Component {
 
     // 获取最新文档
     handleGetLatestDoc = (c_id) => {
-        let params = {'not_page': true, 'c_doc': c_id, 'page_size': 5, 'ordering': '-created_time', 'show_content': true};
+        let params = {'not_page': true, 'c_doc': c_id, 'page_size': 5, 'ordering': '-created_time'};
         getDocList(params)
             .then(res => {
                 const data = res.data;
@@ -101,10 +109,33 @@ class Home extends Component {
         this.handleGetLatestDoc(params.c_id);
     }
 
+    handleGetCurrentDoc = (doc_id) => {
+        retrieveDoc(doc_id)
+            .then(res => {
+                const data = res.data;
+                this.setState({ current_doc: data.results });
+            }, error => {
+                console.log(error.response);
+            })
+    };
+
     // 选择文档
     onSelectDocTree = (selectedKeys, info) => {
-        console.log('selected', selectedKeys, info);
-        this.setState({ current_doc: selectedKeys });
+        this.setState({ current_doc_toc: [] });
+        this.handleGetCurrentDoc(selectedKeys[0]);
+
+    }
+
+    onSelectDoc(value) {
+        console.log('selected', value);
+        this.setState({ current_doc_toc: [] });
+        this.handleGetCurrentDoc(value);
+
+    }
+
+    onReSetDoc() {
+        this.setState({ current_doc: null });
+        this.setState({ current_doc_toc: [] });
     }
 
     renderDocCategory = (doc_options) =>{
@@ -113,8 +144,8 @@ class Home extends Component {
                 {
                     doc_options.map(item =>
                         (
-                            <Timeline.Item>
-                                {item.title}  <FieldTimeOutlined /> {item.created_time}
+                            <Timeline.Item key={item.key}>
+                                <Button type="link" onClick={ () => this.onSelectDoc(item.key)}>{item.title}</Button> <FieldTimeOutlined /> {item.created_time}
                                 {item.children.length>0? <Divider />: null}
                                 {item.children.length>0? this.renderDocCategory(item.children): null}
                             </Timeline.Item>
@@ -127,11 +158,41 @@ class Home extends Component {
     }
 
 
+
+
+
     render() {
 
         const { TabPane } = Tabs;
+        const { Title, Paragraph, Text } = Typography;
+        const { Link } = Anchor;
+
         const { c_doc } = this.state;
-        console.log(renderToString(this.renderDocCategory(this.state.doc_options)));
+
+        const flatten = (text, child) => {
+            return typeof child === 'string'
+                ? text + child
+                : React.Children.toArray(child.props.children).reduce(flatten, text)
+        }
+
+        const HeadingRenderer = (props) => {
+            let children = React.Children.toArray(props.children)
+            let text = children.reduce(flatten, '')
+            let slug = text.toLowerCase().replace(/\W/g, '-');
+            console.log('text', text, 'slug', slug);
+            // let current_doc_toc = this.state.current_doc_toc;
+            // current_doc_toc.push(slug);
+            // this.setState({ current_doc_toc: current_doc_toc });
+            // console.log(this.state.current_doc_toc);
+            return React.createElement('h' + props.level, {id: slug}, props.children)
+        }
+
+        const renderers = {
+            code: ({language, value}) => {
+                return <SyntaxHighlighter style={dark} language={language} children={value} />
+            },
+            heading: HeadingRenderer,
+        }
         return (
             <div>
                 <div styleName="page-tool">
@@ -177,6 +238,8 @@ class Home extends Component {
 
                 <div styleName="page-detail">
                     <div styleName="page-docs">
+                        <Button type="link" onClick={ () => this.onReSetDoc()}> <Title>{c_doc.name}</Title></Button>
+                        <Divider />
                         {
                             this.state.doc_options.length
                                 ?
@@ -184,46 +247,75 @@ class Home extends Component {
                                     defaultExpandAll={true}
                                     treeData={this.state.doc_options}
                                     onSelect={this.onSelectDocTree}
-                                    selectedKeys={this.state.current_doc}
+                                    selectedKeys={this.state.current_doc? [this.state.current_doc.id]: null}
                                 />
                                 :
-                                null
+                                <Paragraph>该文集尚未有文档</Paragraph>
                         }
                     </div>
-                    <div styleName="page-content">
-                        <Tabs defaultActiveKey="desc">
-                            <TabPane tab="描述" key="desc">
-                                {c_doc.intro}
-                            </TabPane>
-                            <TabPane tab="目录" key="category">
-                                {this.renderDocCategory(this.state.doc_options)}
-                            </TabPane>
-                            <TabPane tab="最新文档" key="last_docs">
-                                {
-                                    this.state.latest_docs.map(item =>
-                                        (
-                                            <div>
-                                                <Descriptions title={item.title} bordered column={1}>
-                                                    <Descriptions.Item label="作者">{item.creator? item.creator.nickname: ''}</Descriptions.Item>
-                                                    <Descriptions.Item label="时间">{item.created_time}</Descriptions.Item>
-                                                    <Descriptions.Item label="内容"><ReactMarkdown>{item.content}</ReactMarkdown></Descriptions.Item>
-                                                </Descriptions>
-                                                <Divider/>
-                                            </div>
+                    {
+                        this.state.current_doc?
+                            <div styleName="page-doc-content">
+                                <div styleName="page-doc-title"><Title>{this.state.current_doc.title}</Title></div>
+                                <Divider />
+                                <div styleName="page-doc-author">
+                                    <Text type="secondary">
+                                        <Space>
+                                            {this.state.current_doc.creator? this.state.current_doc.creator.nickname: ''}
+                                            <FieldTimeOutlined /> {this.state.current_doc.created_time}
+                                        </Space>
+                                    </Text>
+                                </div>
+                                <Divider />
+                                <ReactMarkdown
+                                    renderers={renderers}
+                                    plugins={[gfm, math]}
+                                    // allowedTypes={['heading','text']}
+                                    // unwrapDisallowed
+                                >
+                                    {this.state.current_doc.content}
+                                </ReactMarkdown>
+                            </div>
+                            :
+                            <div styleName="page-content">
+                                <Tabs defaultActiveKey="desc">
+                                    <TabPane tab="描述" key="desc">
+                                        <Text strong>{c_doc.intro} </Text>
+                                    </TabPane>
+                                    <TabPane tab="目录" key="category">
+                                        {this.renderDocCategory(this.state.doc_options)}
+                                    </TabPane>
+                                    <TabPane tab="最新文档" key="last_docs">
+                                        {
+                                            this.state.latest_docs.map(item =>
+                                                (
+                                                    <div key={item.id}>
+                                                        <Descriptions title={<Button type="link" onClick={ () => this.onSelectDoc(item.id)}><Title>{item.title}</Title></Button>} bordered={true} column={2}>
+                                                            <Descriptions.Item label="作者">{item.creator? item.creator.nickname: ''}</Descriptions.Item>
+                                                            <Descriptions.Item label="时间">{item.created_time}</Descriptions.Item>
+                                                            <Descriptions.Item label="内容">{item.content_text.slice(0, 500)}......</Descriptions.Item>
+                                                        </Descriptions>
+                                                        <Divider/>
+                                                    </div>
+                                                )
+                                            )
+                                        }
 
-                                        )
-                                    )
-                                }
-
-                            </TabPane>
-                        </Tabs>
-                    </div>
+                                    </TabPane>
+                                </Tabs>
+                            </div>
+                    }
                     <div styleName="page-toc">
-                        <Card title="Card title">
-                            <p>Card content</p>
-                            <p>Card content</p>
-                            <p>Card content</p>
-                        </Card>
+                        <Anchor>
+
+                            {
+                                this.state.current_doc_toc.map(item =>
+                                    (
+                                        <Link href={item.id} title={item.text} key={item.id}/>
+                                    )
+                                )
+                            }
+                        </Anchor>
                     </div>
                 </div>
                 <div><Footer/></div>
