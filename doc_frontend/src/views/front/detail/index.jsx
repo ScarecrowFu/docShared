@@ -7,7 +7,7 @@ import FormElement from "src/library/FormElement"
 import {getLoginUser} from "src/utils/userAuth"
 import Pagination from "src/library/Pagination"
 import {getCDocList, retrieveCDoc} from "src/apis/c_doc"
-import {getDocList, retrieveDoc} from "src/apis/doc"
+import {getDocList, retrieveDoc, getDocToc} from "src/apis/doc"
 import { SmileTwoTone, FieldTimeOutlined } from '@ant-design/icons';
 import Footer from "src/layouts/Footer"
 import { renderToString } from 'react-dom/server'
@@ -38,7 +38,8 @@ class Home extends Component {
         doc_options: [],  // 文集下的文档选项
         current_doc: null,  //当前展示的文档
         current_doc_toc: [],  //当前展示的文档目录
-        latest_docs: [] // 最新文档
+        latest_docs: [], // 最新文档
+        doc_toc: null // 文档目录
     };
 
     // 获取文集详情
@@ -101,12 +102,26 @@ class Home extends Component {
             })
     };
 
+    // 获取最新文档
+    handleGetDocToc = () => {
+        getDocToc(this.state.current_doc.id)
+            .then(res => {
+                const data = res.data;
+                this.setState({ doc_toc: data.results });
+            }, error => {
+                console.log(error.response);
+            })
+    };
+
     componentDidMount() {
         const params = this.props.match.params;
         this.setState({ c_id: params.c_id });
         this.fetchCDocData(params.c_id);
         this.handleGetCDocOptions(params.c_id);
         this.handleGetLatestDoc(params.c_id);
+        if (this.state.current_doc) {
+            this.handleGetDocToc();
+        }
     }
 
     handleGetCurrentDoc = (doc_id) => {
@@ -114,6 +129,7 @@ class Home extends Component {
             .then(res => {
                 const data = res.data;
                 this.setState({ current_doc: data.results });
+                this.handleGetDocToc();
             }, error => {
                 console.log(error.response);
             })
@@ -123,19 +139,17 @@ class Home extends Component {
     onSelectDocTree = (selectedKeys, info) => {
         this.setState({ current_doc_toc: [] });
         this.handleGetCurrentDoc(selectedKeys[0]);
-
     }
 
     onSelectDoc(value) {
-        console.log('selected', value);
         this.setState({ current_doc_toc: [] });
         this.handleGetCurrentDoc(value);
-
     }
 
     onReSetDoc() {
         this.setState({ current_doc: null });
         this.setState({ current_doc_toc: [] });
+        this.setState({ doc_toc: null });
     }
 
     renderDocCategory = (doc_options) =>{
@@ -159,8 +173,6 @@ class Home extends Component {
 
 
 
-
-
     render() {
 
         const { TabPane } = Tabs;
@@ -168,6 +180,23 @@ class Home extends Component {
         const { Link } = Anchor;
 
         const { c_doc } = this.state;
+
+        const renderDocToc = (doc_toc) =>{
+            return (
+                <div>
+                    {
+                        doc_toc.map(item =>
+                            (
+                                <Link key={item.key} href={item.name}>
+                                    {item.children.length > 0? renderDocToc(item.children): null}
+                                </Link>
+                            )
+                        )
+                    }
+                </div>
+            );
+
+        }
 
         const flatten = (text, child) => {
             return typeof child === 'string'
@@ -306,16 +335,13 @@ class Home extends Component {
                             </div>
                     }
                     <div styleName="page-toc">
-                        <Anchor>
-
-                            {
-                                this.state.current_doc_toc.map(item =>
-                                    (
-                                        <Link href={item.id} title={item.text} key={item.id}/>
-                                    )
-                                )
-                            }
-                        </Anchor>
+                        {this.state.doc_toc?
+                            (
+                                <Anchor>
+                                    {renderDocToc(this.state.doc_toc)}
+                                </Anchor>
+                            ) : '暂无目录'
+                        }
                     </div>
                 </div>
                 <div><Footer/></div>

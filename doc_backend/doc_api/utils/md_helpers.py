@@ -1,41 +1,43 @@
 import os
 import re
 import argparse
+import json
 
-HDRS = {
-    'markdown': re.compile(r'^(#+)\s*(.*)\s*$'),
-    'asciidoc': re.compile(r'^(=+)\s*(.*)\s*$')
-}
+markdown_reg = re.compile(r'^(#+)\s*(.*)\s*$')
 
 
-def guess_type(path):
-    _, ext = os.path.splitext(path)
-    if ext.lower() in {'.md', '.mdown', '.markdown', '.mkdn', '.rmd'}:
-        return 'markdown'
 
-    if ext.lower() in {'.asciidoc', '.adoc'}:
-        return 'asciidoc'
+def extract_toc_text(text):
+    level_key = {0: '', 1: '', 2: '', 3: '', 4: '', 5: ''}
+    toc_tree = []
+    for line in text.split('\n'):
+        match = markdown_reg.match(line)
+        if match is not None:
+            level, text = match.groups()
+            level_key[len(level)] = text
+            # tab = ((len(level) - 1) * 2) * " "
+            toc_tree.append({'level': len(level), 'name': text, 'parent': level_key[len(level) - 1]})
+    return toc_tree
 
-    raise ValueError('Unknown extenion type "{}"'.format(ext))
+
+def extract_toc_to_tree(top_trees, toc_text):
+    for top_tree in top_trees:
+        children_toc = [default_toc for default_toc in toc_text if default_toc['parent'] == top_tree['name'] and default_toc['level'] == top_tree['level'] + 1]
+        if len(children_toc) > 1:
+            top_tree['children'] = extract_toc_to_tree(children_toc, toc_text)
+        else:
+            top_tree['children'] = []
+    return top_trees
 
 
-def extract_toc(path, indent=2, dtype=None):
-    # Get the header regular expression from the markup format
-    dtype = dtype or guess_type(path)
-    if dtype not in HDRS:
-        raise ValueError("{} is not a valid document type".format(dtype))
-
-    hdr = HDRS[dtype]
-
-    # Open up the file for reading
-    with open(path, 'r') as f:
-        for line in f:
-            match = hdr.match(line)
-            if match is not None:
-                level, text = match.groups()
-                tab = ((len(level) - 1) * indent) * " "
-                print("{}- {}".format(tab, text))
+def extract_toc(text):
+    toc_text = extract_toc_text(text)
+    top_toc = [{'level': toc['level'], 'name': toc['name'], 'parent': '', 'children': []} for toc in toc_text if toc['parent'] == ""]
+    toc_trees = extract_toc_to_tree(top_toc, toc_text)
+    return toc_trees
 
 
 if __name__ == '__main__':
-    extract_toc('/home/alan/test.md', indent=5, dtype='markdown')
+    markdown_text = open('/home/alan/test.md').read()
+    new_toc_tree = extract_toc(markdown_text)
+    print(json.dumps(new_toc_tree, ensure_ascii=False))

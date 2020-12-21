@@ -10,6 +10,7 @@ from doc_api.serializers.doc_serializers import DocTemplateListSerializer, DocTe
 from doc_api.settings.conf import DocStatus
 from doc_api.filters.doc_filters import DocParameterFilter, DocTagParameterFilter, DocTemplateParameterFilter
 from django.db.models import Q
+from doc_api.utils.md_helpers import extract_toc
 
 
 class DocViewSet(viewsets.ModelViewSet):
@@ -142,6 +143,13 @@ class DocViewSet(viewsets.ModelViewSet):
         recover_objects.update(is_deleted=False)
         # todo 记录操作日志
         result = {'success': True, 'messages': f'批量还原文档:{recover_objects_names}'}
+        return Response(result, status=status.HTTP_200_OK)
+
+    @action(methods=['GET'], detail=True)
+    def doc_toc(self, request, *args, **kwargs):
+        instance = self.get_object()
+        toc = extract_toc(instance.content)
+        result = {'success': True, 'messages': f'获取当前文档:{instance.title}的目录信息', 'results': toc}
         return Response(result, status=status.HTTP_200_OK)
 
     def get_serializer_class(self):

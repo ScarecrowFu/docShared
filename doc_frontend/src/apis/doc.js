@@ -74,6 +74,14 @@ export function getDocStatus(params) {
 }
 
 
+export function getDocToc(instance_id) {
+  return request({
+    url: `/api/docs/${instance_id}/doc_toc/`,
+    method: "get",
+  });
+}
+
+
 ///////////////////////////////////////////////////////////////////////////////////////////
 
 
