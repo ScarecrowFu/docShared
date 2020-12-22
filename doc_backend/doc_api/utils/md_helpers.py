@@ -1,10 +1,7 @@
-import os
 import re
-import argparse
 import json
 
 markdown_reg = re.compile(r'^(#+)\s*(.*)\s*$')
-
 
 
 def extract_toc_text(text):

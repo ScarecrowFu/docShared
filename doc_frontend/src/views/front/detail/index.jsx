@@ -1,27 +1,22 @@
 import React, {Component} from 'react';
 import config from 'src/utils/Hoc/configHoc';
+import {Button, Form, Divider, Tabs, Tree, Space, Timeline, Anchor, Descriptions, Typography, Tooltip} from "antd";
+import FormRow from "src/library/FormRow";
+import FormElement from "src/library/FormElement";
+import {retrieveCDoc} from "src/apis/c_doc";
+import {getDocList, retrieveDoc, getDocToc} from "src/apis/doc";
+import {
+    FieldTimeOutlined, RollbackOutlined, ShareAltOutlined, FileAddOutlined,
+    EditOutlined, CopyOutlined, HistoryOutlined, ExportOutlined,
+    DeleteOutlined, RadiusSettingOutlined, SearchOutlined} from '@ant-design/icons';
+import Footer from "src/layouts/Footer";
+import ReactMarkdown from 'react-markdown';
+import {Prism as SyntaxHighlighter} from 'react-syntax-highlighter';
+import {dark} from 'react-syntax-highlighter/dist/esm/styles/prism';
+import gfm from 'remark-gfm';
+import math from 'remark-math';
 import './style.less';
-import {Button, Form, Divider, Card, Col, Row, Tooltip, Tabs, Tree, Space, Timeline, Anchor, Descriptions, Typography} from "antd"
-import FormRow from "src/library/FormRow"
-import FormElement from "src/library/FormElement"
-import {getLoginUser} from "src/utils/userAuth"
-import Pagination from "src/library/Pagination"
-import {getCDocList, retrieveCDoc} from "src/apis/c_doc"
-import {getDocList, retrieveDoc, getDocToc} from "src/apis/doc"
-import { SmileTwoTone, FieldTimeOutlined } from '@ant-design/icons';
-import Footer from "src/layouts/Footer"
-import { renderToString } from 'react-dom/server'
-import ReactMarkdown from 'react-markdown'
-import {Prism as SyntaxHighlighter} from 'react-syntax-highlighter'
-import {dark} from 'react-syntax-highlighter/dist/esm/styles/prism'
-import gfm from 'remark-gfm'
-import math from 'remark-math'
-
-
-
-
-
-
+import {getLoginUser} from "../../../utils/userAuth"
 
 
 @config({
@@ -39,7 +34,8 @@ class Home extends Component {
         current_doc: null,  //当前展示的文档
         current_doc_toc: [],  //当前展示的文档目录
         latest_docs: [], // 最新文档
-        doc_toc: null // 文档目录
+        doc_toc: null, // 文档目录
+        user_id: null // 当前是否已存在认证用户
     };
 
     // 获取文集详情
@@ -115,6 +111,9 @@ class Home extends Component {
 
     componentDidMount() {
         const params = this.props.match.params;
+        const loginUser = getLoginUser();
+        const user_id = loginUser?.id;
+        this.setState({ user_id: user_id });
         this.setState({ c_id: params.c_id });
         this.fetchCDocData(params.c_id);
         this.handleGetCDocOptions(params.c_id);
@@ -124,6 +123,7 @@ class Home extends Component {
         }
     }
 
+    // 获取详细文档
     handleGetCurrentDoc = (doc_id) => {
         retrieveDoc(doc_id)
             .then(res => {
@@ -141,87 +141,82 @@ class Home extends Component {
         this.handleGetCurrentDoc(selectedKeys[0]);
     }
 
+    // 选择文档
     onSelectDoc(value) {
         this.setState({ current_doc_toc: [] });
         this.handleGetCurrentDoc(value);
     }
 
+    // 回到文集信息， 重置当前文档
     onReSetDoc() {
         this.setState({ current_doc: null });
         this.setState({ current_doc_toc: [] });
         this.setState({ doc_toc: null });
     }
 
-    renderDocCategory = (doc_options) =>{
-        return (
-            <Timeline>
-                {
-                    doc_options.map(item =>
-                        (
-                            <Timeline.Item key={item.key}>
-                                <Button type="link" onClick={ () => this.onSelectDoc(item.key)}>{item.title}</Button> <FieldTimeOutlined /> {item.created_time}
-                                {item.children.length>0? <Divider />: null}
-                                {item.children.length>0? this.renderDocCategory(item.children): null}
-                            </Timeline.Item>
-                        )
-                    )
-                }
-            </Timeline>
-        );
-
-    }
-
-
-
     render() {
 
         const { TabPane } = Tabs;
         const { Title, Paragraph, Text } = Typography;
         const { Link } = Anchor;
-
         const { c_doc } = this.state;
 
-        const renderDocToc = (doc_toc) =>{
+        // 渲染文档列表
+        const renderDocCategory = (doc_options) =>{
             return (
-                <div>
+                <Timeline>
                     {
-                        doc_toc.map(item =>
+                        doc_options.map(item =>
                             (
-                                <Link key={item.key} href={item.name}>
-                                    {item.children.length > 0? renderDocToc(item.children): null}
-                                </Link>
+                                <Timeline.Item key={item.key}>
+                                    <Button type="link" onClick={ () => this.onSelectDoc(item.key)}>{item.title}</Button> <FieldTimeOutlined /> {item.created_time}
+                                    {item.children.length>0? <Divider />: null}
+                                    {item.children.length>0? renderDocCategory(item.children): null}
+                                </Timeline.Item>
                             )
                         )
                     }
-                </div>
+                </Timeline>
             );
-
         }
 
+        // 渲染文档目录
+        const renderDocToc = (doc_toc) =>{
+            console.log('doc_toc', doc_toc);
+            return (
+                doc_toc.map(item =>
+                    (
+                        <Link href={'#' + item.name.toLowerCase().replace(/\W/g, '-')} title={item.name}>
+                            {item.children.length > 0? renderDocToc(item.children): null}
+                        </Link>
+                    )
+                )
+            );
+        }
+
+        // markdown 渲染标题信息
         const flatten = (text, child) => {
             return typeof child === 'string'
                 ? text + child
                 : React.Children.toArray(child.props.children).reduce(flatten, text)
         }
 
+        // markdown 渲染标题信息
         const HeadingRenderer = (props) => {
             let children = React.Children.toArray(props.children)
             let text = children.reduce(flatten, '')
             let slug = text.toLowerCase().replace(/\W/g, '-');
-            console.log('text', text, 'slug', slug);
-            // let current_doc_toc = this.state.current_doc_toc;
-            // current_doc_toc.push(slug);
-            // this.setState({ current_doc_toc: current_doc_toc });
-            // console.log(this.state.current_doc_toc);
             return React.createElement('h' + props.level, {id: slug}, props.children)
         }
 
+        // markdown 渲染标题信息
         const renderers = {
             code: ({language, value}) => {
                 return <SyntaxHighlighter style={dark} language={language} children={value} />
             },
             heading: HeadingRenderer,
         }
+
         return (
             <div>
                 <div styleName="page-tool">
@@ -229,37 +224,39 @@ class Home extends Component {
                         <FormRow styleName="form-row">
                             <FormElement
                                 styleName="form-element"
-                                label="关键字"
                                 name="search"
-                                placeholder="搜索文档"
+                                placeholder="搜索当前文集内的文档"
                             />
-                            <FormElement
-                                styleName="form-element"
-                                showSearch
-                                type="select"
-                                label="权限"
-                                name="perm"
-                                options={this.state.perm_options}
-                            />
-                            <FormElement
-                                width={300}
-                                styleName="form-element"
-                                type="date-range"
-                                label="时间"
-                                name="created_time"
-                            />
-                            <FormElement
-                                styleName="form-element"
-                                showSearch
-                                type="select"
-                                label="排序"
-                                name="ordering"
-                                options={[{'value': 'created_time', 'label': '时间生序'}, {'value': '-created_time', 'label': '时间降序'}]}
-                            />
-                            <FormElement layout>
-                                <Button type="primary" htmlType="submit" styleName="form-btn">搜 索</Button>
-                                <Button onClick={this.handleResetSubmit} styleName="form-btn">重 置</Button>
-                            </FormElement>
+                            <Tooltip title="搜索" styleName="form-element">
+                                <Button  htmlType="submit" shape="circle" icon={<SearchOutlined />} />
+                            </Tooltip>
+                            <Tooltip title="返回" styleName="form-element">
+                                <Button  shape="circle" icon={<RollbackOutlined />} />
+                            </Tooltip>
+                            <Tooltip title="分享" styleName="form-element">
+                                <Button shape="circle" icon={<ShareAltOutlined />} />
+                            </Tooltip>
+                            <Tooltip title="新增" styleName="form-element">
+                                <Button shape="circle" icon={<FileAddOutlined />} />
+                            </Tooltip>
+                            <Tooltip title="编辑" styleName="form-element">
+                                <Button  shape="circle" icon={<EditOutlined />} />
+                            </Tooltip>
+                            <Tooltip title="克隆" styleName="form-element">
+                                <Button shape="circle" icon={<CopyOutlined />} />
+                            </Tooltip>
+                            <Tooltip title="历史版本" styleName="form-element">
+                                <Button type="dashed" shape="circle" icon={<HistoryOutlined />} />
+                            </Tooltip>
+                            <Tooltip title="导出" styleName="form-element">
+                                <Button type="dashed" shape="circle" icon={<ExportOutlined />} />
+                            </Tooltip>
+                            <Tooltip title="删除" styleName="form-element">
+                                <Button type="dashed" shape="circle" icon={<DeleteOutlined />} />
+                            </Tooltip>
+                            <Tooltip title="文集设置" styleName="form-element">
+                                <Button type="dashed" shape="circle" icon={<RadiusSettingOutlined />} />
+                            </Tooltip>
                         </FormRow>
                     </Form>
                 </div>
@@ -267,20 +264,22 @@ class Home extends Component {
 
                 <div styleName="page-detail">
                     <div styleName="page-docs">
-                        <Button type="link" onClick={ () => this.onReSetDoc()}> <Title>{c_doc.name}</Title></Button>
-                        <Divider />
-                        {
-                            this.state.doc_options.length
-                                ?
-                                <Tree
-                                    defaultExpandAll={true}
-                                    treeData={this.state.doc_options}
-                                    onSelect={this.onSelectDocTree}
-                                    selectedKeys={this.state.current_doc? [this.state.current_doc.id]: null}
-                                />
-                                :
-                                <Paragraph>该文集尚未有文档</Paragraph>
-                        }
+                        <Anchor offsetTop={50}>
+                            <Button type="link" onClick={ () => this.onReSetDoc()}> <Title>{c_doc.name}</Title></Button>
+                            <Divider />
+                            {
+                                this.state.doc_options.length
+                                    ?
+                                    <Tree
+                                        defaultExpandAll={true}
+                                        treeData={this.state.doc_options}
+                                        onSelect={this.onSelectDocTree}
+                                        selectedKeys={this.state.current_doc? [this.state.current_doc.id]: null}
+                                    />
+                                    :
+                                    <Paragraph>该文集尚未有文档</Paragraph>
+                            }
+                        </Anchor>
                     </div>
                     {
                         this.state.current_doc?
@@ -299,8 +298,6 @@ class Home extends Component {
                                 <ReactMarkdown
                                     renderers={renderers}
                                     plugins={[gfm, math]}
-                                    // allowedTypes={['heading','text']}
-                                    // unwrapDisallowed
                                 >
                                     {this.state.current_doc.content}
                                 </ReactMarkdown>
@@ -309,10 +306,10 @@ class Home extends Component {
                             <div styleName="page-content">
                                 <Tabs defaultActiveKey="desc">
                                     <TabPane tab="描述" key="desc">
-                                        <Text strong>{c_doc.intro} </Text>
+                                        <Paragraph style={{'width': '90%', 'padding-left': '10%'}}><Text strong>{c_doc.intro} </Text></Paragraph>
                                     </TabPane>
                                     <TabPane tab="目录" key="category">
-                                        {this.renderDocCategory(this.state.doc_options)}
+                                        {renderDocCategory(this.state.doc_options)}
                                     </TabPane>
                                     <TabPane tab="最新文档" key="last_docs">
                                         {
@@ -337,10 +334,10 @@ class Home extends Component {
                     <div styleName="page-toc">
                         {this.state.doc_toc?
                             (
-                                <Anchor>
+                                <Anchor offsetTop={60}>
                                     {renderDocToc(this.state.doc_toc)}
                                 </Anchor>
-                            ) : '暂无目录'
+                            ) : <Anchor offsetTop={60} style={{'text-align': 'center'}}>暂无目录</Anchor>
                         }
                     </div>
                 </div>
