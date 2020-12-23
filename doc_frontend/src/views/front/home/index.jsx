@@ -2,13 +2,19 @@ import React, {Component} from 'react';
 import config from 'src/utils/Hoc/configHoc';
 import './style.less';
 import {Button, Form, Divider, Card, Col, Row, Tooltip} from "antd"
-import FormRow from "src/library/FormRow"
-import FormElement from "src/library/FormElement"
-import {getLoginUser} from "src/utils/userAuth"
-import Pagination from "src/library/Pagination"
-import {getCDocList} from "src/apis/c_doc"
+import FormRow from "src/library/FormRow";
+import FormElement from "src/library/FormElement";
+import {getLoginUser} from "src/utils/userAuth";
+import Pagination from "src/library/Pagination";
+import {
+    getCDocList,
+    getCDocPermissionTypes, 
+    anonymousGetCDocList,
+    anonymousGetCDocPermissionTypes,
+} from "src/apis/c_doc";
 import { SmileTwoTone } from '@ant-design/icons';
-import Footer from "src/layouts/Footer"
+import Footer from "src/layouts/Footer";
+import ValidPermModal from "./ValidPermModal"
 
 
 @config({
@@ -19,34 +25,48 @@ import Footer from "src/layouts/Footer"
 })
 class Home extends Component {
     state = {
-        loading: false,     // 表格加载数据loading
-        dataSource: [],     // 表格数据
-        selectedRowKeys: [],// 表格中选中行keys
+        loading: false,     // 加载数据loading
+        c_doc_list: [],     // 文集列表
         total: 0,           // 分页中条数
         pageNum: 1,         // 分页当前页
         pageSize: 15,       // 分页每页显示条数
-        visible: false,     // 添加、修改弹框
-        id: null,           // 需要修改的数据id
         ordering: null,           // 排序
+        perm_confirm_visible: false, // 验证访问码对话框
+        click_doc_id: false, // 当前选择的文档
+        perm_types: [],           // 权限选项
         perm_options: [],           // 权限选项
-        twoToneColor: {10: '', 20: '#eb2f96', 30: '#52c41a', 40: '#c4b510'},           // 对应颜色
+        perm_color: {10: '', 20: '#aaeb0e', 30: '#52c41a', 40: '#c45c06'},    // 对应颜色
+        login_user: null,
     };
 
+    // 获取文集权限类型
     handlePermissionOptions = () => {
-        let perm_options = [{'value': 10, 'label': '公开'}, {'value': 40, 'label': '访问码可见'}]
-        const loginUser = getLoginUser();
-        const userId = loginUser?.id;
-        if (userId) {
-            perm_options.push({'value': 20, 'label': '私密'}, {'value': 30, 'label': '成员可见'}, )
+        let CDocPermissionTypesFun = anonymousGetCDocPermissionTypes;
+        if (this.state.login_user != null) {
+            CDocPermissionTypesFun = getCDocPermissionTypes;
         }
-        this.setState({ perm_options: perm_options });
+        CDocPermissionTypesFun()
+            .then(res => {
+                const data = res.data;
+                this.setState({ perm_types: data.results });
+                const perm_options = [];
+                Object.keys(data.results).forEach(function(key) {
+                    perm_options.push({'value': key, 'label': data.results[key]});
+                });
+                this.setState({ perm_options: perm_options });
+            }, error => {
+                console.log(error.response);
+            })
     }
 
+    // 获取数据
     handleSubmit = async () => {
         if (this.state.loading) return;
-
+        let getCDocListFun = anonymousGetCDocList;
+        if (this.state.login_user != null) {
+            getCDocListFun = getCDocList;
+        }
         const values = await this.form.validateFields();
-        console.log(values);
         if ('created_time' in values && values.created_time !== null && values.created_time !== undefined) {
             const created_time = values.created_time;
             if (created_time !== undefined && created_time.length === 2) {
@@ -68,12 +88,12 @@ class Home extends Component {
             params['ordering'] = this.state.ordering;
         }
         this.setState({ loading: true });
-        getCDocList(params)
+        getCDocListFun(params)
             .then(res => {
                 const data = res.data;
-                const dataSource = data?.results || [];
+                const c_doc_list = data?.results || [];
                 const total = data?.all_count || 0;
-                this.setState({ dataSource, total });
+                this.setState({ c_doc_list, total });
             }, error => {
                 console.log(error.response);
             })
@@ -86,61 +106,39 @@ class Home extends Component {
     };
 
     componentDidMount() {
-        this.handlePermissionOptions();
-        this.handleSubmit();
+        const login_user = getLoginUser();
+        this.setState({login_user:login_user},function () {
+            this.handlePermissionOptions();
+            this.handleSubmit();
+        });
     }
 
+    // 重置
     handleResetSubmit = () => {
         this.form.resetFields();
         this.handleSubmit();
     }
 
-    renderCDocCol= (item) => {
-        let creator = ''
-        if (item.creator) {
-            creator = item.creator.nickname;
-        }
-        let intro = item.intro? item.intro : ''
-        if (intro.length === 0) {
-            intro = (<p>描述: 该文集尚未填写描述</p>);
-        } else if (intro.length >= 25) {
-            intro = `${intro.slice(0, 25)}......`;
-            intro = (
-                <Tooltip title={item.intro}>
-                    <p>描述: {intro}</p>
-                </Tooltip>
-            );
-        } else {
-            intro = (<p>描述: {intro}</p>);
-        }
-        const link = `/detail/${item.id}/`
-        return (
-            <Col span={8} key={item.id}>
-                <a href={link} target="_blank" rel="noreferrer" >
-                    <Card title={<span><SmileTwoTone twoToneColor={this.state.twoToneColor[item.perm]} />  {item.name}</span>} bordered={true}>
-                        <p>作者: {creator}</p>
-                        <p>最新文档: </p>
-                        {intro}
-                    </Card>
-                </a>
-            </Col>
-        );
+    clickDoc = (doc_id) => {
+        const url = `/detail/${doc_id}/`;
+        let link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("target", '_blank');
+        link.style.display = "none";
+        document.body.appendChild(link);
+        link.click();
+        URL.revokeObjectURL(url); // 释放URL 对象
+        document.body.removeChild(link);
     }
 
-    renderCDoc= () => {
-        let renderRows = [], cols = [], _that = this;
-        this.state.dataSource.forEach(function (item, index) {
-            cols.push(_that.renderCDocCol(item));
-            if((index+1) % 3 === 0) {
-                renderRows.push(<Row gutter={16} styleName="doc-row" key={index+1}>{cols}</Row>);
-                cols = [];
-            }
-        })
-        if (cols.length > 0) {
-            renderRows.push(<Row gutter={16} styleName="doc-row" key={0}>{cols}</Row>);
-            cols = [];
+    // 点击具体文档触发
+    handleDocClick = (e, doc_id, doc_perm) => {
+        e.preventDefault();
+        if (doc_perm === 20) {
+            this.setState({ perm_confirm_visible: true, click_doc_id: doc_id});
+        } else {
+            this.clickDoc(doc_id);
         }
-        return renderRows;
     }
 
     render() {
@@ -148,11 +146,74 @@ class Home extends Component {
             total,
             pageNum,
             pageSize,
+            perm_confirm_visible,
+            click_doc_id,
+            perm_options,
+            perm_types,
+            perm_color,
+            c_doc_list,
         } = this.state;
 
         const formProps = {
             width: 200,
         };
+
+        // 渲染列表行
+        const renderCDocCol= (item) => {
+            let intro = item.intro? item.intro : ''
+            if (intro.length === 0) {
+                intro = (<p>描述: 该文集尚未填写描述</p>);
+            } else if (intro.length >= 25) {
+                intro = `${intro.slice(0, 25)}......`;
+                intro = (
+                    <Tooltip title={item.intro}>
+                        <p>描述: {intro}</p>
+                    </Tooltip>
+                );
+            } else {
+                intro = (<p>描述: {intro}</p>);
+            }
+            const link = `/detail/${item.id}/`;
+            return (
+                <Col span={8} key={item.id}>
+                    {/*<a href={link} target="_blank" rel="noreferrer" onClick={(e) => this.handleDocClick(e, item.id, item.perm) }>*/}
+                    <a href={link} target="_blank" rel="noreferrer">
+                        <Card title={
+                            <span>
+                                <Tooltip title={perm_types[item.perm]}>
+                                    <SmileTwoTone twoToneColor={perm_color[item.perm]} />
+                                </Tooltip>
+                                {item.name}
+                            </span>
+                        }
+                              bordered={true}
+                        >
+                            <p>作者: {item?.creator?.nickname}</p>
+                            <p>最新文档: {item?.latest_doc?.title } </p>
+                            {intro}
+                        </Card>
+                    </a>
+                </Col>
+            );
+        }
+
+        // 渲染列表
+        const renderCDoc= () => {
+            let renderRows = [], cols = [];
+            c_doc_list.forEach(function (item, index) {
+                cols.push(renderCDocCol(item));
+                if((index+1) % 3 === 0) {
+                    renderRows.push(<Row gutter={16} styleName="doc-row" key={index+1}>{cols}</Row>);
+                    cols = [];
+                }
+            })
+            if (cols.length > 0) {
+                renderRows.push(<Row gutter={16} styleName="doc-row" key={0}>{cols}</Row>);
+                cols = [];
+            }
+            return renderRows;
+        }
+
         return (
             <div ref={node => this.root = node}>
                 <div styleName="page-tool">
@@ -163,7 +224,7 @@ class Home extends Component {
                                 styleName="form-element"
                                 label="关键字"
                                 name="search"
-                                placeholder="搜索文档"
+                                placeholder="搜索文集"
                             />
                             <FormElement
                                 {...formProps}
@@ -172,7 +233,7 @@ class Home extends Component {
                                 type="select"
                                 label="权限"
                                 name="perm"
-                                options={this.state.perm_options}
+                                options={perm_options}
                             />
                             <FormElement
                                 width={300}
@@ -201,7 +262,7 @@ class Home extends Component {
 
                 <div styleName="page-content">
                     <div className="site-card-wrapper">
-                        {this.renderCDoc()}
+                        {renderCDoc()}
                     </div>
 
                     <Pagination
@@ -210,6 +271,13 @@ class Home extends Component {
                         pageSize={pageSize}
                         onPageNumChange={pageNum => this.setState({ pageNum }, () => this.handleSubmit())}
                         onPageSizeChange={pageSize => this.setState({ pageSize, pageNum: 1 })}
+                    />
+
+                    <ValidPermModal
+                        visible={perm_confirm_visible}
+                        id={click_doc_id}
+                        onOk={() => this.setState({ perm_confirm_visible: false }, () => this.clickDoc(click_doc_id))}
+                        onCancel={() => this.setState({ perm_confirm_visible: false, click_doc_id: null })}
                     />
                 </div>
                 <div><Footer/></div>

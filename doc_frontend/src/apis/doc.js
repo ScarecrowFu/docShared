@@ -186,3 +186,37 @@ export function bulkDeleteDocTag(data) {
     data,
   });
 }
+
+//////////////////////////////////////////////////////////
+
+
+export function anonymousGetDocList(params) {
+  return request({
+    url: "/api/anonymous_docs/",
+    method: "get",
+    params,
+  });
+}
+
+export function anonymousRetrieveDoc(instance_id) {
+  return request({
+    url: `/api/anonymous_docs/${instance_id}/`,
+    method: "get",
+  });
+}
+
+export function anonymousGetDocStatus(params) {
+  return request({
+    url: "/api/anonymous_docs/doc_status/",
+    method: "get",
+    params,
+  });
+}
+
+export function anonymousGetDocToc(instance_id, data) {
+  return request({
+    url: `/api/anonymous_docs/${instance_id}/doc_toc/`,
+    method: "get",
+    data,
+  });
+}

@@ -1,6 +1,6 @@
 from django.conf.urls import url, include
 from rest_framework import routers
-from doc_api.apis import auth_apis, user_apis, c_doc_apis, doc_apis, file_apis, sys_manage_apis
+from doc_api.apis import auth_apis, user_apis, c_doc_apis, doc_apis, file_apis, sys_manage_apis, anonymous_apis
 
 router = routers.DefaultRouter()
 
@@ -22,9 +22,13 @@ router.register('announcements', sys_manage_apis.AnnouncementViewSet, basename='
 router.register('reg_codes', sys_manage_apis.RegisterCodeViewSet, basename='reg_codes')
 router.register('sys_set', sys_manage_apis.SystemSettingViewSet, basename='sys_set')
 
+router.register('anonymous_c_docs', anonymous_apis.AnonymousCollectedDocViewSet, basename='anonymous_c_docs')
+router.register('anonymous_docs', anonymous_apis.AnonymousDocViewSet, basename='anonymous_docs')
+
 
 urlpatterns = [
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     url(r'^', include(router.urls), name='api-index'),
     url(r'^auth/$', auth_apis.Authentication.as_view(), name='authentication'),
+    url(r'^verify_auth/$', auth_apis.VerifyAuthenticationToken.as_view(), name='verify_auth'),
 ]

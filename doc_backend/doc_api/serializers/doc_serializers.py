@@ -137,18 +137,20 @@ class DocListSerializer(serializers.ModelSerializer):
 
     def get_member_perm(self, obj):
         user = self.context['request'].user
-        if obj.creator == user or user.is_admin:
-            return 30  # 文集管理员
-        perms = [10]
-        user_perms = obj.c_doc.users.filter(user=user).values_list('perm', flat=True)
-        if user_perms:
-            perms.append(max(user_perms))
-        user_member_teams = obj.c_doc.teams.filter(c_doc_team_users__user=user).all()
-        for user_member_team in user_member_teams:
-            team_perms = user_member_team.c_doc_team_users.filter(user=user).values_list('perm', flat=True)
-            if team_perms:
-                perms.append(max(team_perms))
-        return max(perms)
+        if not user.is_anonymous:
+            if obj.creator == user or user.is_admin:
+                return 30  # 文集管理员
+            perms = [0]
+            user_perms = obj.c_doc.users.filter(user=user).values_list('perm', flat=True)
+            if user_perms:
+                perms.append(max(user_perms))
+            user_member_teams = obj.c_doc.teams.filter(c_doc_team_users__user=user).all()
+            for user_member_team in user_member_teams:
+                team_perms = user_member_team.c_doc_team_users.filter(user=user).values_list('perm', flat=True)
+                if team_perms:
+                    perms.append(max(team_perms))
+            return max(perms)
+        return 0
 
     def get_content_text(self, obj):
         return md_to_text(obj.content)

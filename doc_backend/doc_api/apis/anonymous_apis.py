@@ -1,5 +1,4 @@
 from rest_framework import viewsets, mixins, filters, status
-from rest_framework import permissions
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from doc_api.models import Doc, CollectedDoc
@@ -24,9 +23,6 @@ class AnonymousCollectedDocViewSet(viewsets.GenericViewSet, mixins.ListModelMixi
     queryset = CollectedDoc.objects.order_by('-id').all()
     permission_classes = ()
     authentication_classes = ()
-
-    def has_permission(self, request, view):
-        return True
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -63,6 +59,17 @@ class AnonymousCollectedDocViewSet(viewsets.GenericViewSet, mixins.ListModelMixi
                   'results': {key: value for key, value in CollectedDocPermissions.items() if key <= 20}}
         return Response(result, status=status.HTTP_200_OK)
 
+    @action(methods=['POST'], detail=True)
+    def valid_perm_value(self, request, *args, **kwargs):
+        instance = self.get_object()
+        perm_value = request.data.get('perm_value', None)
+        if perm_value == instance.perm_value:
+            result = {'success': True, 'messages': f'当前访问码正确'}
+            return Response(result, status=status.HTTP_200_OK)
+        else:
+            result = {'success': False, 'messages': f'当前访问码不正确, 无法浏览'}
+            return Response(result, status=status.HTTP_400_BAD_REQUEST)
+
     def get_serializer_class(self):
         if self.action == 'list':
             return CollectedDocListSerializer
@@ -80,6 +87,8 @@ class AnonymousDocViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins
     ordering_fields = ('c_doc__name', 'title',)
     filterset_fields = ('creator', 'created_time', 'c_doc', 'status', 'is_deleted')
     queryset = Doc.objects.order_by('-id').all()
+    permission_classes = ()
+    authentication_classes = ()
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -92,16 +101,9 @@ class AnonymousDocViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins
         query_params = self.request.query_params
         not_page = query_params.get('not_page', '')
         tree = query_params.get('tree', '')
-        personal = query_params.get('personal', '')
-        cooperate = query_params.get('cooperate', '')
         queryset = self.filter_queryset(self.get_queryset())
         if tree.lower() == 'true':
             queryset = queryset.filter(parent_doc=None)
-        if personal.lower() == 'true':
-            queryset = queryset.filter(creator=request.user)
-        if cooperate.lower() == 'true':
-            queryset = queryset.exclude(creator=request.user).\
-                filter(Q(c_doc__users__user=request.user) | Q(c_doc__teams__team_group__members=request.user))
         queryset = queryset.distinct()
         if not_page and not_page.lower() != 'false':
             serializer = self.get_serializer(queryset, many=True)

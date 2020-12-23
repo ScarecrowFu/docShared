@@ -1,6 +1,7 @@
 from rest_framework_jwt.views import JSONWebTokenAPIView
 from rest_framework import status
 from rest_framework_jwt.serializers import JSONWebTokenSerializer
+from rest_framework_jwt.utils import jwt_decode_handler
 from rest_framework.response import Response
 from doc_api.models.user_models import User
 from django.contrib.auth import authenticate
@@ -8,6 +9,8 @@ from doc_api.utils.auth_helpers import get_jwt_token, jwt_response_payload_handl
 
 
 class Authentication(JSONWebTokenAPIView):
+    serializer_class = JSONWebTokenSerializer
+
     def post(self, request, *args, **kwargs):
         username = request.data.get('username')
         password = request.data.get('password')
@@ -35,4 +38,24 @@ class Authentication(JSONWebTokenAPIView):
         response = Response(response_data, status=status.HTTP_200_OK)
         # todo: 操作日志记录
         return response
-    serializer_class = JSONWebTokenSerializer
+
+
+class VerifyAuthenticationToken(JSONWebTokenAPIView):
+
+    # serializer_class = VerifyJSONWebTokenSerializer
+
+    def post(self, request, *args, **kwargs):
+        token = request.data.get('token', '')
+        valid = False
+        try:
+            payload = jwt_decode_handler(token)
+            valid = True
+            result = {'success': True, 'messages': f'验证验证用户token信息:{payload}', 'results': {'valid': valid}}
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as error:
+            result = {'success': True, 'messages': f'验证验证用户信息发生错误:{error}',  'results': {'valid': valid}}
+            return Response(result, status=status.HTTP_200_OK)
+
+
+
+

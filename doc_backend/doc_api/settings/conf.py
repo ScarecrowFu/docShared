@@ -1,8 +1,8 @@
 CollectedDocPermissions = {
     10: '公开',
-    20: '私密',
+    20: '访问码可见',
     30: '成员可见',
-    40: '访问码可见',
+    40: '私密',
 }
 
 CollectedDocMembersPermissions = {

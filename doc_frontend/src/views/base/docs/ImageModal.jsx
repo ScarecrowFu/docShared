@@ -1,10 +1,10 @@
 import React, {Component} from 'react';
-import {Form, notification} from 'antd';
-import FormElement from 'src/library/FormElement';
+// import {Form, notification} from 'antd';
+// import FormElement from 'src/library/FormElement';
 import config from 'src/utils/Hoc/configHoc';
 import ModalContent from 'src/library/ModalHoc/ModalContent';
-import { createDocTag, retrieveDocTag, updateDocTag } from 'src/apis/doc';
-import {messageDuration} from "src/config/settings"
+// import { createDocTag, retrieveDocTag, updateDocTag } from 'src/apis/doc';
+// import {messageDuration} from "src/config/settings"
 
 
 @config({
@@ -25,10 +25,10 @@ class ImageModal extends Component {
 
     render() {
         const {isEdit, onCancel} = this.props;
-        const {loading, data } = this.state;
-        const formProps = {
-            labelWidth: 100,
-        };
+        const {loading } = this.state;
+        // const formProps = {
+        //     labelWidth: 100,
+        // };
         return (
             <ModalContent
                 loading={loading}

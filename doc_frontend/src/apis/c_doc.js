@@ -190,3 +190,36 @@ export function bulkDeleteCDocTeam(data) {
     data,
   });
 }
+
+/////////////////////////////////////////////////////////////
+
+export function anonymousGetCDocList(params) {
+  return request({
+    url: "/api/anonymous_c_docs/",
+    method: "get",
+    params,
+  });
+}
+
+export function anonymousRetrieveCDoc(instance_id) {
+  return request({
+    url: `/api/anonymous_c_docs/${instance_id}/`,
+    method: "get",
+  });
+}
+
+export function anonymousGetCDocPermissionTypes(params) {
+  return request({
+    url: "/api/anonymous_c_docs/permission_types/",
+    method: "get",
+    params,
+  });
+}
+
+export function validCDocPermValue(instance_id, data) {
+  return request({
+    url: `/api/anonymous_c_docs/${instance_id}/valid_perm_value/`,
+    method: "post",
+    data,
+  });
+}

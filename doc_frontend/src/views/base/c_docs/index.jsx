@@ -17,7 +17,7 @@ import {bulkDeleteCDoc, deleteCDoc, getCDocList, getCDocPermissionTypes} from 's
 import {getUserList} from 'src/apis/user';
 import {messageDuration} from "src/config/settings";
 import PropTypes from "prop-types"
-import {getNodeByPropertyAndValue} from "../../../utils/tree"
+// import {getNodeByPropertyAndValue} from "../../../utils/tree"
 
 
 export default class CDocBase extends Component {

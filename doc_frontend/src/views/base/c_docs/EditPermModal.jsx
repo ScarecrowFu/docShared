@@ -51,9 +51,6 @@ class EditPermModal extends Component {
                 this.setState({data: results});
                 this.setState({current_perm: results.perm});
                 this.form.setFieldsValue(results);
-                if(results.perm === 40) {
-                    this.form.setFieldsValue({'access_code': results.perm_value});
-                }
             }, error => {
                 console.log(error.response);
             })
@@ -72,10 +69,6 @@ class EditPermModal extends Component {
         const {id} = this.props;
         const successTip = '修改文集权限成功！' ;
         this.setState({loading: true});
-        if(values.perm === 40) {
-            values.perm_value = values.access_code
-            delete values.access_code
-        }
         updateCDoc(id, values)
             .then(res => {
                 const data = res.data;
@@ -147,11 +140,11 @@ class EditPermModal extends Component {
                         options={this.state.perm_options}
                         onChange={this.handlePermChange}
                     />
-                    {this.state.current_perm === 40 ?
+                    {this.state.current_perm === 20 ?
                         <FormElement
                             {...formProps}
                             label="访问码"
-                            name="access_code"
+                            name="perm_value"
                             noSpace
                             required
                             placeholder="访问码"

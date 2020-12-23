@@ -330,13 +330,14 @@ class EditModal extends Component {
                                         {menu}
                                         <Divider style={{ margin: '4px 0' }} />
                                         <div style={{ display: 'flex', flexWrap: 'nowrap', padding: 8 }}>
-                                            <a
+                                            <button
+                                                type="text"
                                                 style={{ flex: 'none', padding: '8px', display: 'block', cursor: 'pointer' }}
                                                 onClick={() => this.setState({ addCDocVisible: true})}
 
                                             >
                                                 <PlusOutlined /> 新增文集
-                                            </a>
+                                            </button>
                                         </div>
                                     </div>
                                 )}
