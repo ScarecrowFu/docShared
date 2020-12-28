@@ -585,3 +585,9 @@ export function formatCurrency(num, options = {}) {
     }
     return `${prefix}${sign}${num}.${cents}`;
 }
+
+export function getUrlIndexName(pathname) {
+    const split_pathname = window.location.pathname.split('/');
+    const index_name = split_pathname.splice(0, 2);
+    return index_name.join('/')
+}

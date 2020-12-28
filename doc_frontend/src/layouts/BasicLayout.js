@@ -45,6 +45,7 @@ class BasicLayout extends Component {
         const {action: {menu, side, system}, isMobile} = this.props;
         // 从Storage中获取出需要同步到redux的数据
         this.props.action.getStateFromStorage();
+        console.log('BasicLayout constructor');
 
         const loginUser = getLoginUser();
         const userId = loginUser?.id;

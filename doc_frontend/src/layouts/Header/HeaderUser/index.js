@@ -11,12 +11,12 @@ import {
 } from '@ant-design/icons';
 import {Menu, Dropdown} from 'antd';
 import {Link} from 'react-router-dom';
-import {toLogin, getLoginUser, removeLoginUser} from 'src/utils/userAuth';
+import {toLogin, getLoginUser, removeLoginUser, toHome} from 'src/utils/userAuth';
 import ModifyPassword from './ModifyPassword';
 import config from 'src/utils/Hoc/configHoc';
 import {isObjEmpty} from 'src/utils'
 import './style.less';
-import {ROUTE_BASE_NAME} from "../../../routers/AppRouter"
+import {ROUTE_BASE_NAME} from "src/routers/AppRouter";
 
 const Item = Menu.Item;
 
@@ -45,7 +45,8 @@ class HeaderUser extends Component {
         }
 
         if (key === 'front') {
-            window.location.href = `${ROUTE_BASE_NAME}/`;
+            // window.location.href = `${ROUTE_BASE_NAME}/`;
+            toHome();
         }
 
         if (key === 'personal') {

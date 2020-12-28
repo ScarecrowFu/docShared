@@ -14,7 +14,6 @@ import {
 } from "src/apis/c_doc";
 import { SmileTwoTone } from '@ant-design/icons';
 import Footer from "src/layouts/Footer";
-import ValidPermModal from "./ValidPermModal"
 
 
 @config({
@@ -107,10 +106,12 @@ class Home extends Component {
 
     componentDidMount() {
         const login_user = getLoginUser();
+        const that_ = this;
         this.setState({login_user:login_user},function () {
-            this.handlePermissionOptions();
-            this.handleSubmit();
+            that_.handlePermissionOptions();
+            that_.handleSubmit();
         });
+        setTimeout(function(){window.scrollTo(0,0);}, 50);
     }
 
     // 重置
@@ -146,8 +147,8 @@ class Home extends Component {
             total,
             pageNum,
             pageSize,
-            perm_confirm_visible,
-            click_doc_id,
+            // perm_confirm_visible,
+            // click_doc_id,
             perm_options,
             perm_types,
             perm_color,
@@ -211,6 +212,7 @@ class Home extends Component {
                 renderRows.push(<Row gutter={16} styleName="doc-row" key={0}>{cols}</Row>);
                 cols = [];
             }
+            // console.log('renderRows', renderRows);
             return renderRows;
         }
 
@@ -271,13 +273,6 @@ class Home extends Component {
                         pageSize={pageSize}
                         onPageNumChange={pageNum => this.setState({ pageNum }, () => this.handleSubmit())}
                         onPageSizeChange={pageSize => this.setState({ pageSize, pageNum: 1 })}
-                    />
-
-                    <ValidPermModal
-                        visible={perm_confirm_visible}
-                        id={click_doc_id}
-                        onOk={() => this.setState({ perm_confirm_visible: false }, () => this.clickDoc(click_doc_id))}
-                        onCancel={() => this.setState({ perm_confirm_visible: false, click_doc_id: null })}
                     />
                 </div>
                 <div><Footer/></div>

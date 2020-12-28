@@ -8,7 +8,7 @@ from django.dispatch import receiver
 class CollectedDoc(models.Model):
     name = models.CharField(max_length=255, verbose_name='文集名称')
     intro = models.CharField(max_length=255, null=True, blank=True, verbose_name='文集简介')
-    # 10表示公开, 20表示私密, 30表示成员可见, 40表示访问码可见，默认公开
+    # 10表示公开, 20表示访问码可见, 30表示成员可见, 40表示私密，默认公开
     perm = models.IntegerField(default=10, choices=dict_for_model_choices(CollectedDocPermissions),
                                verbose_name='文集权限值')
     # 当文集权限为10时，记录为空

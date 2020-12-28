@@ -21,10 +21,12 @@ import {keepAliveRoutes} from './routes';
 })
 class KeepAuthRoute extends React.Component {
     componentDidUpdate() {
+        console.log('KeepAuthRoute componentDidUpdate');
         if (this.tabsChange) {
             this.tabsChange = false;
             this.props.action.system.setTabs(this.tabs);
             // console.timeEnd('active');
+            console.log('KeepAuthRoute componentDidUpdate tabsChange')
         }
     }
 
@@ -83,6 +85,7 @@ class KeepAuthRoute extends React.Component {
 
                             // 记录上一个页面的滚动条位置
                             if (prevActiveTab) {
+                                console.log("KeepAuthRoute 1 prevActiveTab 记录上一个页面的滚动条位置");
                                 prevActiveTab.scrollTop = document.body.scrollTop = document.documentElement.scrollTop;
                             }
 
@@ -112,6 +115,7 @@ class KeepAuthRoute extends React.Component {
 
                         // 先让 KeepPage.jsx 进行一次 无component渲染，然后再次渲染component达到刷新的目的
                         if (keepAlive && currentTab && !currentTab.component) {
+                            console.log('KeepAuthRoute 先让 KeepPage.jsx 进行一次 无component渲染，然后再次渲染component达到刷新的目的')
                             setTimeout(() => {
                                 currentTab.component = TabComponent;
                                 system.setTabs([...tabs]);
@@ -129,6 +133,7 @@ class KeepAuthRoute extends React.Component {
 
                             // 记录上一个页面的滚动条位置
                             if (prevActiveTab) {
+                                console.log("KeepAuthRoute 2 prevActiveTab 记录上一个页面的滚动条位置");
                                 prevActiveTab.scrollTop = document.body.scrollTop = document.documentElement.scrollTop;
                             }
 
@@ -158,9 +163,11 @@ class KeepAuthRoute extends React.Component {
                     }
 
                     // 由KeepPage组件进行页面渲染和切换，这里不需要进行页面渲染
+                    console.log('KeepAuthRoute 由KeepPage组件进行页面渲染和切换，这里不需要进行页面渲染');
                     if (keepAlive) return null;
 
                     // 页面滚动条滚动到顶部
+                    console.log("KeepAuthRoute 页面滚动条滚动到顶部");
                     document.body.scrollTop = document.documentElement.scrollTop = 0;
                     return component;
                 }}

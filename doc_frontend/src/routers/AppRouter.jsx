@@ -7,6 +7,7 @@ import Error404 from 'src/components/Error/Error404';
 import config from 'src/utils/Hoc/configHoc';
 import KeepAuthRoute from './KeepAuthRoute';
 import KeepPage from './KeepPage';
+import {getUrlIndexName} from 'src/utils'
 import routes, {noFrameRoutes, noAuthRoutes /*commonPaths*/} from './routes';
 
 // 直接挂载到域名根目录
@@ -27,14 +28,24 @@ class AppRouter extends Component {
         // const {userPaths} = this.props;
         // const allPaths = [...userPaths, ...commonPaths];
         // return routes.filter(item => allPaths.includes(item.path));
-        return routes;
+        // const pathname = window.location.pathname;
+        // return routes;
+        // 路由配置需要与当前菜单保持一致
+        const index_name = getUrlIndexName(window.location.pathname);
+        if (index_name === '/admin' || index_name === '/personal') {
+            return routes.filter(item => item.path.startsWith(index_name));
+        } else {
+            return routes.filter(item => !item.path.startsWith('/admin') && !item.path.startsWith('/personal'));
+        }
+
+
     };
 
     render() {
         const {noFrame: queryNoFrame, noAuth} = this.props.query;
         const {systemNoFrame} = this.props;
         const userRoutes = this.getUserRoutes();
-        console.log('isLogin', isLogin())
+        console.log('AppRouter render: isLogin', isLogin())
         return (
             <BrowserRouter basename={ROUTE_BASE_NAME}>
                 <div style={{display: 'flex', flexDirection: 'column', position: 'relative', minHeight: '100vh'}}>
@@ -51,20 +62,22 @@ class AppRouter extends Component {
 
                             // 如果浏览器url中携带了noFrame=true参数，不显示框架
                             if (queryNoFrame === 'true') return null;
-
                             return <BasicLayout {...props}/>;
                         } else {
                             if (pathname.startsWith('/login')) {
                                 return null;
                             }
                             return <FrontLayout {...props}/>;
+                            // return <BasicLayout {...props}/>;
                         }
 
                     }}/>
                     <Route exact path={userRoutes.map(item => item.path)}>
+                        {console.log("AppRouter Route KeepPage", userRoutes)}
                         <KeepPage/>
                     </Route>
                     <Switch>
+                        {console.log("AppRouter Switch userRoutes map return KeepAuthRoute", userRoutes)}
                         {userRoutes.map(item => {
                             const {path, component} = item;
                             let isNoAuthRoute = false;
@@ -74,7 +87,6 @@ class AppRouter extends Component {
 
                             // 如果浏览器url中携带了noAuthor=true参数，不需要登录即可访问
                             if (noAuth === 'true') isNoAuthRoute = true;
-
                             return (
                                 <KeepAuthRoute
                                     key={path}

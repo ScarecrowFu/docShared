@@ -1,5 +1,5 @@
 @headerHeight: 50px;
-@sideWidth: 10px;
+@sideWidth: 256px;
 @footerHeight: 40px;
 @contentTop: @headerHeight;
 @contentLeft: @sideWidth;
@@ -12,7 +12,7 @@
 body {
   margin: 0;
   background: #f0f2f5;
-  padding-left: 0;
+  padding-left: @contentLeft;
   transition: padding-left @transitionDuration;
 }
 

@@ -24,20 +24,18 @@ export default {
         keepAlive: true,
         tabs: [{path: true, text: true, icon: true, active: true, scrollTop: true}],
     },
-
+    // tabs 不能是空, 否则可能出现死循环错误
     setTabs: (newTabs) => {
         const pathname = window.location.pathname;
-        if (pathname === '/') {
-            return {tabs: []}
-        }
-        let tabs = newTabs.filter(item => item.path !== '/');
         if (pathname.startsWith('/admin')) {
-            tabs = newTabs.filter(item => item.path !== '/' && item.path.startsWith('/admin'));
+            const tabs = newTabs.filter(item => item.path !== '/' && item.path.startsWith('/admin'));
+            return {tabs: tabs};
         }
         if (pathname.startsWith('/personal')) {
-            tabs = newTabs.filter(item => item.path !== '/' && item.path.startsWith('/personal'));
+            const tabs = newTabs.filter(item => item.path !== '/' && item.path.startsWith('/personal'));
+            return {tabs: tabs};
         }
-        return {tabs: tabs};
+        return {tabs: newTabs};
     },
     setKeepPage: keepAlive => ({keepAlive}),
 
@@ -88,7 +86,15 @@ export default {
     },
 
     closeAllTabs: () => {
-        return {tabs: [{path: '/', nextActive: true}]};
+        const pathname = window.location.pathname;
+        let index_tab = '/';
+        if (pathname.startsWith('/admin')) {
+            index_tab = '/admin';
+        }
+        if (pathname.startsWith('/personal')) {
+            index_tab = '/personal';
+        }
+        return {tabs: [{path: index_tab, nextActive: true}]};
     },
 
     closeLeftTabs: (targetPath, state) => {
@@ -188,7 +194,7 @@ function closeTabByPath(targetPath, tabs) {
         tabs.splice(closeTabIndex, 1);
 
         // 关闭的是最后一个，默认打开首页
-        if (!tabs.length) return {tabs: [{path: '/', nextActive: true}]};
+        // if (!tabs.length) return {tabs: [{path: '/', nextActive: true}]};
 
         return {tabs: [...tabs]};
     }

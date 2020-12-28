@@ -33,8 +33,8 @@ export function setLoginUser(loginUser = {}) {
         permissions,    // 用户权限 非必须
         ...others,      // 其他属性
     });
-    localStorage.setItem(LOGIN_USER_STORAGE_KEY, userStr);
     sessionStorage.setItem(LOGIN_USER_STORAGE_KEY, userStr);
+    localStorage.setItem(LOGIN_USER_STORAGE_KEY, userStr);
 }
 
 /**

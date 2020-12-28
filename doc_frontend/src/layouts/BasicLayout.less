@@ -31,8 +31,8 @@ body {
   top: 0;
   right: 0;
   left: 0;
-  height: @headerHeight;
-  line-height: @headerHeight;
+  //height: @headerHeight;
+  //line-height: @headerHeight;
   padding-right: 16px;
   background: #fff;
   box-shadow: 0 1px 4px rgba(0, 21, 41, .08);
@@ -46,8 +46,8 @@ body {
 .logo {
   float: left;
   display: inline-block;
-  height: @headerHeight;
-  line-height: @headerHeight;
+  //height: @headerHeight;
+  //line-height: @headerHeight;
   position: relative;
   //transition: all @transitionDuration;
   background: #002140;
@@ -61,7 +61,7 @@ body {
 .trigger {
   float: left;
   font-size: 20px;
-  line-height: @headerHeight;
+  //line-height: @headerHeight;
   cursor: pointer;
   transition: all .3s;
   padding: 0 24px;
@@ -74,7 +74,7 @@ body {
 .side {
   position: fixed;
   z-index: 999;
-  top: @headerHeight;
+  //top: @headerHeight;
   left: 0;
   bottom: 0;
   width: 200px;
@@ -93,7 +93,7 @@ body {
 
   .inner {
     position: relative;
-    height: 100%;
+    //height: 100%;
     overflow-x: visible;
     overflow-y: scroll;
     transition: all @transitionDuration;
@@ -106,20 +106,20 @@ body {
 
 .content-top-space {
   position: relative;
-  height: @contentTop;
+  //height: @contentTop;
   background: #f0f2f5;
   //transition: all @transitionDuration;
 
   &.with-fixed-page-head {
-    height: @contentTop + @pageHeadHeight;
+    //height: @contentTop + @pageHeadHeight;
   }
 
   &.with-tabs {
-    height: @contentTop + @pageTabsHeight;
+    //height: @contentTop + @pageTabsHeight;
   }
 
   &.with-fixed-page-head.with-tabs {
-    height: @contentTop + @pageHeadHeight + @pageTabsHeight;
+    //height: @contentTop + @pageHeadHeight + @pageTabsHeight;
   }
 }
 
@@ -131,7 +131,7 @@ body {
   z-index: 998;
 
   &.with-tabs {
-    top: @contentTop + @pageTabsHeight;
+    //top: @contentTop + @pageTabsHeight;
   }
 }
 
@@ -139,7 +139,7 @@ body {
   position: fixed;
   right: 0;
   top: @contentTop;
-  height: @pageTabsHeight;
+  //height: @pageTabsHeight;
   background: #fff;
   z-index: 998;
   padding-right: 16px;
@@ -154,8 +154,8 @@ body {
   bottom: 10px;
   left: 0;
   right: 0;
-  height: @footerHeight;
-  line-height: @footerHeight;
+  //height: @footerHeight;
+  //line-height: @footerHeight;
   text-align: center;
 }
 
@@ -164,7 +164,7 @@ body {
   padding: 0 12px;
   display: inline-block;
   transition: all @transitionDuration;
-  height: 100%;
+  //height: 100%;
 
   > i {
     font-size: 16px;

@@ -5,7 +5,7 @@
 
 export default function getMenus(userId, menuType='front') {
     // 若由后端返回可使用菜单, 在这里根据 userId 请求相关菜单权限
-    console.log(userId, menuType);
+    console.log('config getMenus: ', userId, menuType);
     const frontMenu = [
         {key: 'home', text: '首页', icon: 'home', path: '/', order: 10},
     ]

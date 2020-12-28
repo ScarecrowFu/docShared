@@ -34,11 +34,10 @@ import ReactMarkdown from 'react-markdown';
 import {Prism as SyntaxHighlighter} from 'react-syntax-highlighter';
 import {dark} from 'react-syntax-highlighter/dist/esm/styles/prism';
 import gfm from 'remark-gfm';
-import math from 'remark-math';
-import './style.less';
 import {getLoginUser, toHome} from "src/utils/userAuth";
-import ValidPermModal from "src/views/front/home/ValidPermModal"
-import {messageDuration} from "src/config/settings"
+import ValidPermModal from "./ValidPermModal"
+import {messageDuration} from "src/config/settings";
+import './style.less';
 
 
 
@@ -57,7 +56,7 @@ class Home extends Component {
         current_doc: null,  //当前展示的文档
         current_doc_toc: [],  //当前展示的文档目录
         latest_docs: [], // 最新文档
-        search_docs: [], // 搜索文档
+        search_docs: null, // 搜索文档
         doc_toc: null, // 文档目录
         login_user: null, // 当前是否已存在认证用户
         perm_confirm_visible: false, // 验证访问码对话框
@@ -254,6 +253,7 @@ class Home extends Component {
 
     // 回到文集信息， 重置当前文档
     onReSetDoc() {
+        this.setState({ search_docs: null });
         this.setState({ current_doc: null });
         this.setState({ current_doc_toc: [] });
         this.setState({ doc_toc: null });
@@ -270,6 +270,7 @@ class Home extends Component {
         getDocListFun(params)
             .then(res => {
                 const data = res.data;
+                this.onReSetDoc();
                 this.setState({ search_docs: data.results });
             }, error => {
                 console.log(error.response);
@@ -317,7 +318,7 @@ class Home extends Component {
             return (
                 doc_toc.map(item =>
                     (
-                        <Link href={'#' + item.name.toLowerCase().replace(/\W/g, '-')} title={item.name}>
+                        <Link key={item.level + item.name} href={'#' + item.name.toLowerCase().replace(/\W/g, '-')} title={item.name}>
                             {item.children.length > 0? renderDocToc(item.children): null}
                         </Link>
                     )
@@ -365,10 +366,7 @@ class Home extends Component {
                                 <Button  htmlType="submit" shape="circle" icon={<SearchOutlined />} />
                             </Tooltip>
                             <Tooltip title="返回" styleName="form-element">
-                                <Button  shape="circle" icon={<RollbackOutlined />} />
-                            </Tooltip>
-                            <Tooltip title="分享" styleName="form-element">
-                                <Button shape="circle" icon={<ShareAltOutlined />} />
+                                <Button  shape="circle" icon={<RollbackOutlined />} onClick={ () => this.onReSetDoc()}/>
                             </Tooltip>
                             {
                                 c_doc?.member_perm >= 10?
@@ -459,13 +457,13 @@ class Home extends Component {
                                 <Divider />
                                 <ReactMarkdown
                                     renderers={renderers}
-                                    plugins={[gfm, math]}
+                                    plugins={[gfm]}
                                 >
                                     {current_doc.content}
                                 </ReactMarkdown>
                             </div>
                             :
-                            <div styleName="page-content">
+                            <div styleName="detail-page-content">
                                 {
                                     search_docs?
                                         <div>

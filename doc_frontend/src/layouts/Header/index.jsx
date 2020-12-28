@@ -10,6 +10,7 @@ import { connect } from 'src/models';
 import { PAGE_FRAME_LAYOUT } from 'src/models/settings';
 import Breadcrumb from '../Breadcrumb';
 import './style.less';
+import {toHome} from "src/utils/userAuth"
 
 @connect(state => {
     const { menus, topMenu } = state.menu;
@@ -58,6 +59,11 @@ class Header extends Component {
         return sideCollapsed ? <MenuUnfoldOutlined {...props} styleName="trigger" className="frame-menu-trigger"/> : <MenuFoldOutlined {...props} styleName="trigger"/>;
     };
 
+    handleLogoClick = (e) => {
+        e.preventDefault();
+        toHome();
+    }
+
     render() {
         let {
             layout,
@@ -69,6 +75,7 @@ class Header extends Component {
             sideDragging,
             breadcrumbs,
             children,
+            headerType,
         } = this.props;
         sideWidth = sideCollapsed ? sideCollapsedWidth : sideWidth;
 
@@ -97,26 +104,26 @@ class Header extends Component {
                     id="logo-container"
                     style={{ flex: `0 0 ${sideWidth}px`, transitionDuration }}
                 >
-                    <Link to="/">
+                    <Link to="/"  onClick={(e) => this.handleLogoClick(e) }>
                         <Logo
                             min={sideCollapsed}
                             title="DocShared"
                         />
                     </Link>
                 </div>
-                {this.renderToggle(showToggle, sideCollapsed, theme)}
+                {headerType !== 'front'? this.renderToggle(showToggle, sideCollapsed, theme): null}
                 {children ? (
                     <div styleName="center">{children}</div>
                 ) : (
                     <div styleName="center">
-                        {showMenu ? (
+                        {showMenu && headerType !== 'front' ? (
                             <HeaderMenu
                                 theme={theme}
                                 dataSource={topMenus}
                                 selectedKeys={[ topMenu && topMenu.key ]}
                             />
                         ) : null}
-                        {isSideMenu ? <div style={{ marginLeft: 16 }}><Breadcrumb theme={theme} dataSource={breadcrumbs}/></div> : null}
+                        {isSideMenu && headerType !== 'front' ? <div style={{ marginLeft: 16 }}><Breadcrumb theme={theme} dataSource={breadcrumbs}/></div> : null}
                     </div>
                 )}
 
