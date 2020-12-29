@@ -88,6 +88,14 @@ export function transferCDoc(instance_id, data) {
   });
 }
 
+export function ExportCDoc(instance_id, data) {
+  return request({
+    url: `/api/collected_docs/${instance_id}/export_file/`,
+    method: "post",
+    data,
+  });
+}
+
 /////////////////////////////////////////////////////////////
 
 

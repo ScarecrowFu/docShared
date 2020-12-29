@@ -70,7 +70,6 @@ class GroupIndexModal extends Component {
         },
     ];
 
-    // todo 整理为分页获取选项
     handleUserOptions = () => {
         getUserList({'not_page': true})
             .then(res => {

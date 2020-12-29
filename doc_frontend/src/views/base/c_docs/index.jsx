@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {Button, Form, notification} from 'antd';
+import {Button, Form, notification, Tooltip} from 'antd';
 import PageContent from 'src/layouts/PageContent';
 import QueryBar from 'src/library/QueryBar';
 import FormRow from 'src/library/FormRow';
@@ -13,11 +13,13 @@ import EditPermModal from './EditPermModal';
 import EditMemberModal from './EditMemberModal';
 import EditSettingModal from './EditSettingModal';
 import EditTransferModal from './EditTransferModal';
+import EditImport from './EditImport';
+import EditExport from './EditExport';
 import {bulkDeleteCDoc, deleteCDoc, getCDocList, getCDocPermissionTypes} from 'src/apis/c_doc';
 import {getUserList} from 'src/apis/user';
 import {messageDuration} from "src/config/settings";
-import PropTypes from "prop-types"
-// import {getNodeByPropertyAndValue} from "../../../utils/tree"
+import PropTypes from "prop-types";
+import {getLoginUser} from 'src/utils/userAuth';
 
 
 export default class CDocBase extends Component {
@@ -46,17 +48,33 @@ export default class CDocBase extends Component {
         visibleMember: false,     // 修改文集成員
         visibleSetting: false,     // 修改文集设置
         visibleTransfer: false,     // 转让
+        visibleImport: false,     // 导入
+        visibleExport: false,     // 导出
         id: null,           // 需要修改的数据id
         ordering: null,           // 排序
-        permissionTypes: {},
+        permissionTypes: {},  // 权限
         perm_options: [],           // 权限选项
         user_options: [],           // 用户选项
+        current_user: null,           // 当前用户
     };
 
     handleTableColumn = () => {
         let columns = [
             { title: '名称', dataIndex: 'name', sorter: true, width: 200 },
-            { title: '简介', dataIndex: 'intro', sorter: true, width: 200 },
+            { title: '简介', dataIndex: 'intro', sorter: true, width: 200,
+                render: (value, record) => {
+                    let slice_value = value;
+                    if (value && value.length > 20) {
+                        slice_value = `${value.slice(0, 20)}......`;
+                        return (
+                            <Tooltip title={value}>
+                                {slice_value}
+                            </Tooltip>)
+                    } else {
+                        return value;
+                    }
+                },
+            },
             {title: '文档数量', dataIndex: 'docs_cnt', sorter: true, width: 100},
             {
                 title: '权限', dataIndex: 'perm', sorter: true, width: 100,
@@ -96,20 +114,24 @@ export default class CDocBase extends Component {
                 render: (value, record) => {
                     const { id, name, member_perm } = record;
                     let items = [];
-                    if (member_perm === 30) {
-                        items = [
-                            {
-                                label: '编辑',
-                                onClick: () => this.setState({ visible: true, id }),
+                    if (member_perm >= 20) {
+                        items.push({
+                            label: '编辑',
+                            onClick: () => this.setState({ visible: true, id }),
+                        })
+                    }
+                    if ((member_perm >= 20 && record.creator && this.state.current_user && this.state.current_user.id === record.creator.id) || member_perm >= 30) {
+                        items.push( {
+                            label: '删除',
+                            color: 'red',
+                            confirm: {
+                                title: `您确定删除"${name}"?`,
+                                onConfirm: () => this.handleDelete(id),
                             },
-                            {
-                                label: '删除',
-                                color: 'red',
-                                confirm: {
-                                    title: `您确定删除"${name}"?`,
-                                    onConfirm: () => this.handleDelete(id),
-                                },
-                            },
+                        })
+                    }
+                    if (member_perm >= 30) {
+                        items.push(
                             {
                                 label: '成员',
                                 color: 'grey',
@@ -123,13 +145,13 @@ export default class CDocBase extends Component {
                                 onClick: () => this.setState({ visibleSetting: true, id }),
                             },
                             {
-                                label: '导出(todo)',
+                                label: '导出',
                                 color: 'grey',
                                 isMore: true,
-                                onClick: () => this.setState({ visibleSetting: true, id }),
+                                onClick: () => this.setState({ visibleExport: true, id }),
                             },
-                        ];
-                        if (!this.props.cooperate) {
+                        );
+                        if (member_perm >= 30 && !this.props.cooperate) {
                             items.push(
                                 {
                                     label: '转让',
@@ -178,6 +200,7 @@ export default class CDocBase extends Component {
     }
 
     componentDidMount() {
+        this.setState({ current_user: getLoginUser() });
         this.handlePermissionTypes();
         this.handleUserOptions();
         this.handleSubmit();
@@ -296,6 +319,10 @@ export default class CDocBase extends Component {
             visibleMember,
             visibleSetting,
             visibleTransfer,
+            visibleImport,
+            visibleExport,
+            perm_options,
+            user_options,
             id,
         } = this.state;
 
@@ -322,7 +349,7 @@ export default class CDocBase extends Component {
                                 type="select"
                                 label="权限"
                                 name="perm"
-                                options={this.state.perm_options}
+                                options={perm_options}
                             />
                             {
                                 personal? null : <FormElement
@@ -331,7 +358,7 @@ export default class CDocBase extends Component {
                                 type="select"
                                 label="用户"
                                 name="creator"
-                                options={this.state.user_options}
+                                options={user_options}
                                     />
                             }
 
@@ -343,11 +370,10 @@ export default class CDocBase extends Component {
                             />
                             <FormElement layout>
                                 <Button type="primary" htmlType="submit">搜索</Button>
-                                <Button onClick={() => this.form.resetFields()}>重置</Button>
+                                <Button onClick={() => {this.form.resetFields(); this.handleSubmit();}}>重置</Button>
                                 {cooperate ? null : <Button type="primary" onClick={() => this.setState({ visible: true, id: null })}>添加</Button>}
                                 {cooperate ? null : <Button danger loading={deleting} disabled={disabledDelete} onClick={this.handleBatchDelete}>删除</Button>}
-                                {cooperate ? null : <Button danger loading={deleting} disabled={disabledDelete} onClick={this.handleBatchDelete}>导入文集(todo)</Button>}
-
+                                {cooperate ? null : <Button type="dashed" onClick={() => this.setState({ visibleImport: true, id: null })}>导入文集</Button>}
                             </FormElement>
                         </FormRow>
                     </Form>
@@ -411,6 +437,20 @@ export default class CDocBase extends Component {
                     id={id}
                     onOk={() => this.setState({ visibleTransfer: false }, () => this.handleSubmit())}
                     onCancel={() => this.setState({ visibleTransfer: false })}
+                    width='60%'
+                />
+                <EditImport
+                    visible={visibleImport}
+                    id={id}
+                    onOk={() => this.setState({ visibleImport: false }, () => this.handleSubmit())}
+                    onCancel={() => this.setState({ visibleImport: false })}
+                    width='60%'
+                />
+                <EditExport
+                    visible={visibleExport}
+                    id={id}
+                    onOk={() => this.setState({ visibleExport: false })}
+                    onCancel={() => this.setState({ visibleExport: false })}
                     width='60%'
                 />
             </PageContent>

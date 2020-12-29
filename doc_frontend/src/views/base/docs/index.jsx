@@ -50,7 +50,12 @@ export default class DocBase extends Component {
             { title: '文档标题', dataIndex: 'title', sorter: true, width: 100 },
             { title: '所属文集', dataIndex: 'c_doc', sorter: true, width: 100,
                 render: (value, record) => {
-                    return value.name;
+                    if (value) {
+                        return value.name;
+                    } else {
+                        return '-'
+                    }
+
                 }
             },
             { title: '上级文档', dataIndex: 'parent_doc', sorter: true, width: 100,
@@ -71,7 +76,7 @@ export default class DocBase extends Component {
                         if (value) {
                             return value.nickname;
                         }
-                        return '';
+                        return '-';
                     }
                 },
             ])
@@ -130,7 +135,6 @@ export default class DocBase extends Component {
             })
     }
 
-    // todo 整理为分页获取选项
     handleUserOptions = () => {
         getUserList({'not_page': true})
             .then(res => {
@@ -314,7 +318,7 @@ export default class DocBase extends Component {
                             />
                             <FormElement layout>
                                 <Button type="primary" htmlType="submit">搜索</Button>
-                                <Button onClick={() => this.form.resetFields()}>重置</Button>
+                                <Button onClick={() => {this.form.resetFields(); this.handleSubmit();}}>重置</Button>
                                 {cooperate ? null : <Button type="primary" onClick={() => this.setState({ visible: true, id: null })}>添加</Button>}
                                 {cooperate ? null :   <Button danger loading={deleting} disabled={disabledDelete} onClick={this.handleBatchDelete}>删除</Button>}
                             </FormElement>

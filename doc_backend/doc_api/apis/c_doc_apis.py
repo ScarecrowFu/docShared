@@ -12,12 +12,13 @@ from doc_api.serializers.c_doc_serializers import CollectedDocTeamListSerializer
 from doc_api.settings.conf import CollectedDocPermissions, CollectedDocMembersPermissions
 from doc_api.filters.c_doc_filters import CollectedDocOrderingFilter, CollectedDocParameterFilter
 from django.db.models import Q
+from doc_api.utils.report_helpers import ReportMD
+from django.conf import settings
 
 
 class CollectedDocViewSet(viewsets.ModelViewSet):
     """
     文集管理
-    todo: 导出/导入
     """
     filter_backends = (CollectedDocOrderingFilter, filters.SearchFilter, CollectedDocParameterFilter)
     search_fields = ('name', )
@@ -65,16 +66,16 @@ class CollectedDocViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         query_params = self.request.query_params
         not_page = query_params.get('not_page', False)
-        personal = query_params.get('personal', '')
-        cooperate = query_params.get('cooperate', '')
-        options = query_params.get('options', '')
+        personal = query_params.get('personal', '')  # 个人中心需由此字段获取仅仅个人的数据
+        cooperate = query_params.get('cooperate', '')  # 协作文集, 即非本人新增，但为成员的文集
+        options = query_params.get('options', '')  # 作为新建文档时的选项返回
         queryset = self.filter_queryset(self.get_queryset())
         if personal.lower() == 'true':
             queryset = queryset.filter(creator=request.user)
         if cooperate.lower() == 'true':
             queryset = queryset.exclude(creator=request.user).\
                 filter(Q(users__user=request.user) | Q(teams__team_group__members=request.user))
-        if options.lower() == 'true' and not request.user.is_admin:
+        if options.lower() == 'true':
             queryset = queryset.filter(Q(users__user=request.user) |
                                        Q(teams__team_group__members=request.user) |
                                        Q(creator=request.user))
@@ -128,12 +129,12 @@ class CollectedDocViewSet(viewsets.ModelViewSet):
 
     @action(methods=['GET', 'POST'], detail=True)
     def export_set(self, request, *args, **kwargs):
+        # 导出设置
         instance = self.get_object()
         c_doc_set = CollectedDocSetting.objects.filter(c_doc=instance).first()
         if request.method == 'GET':
             export_set = []
             if c_doc_set:
-                print(c_doc_set)
                 if c_doc_set.allow_epub: export_set.append('allow_epub')
                 if c_doc_set.allow_pdf: export_set.append('allow_pdf')
                 if c_doc_set.allow_doc: export_set.append('allow_doc')
@@ -152,8 +153,14 @@ class CollectedDocViewSet(viewsets.ModelViewSet):
 
     @action(methods=['POST'], detail=True)
     def export_file(self, request, *args, **kwargs):
-        # todo
-        result = {'success': True, 'messages': f'导出文集:'}
+        instance = self.get_object()
+        doc_status = request.data.get('status', '')
+        export_type = request.data.get('export_type', 'md')
+        doc_status = [int(d_status) for d_status in doc_status.split(',')]
+        report_md = ReportMD(c_doc_id=instance.id, status=doc_status)
+        report_file = report_md.work()
+        report_file = report_file.replace(settings.MEDIA_ROOT, '')
+        result = {'success': True, 'messages': f'导出文集:{instance.__str__()}', 'results': f'media{report_file}'}
         return Response(result, status=status.HTTP_200_OK)
 
     @action(methods=['POST'], detail=True)

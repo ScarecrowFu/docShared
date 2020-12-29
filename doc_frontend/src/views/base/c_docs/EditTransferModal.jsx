@@ -25,7 +25,6 @@ class EditTransferModal extends Component {
         this.handleUserOptions();
     }
 
-    // todo 整理为分页获取选项
     handleUserOptions = () => {
         getUserList({'not_page': true})
             .then(res => {

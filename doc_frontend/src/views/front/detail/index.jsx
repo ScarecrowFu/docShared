@@ -26,7 +26,7 @@ import {
 } from "src/apis/doc";
 import {anonymousRetrieveCDoc, retrieveCDoc} from "src/apis/c_doc"
 import {
-    FieldTimeOutlined, RollbackOutlined, ShareAltOutlined, FileAddOutlined,
+    FieldTimeOutlined, RollbackOutlined, FileAddOutlined,
     EditOutlined, CopyOutlined, HistoryOutlined, ExportOutlined,
     DeleteOutlined, RadiusSettingOutlined, SearchOutlined} from '@ant-design/icons';
 import Footer from "src/layouts/Footer";

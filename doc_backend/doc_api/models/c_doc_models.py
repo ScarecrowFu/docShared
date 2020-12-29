@@ -11,10 +11,6 @@ class CollectedDoc(models.Model):
     # 10表示公开, 20表示访问码可见, 30表示成员可见, 40表示私密，默认公开
     perm = models.IntegerField(default=10, choices=dict_for_model_choices(CollectedDocPermissions),
                                verbose_name='文集权限值')
-    # 当文集权限为10时，记录为空
-    # 当文集权限为20时，记录为空
-    # 当文集权限为30时，记录为空
-    # 当文集权限为40时，记录为访问码
     perm_value = models.TextField(default='', null=True, blank=True, verbose_name='文集权限值')
     creator = models.ForeignKey('User', null=True, blank=True, on_delete=models.SET_NULL, verbose_name='创建者',
                                 related_name='created_c_docs')

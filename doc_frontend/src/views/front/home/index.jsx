@@ -147,8 +147,6 @@ class Home extends Component {
             total,
             pageNum,
             pageSize,
-            // perm_confirm_visible,
-            // click_doc_id,
             perm_options,
             perm_types,
             perm_color,

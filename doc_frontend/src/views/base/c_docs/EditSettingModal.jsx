@@ -130,6 +130,13 @@ class EditSettingModal extends Component {
                     showIcon
                     closable
                 />
+                <Alert
+                    message="Tips"
+                    description="目前仅支持导出markdown格式文件, 其他文件将在后续增加"
+                    type="warning"
+                    showIcon
+                    closable
+                />
             </ModalContent>
         );
     }

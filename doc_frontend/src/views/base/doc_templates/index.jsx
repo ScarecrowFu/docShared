@@ -83,7 +83,6 @@ export default class DocTemplateBase extends Component {
         return columns;
     };
 
-    // todo 整理为分页获取选项
     handleUserOptions = () => {
         getUserList({'not_page': true})
             .then(res => {

@@ -1,5 +1,4 @@
 import React, {Component} from 'react';
-import MDEditor, { commands, ICommand, TextState, TextApi } from '@uiw/react-md-editor';
 import {
     Button,
     notification,
@@ -24,7 +23,7 @@ import {
 import { getCDocList } from 'src/apis/c_doc';
 import {messageDuration} from "src/config/settings"
 import ADDCDocModal from 'src/views/base/c_docs/EditModal'
-import ImageModal from './ImageModal'
+import MarkdownEditor from 'src/components/MarkdownEditor'
 import './style.less';
 
 
@@ -83,11 +82,10 @@ class EditModal extends Component {
     };
 
     handleCDocSelect = (value) => {
-        getDocList({'not_page': true, 'c_doc': value, 'tree': true})
+        getDocList({'not_page': true, 'c_doc': value, 'tree': true, 'status': 20})
             .then(res => {
                 const data = res.data;
                 const doc_options = this.getDocOptions(data.results);
-                console.log('doc_options', doc_options);
                 this.setState({ doc_options: doc_options });
 
             }, error => {
@@ -265,36 +263,12 @@ class EditModal extends Component {
         const formProps = {
             labelWidth: 80,
         };
-        // todo 增加 插入图片与插入附件功能
-        const insertImages: ICommand = {
-            name: '插入图片',
-            keyCommand: 'insertImages',
-            buttonProps: { 'aria-label': 'Insert title3' },
-            icon: (
-                <svg width="12" height="12" viewBox="0 0 20 20">
-                    <path fill="currentColor" d="M15 9c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm4-7H1c-.55 0-1 .45-1 1v14c0 .55.45 1 1 1h18c.55 0 1-.45 1-1V3c0-.55-.45-1-1-1zm-1 13l-6-5-2 2-4-5-4 8V4h16v11z" />
-                </svg>
-            ),
-            execute: (state: TextState, api: TextApi) => {
-                // let modifyText = `### ${state.selectedText}\n`;
-                // if (!state.selectedText) {
-                //     modifyText = `### `;
-                // }
-                // api.replaceSelection(modifyText);
-                this.setState({insertImageVisible: true});
-            },
-        };
-
         const { Text } = Typography;
         return (
             <ModalContent
                 loading={loading}
-                // okText={isEdit ? "修改" : "保存"}
                 cancelText="关 闭"
-                // resetText={isEdit ? null : "重置"}
-                // onOk={() => this.form.submit()}
                 onCancel={onCancel}
-                // onReset={isEdit ? null : () => this.form.resetFields()}
             >
                 <Form
                     ref={form => this.form = form}
@@ -330,20 +304,19 @@ class EditModal extends Component {
                                         {menu}
                                         <Divider style={{ margin: '4px 0' }} />
                                         <div style={{ display: 'flex', flexWrap: 'nowrap', padding: 8 }}>
-                                            <button
-                                                type="text"
+                                            <Button
+                                                type="link"
+                                                size="small"
                                                 style={{ flex: 'none', padding: '8px', display: 'block', cursor: 'pointer' }}
                                                 onClick={() => this.setState({ addCDocVisible: true})}
-
                                             >
                                                 <PlusOutlined /> 新增文集
-                                            </button>
+                                            </Button>
                                         </div>
                                     </div>
                                 )}
                                 onSelect={this.handleCDocSelect}
                             />
-                            {/*<Divider dashed />*/}
 
                             <div styleName='flex-item'>
                                 <Text type="secondary">上级文档:</Text>
@@ -378,7 +351,6 @@ class EditModal extends Component {
                                 onDeselect={this.handleTagsDeselect}
                                 onSelect={this.handleTagsSelect}
                             />
-                            {/*<Divider dashed />*/}
 
                             <div styleName='flex-item'>
                                 <Text type="secondary">文档排序:</Text>
@@ -418,19 +390,9 @@ class EditModal extends Component {
                                 required
                                 noSpace
                             />
-                            <MDEditor
-                                value={this.state.content}
-                                height={650}
-                                commands={[
-                                    commands.bold, commands.italic, commands.strikethrough, commands.hr, commands.title,
-                                    commands.divider, commands.link, commands.quote, commands.code, commands.image,
-                                    commands.unorderedListCommand, commands.orderedListCommand, commands.checkedListCommand,
-                                    commands.codeEdit, commands.codeLive, commands.codePreview, commands.fullscreen,
-                                    // Custom Toolbars here
-                                    insertImages,
-
-                                ]}
-                                onChange={this.handleContentChange}
+                            <MarkdownEditor
+                                content={this.state.content}
+                                handleContentChange={this.handleContentChange}
                             />
                         </div>
                     </div>
@@ -464,13 +426,6 @@ class EditModal extends Component {
                     onCancel={() => this.setState({ addCDocVisible: false })}
                     width='60%'
                 />
-
-                <ImageModal
-                    visible={this.state.insertImageVisible}
-                    onOk={() => this.setState({ insertImageVisible: false })}
-                    onCancel={() => this.setState({ insertImageVisible: false })}
-                />
-
             </ModalContent>
         );
     }
