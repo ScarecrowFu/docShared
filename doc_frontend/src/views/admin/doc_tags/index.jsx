@@ -11,7 +11,7 @@ import DocTagBase from "src/views/base/doc_tags"
 })
 class DocTag extends Component {
     state = {
-        personal: true,  // 是否个人中心
+        personal: false,  // 是否个人中心
     };
     render() {
         const {

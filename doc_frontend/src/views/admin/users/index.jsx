@@ -10,6 +10,7 @@ import Operator from 'src/library/Operator';
 import Pagination from 'src/library/Pagination';
 import batchDeleteConfirm from 'src/components/BatchDeleteConfirm';
 import EditModal from './EditModal';
+import EditPasswordModal from './EditPasswordModal';
 import { getUserList, deleteUser, bulkDeleteUser, activationUser } from 'src/apis/user';
 import { yesOrNoTag } from 'src/utils/tagRender';
 import {getLoginUser} from 'src/utils/userAuth';
@@ -30,6 +31,7 @@ class UserCenter extends Component {
         pageSize: 10,       // 分页每页显示条数
         deleting: false,    // 批量删除中loading
         visible: false,     // 添加、修改弹框
+        resetVisible: false,     // 重置密码
         id: null,           // 需要修改的数据id
         ordering: null,           // 排序
     };
@@ -38,9 +40,9 @@ class UserCenter extends Component {
         { title: '账号', dataIndex: 'username', sorter: true, width: 200 },
         { title: '名称', dataIndex: 'nickname', sorter: true, width: 200 },
         { title: '邮箱', dataIndex: 'email', sorter: true, width: 200 },
-        { title: '电话', dataIndex: 'phone', sorter: true, width: 100 },
+        // { title: '电话', dataIndex: 'phone', sorter: true, width: 100 },
         { title: '性别', dataIndex: 'gender', sorter: true, width: 100 },
-        { title: '职称', dataIndex: 'title', sorter: true, width: 100 },
+        // { title: '职称', dataIndex: 'title', sorter: true, width: 100 },
         {
             title: '管理员', dataIndex: 'is_admin', sorter: true, width: 100,
             render: (value, record)  => {
@@ -75,6 +77,7 @@ class UserCenter extends Component {
                             {
                                 label: '禁用',
                                 color: 'gray',
+                                isMore: true,
                                 confirm: {
                                     title: `您确定禁用"${nickname}"?`,
                                     onConfirm: () => this.handleActivation(id, false),
@@ -87,6 +90,7 @@ class UserCenter extends Component {
                             {
                                 label: '启用',
                                 color: 'blue',
+                                isMore: true,
                                 confirm: {
                                     title: `您确定启用"${nickname}"?`,
                                     onConfirm: () => this.handleActivation(id, true),
@@ -95,6 +99,14 @@ class UserCenter extends Component {
                         )
                     }
                 }
+                items.push(
+                    {
+                        label: '重置密码',
+                        color: 'gray',
+                        isMore: true,
+                        onClick: () => this.setState({ resetVisible: true }),
+                    },
+                )
                 return <Operator items={items}/>;
             },
         },
@@ -217,6 +229,7 @@ class UserCenter extends Component {
             pageNum,
             pageSize,
             visible,
+            resetVisible,
             id,
         } = this.state;
 
@@ -307,6 +320,13 @@ class UserCenter extends Component {
                     isEdit={id !== null}
                     onOk={() => this.setState({ visible: false }, () => this.handleSubmit())}
                     onCancel={() => this.setState({ visible: false })}
+                />
+
+                <EditPasswordModal
+                    visible={resetVisible}
+                    id={id}
+                    onOk={() => this.setState({ resetVisible: false })}
+                    onCancel={() => this.setState({ resetVisible: false })}
                 />
             </PageContent>
         );

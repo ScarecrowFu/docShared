@@ -89,12 +89,20 @@ class PersonalSet extends Component {
                         <Button
                             type="primary"
                             htmlType="submit"
-                        >刷新token(todo)</Button>
+                        >刷新token</Button>
                     </Form.Item>
                     <Alert
                         message="Tips"
                         description="借助Token，你可以无需打开网站，直接通过更加自动化的方式进行文档编写"
                         type="success"
+                        showIcon
+                        closable
+                        width={'80%'}
+                    />
+                    <Alert
+                        message="Tips"
+                        description="刷新Token暂无效, 后续完善"
+                        type="warning"
                         showIcon
                         closable
                         width={'80%'}

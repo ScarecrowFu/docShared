@@ -24,6 +24,21 @@ export default class ModalContent extends Component {
         onCancel: PropTypes.func,       // 取消事件
         resetText: PropTypes.any,       // 重置按钮文案
         onReset: PropTypes.func,        // 表单重置事件
+        otherText1: PropTypes.any,          // 其他按钮文案
+        otherButton1: PropTypes.func,           // 其他事件
+        otherType1: PropTypes.any,      // 其他按钮类型
+        otherText2: PropTypes.any,          // 其他按钮文案
+        otherButton2: PropTypes.func,           // 其他事件
+        otherType2: PropTypes.any,      // 其他按钮类型
+        otherText3: PropTypes.any,          // 其他按钮文案
+        otherButton3: PropTypes.func,           // 其他事件
+        otherType3: PropTypes.any,      // 其他按钮类型
+        otherText4: PropTypes.any,          // 其他按钮文案
+        otherButton4: PropTypes.func,           // 其他事件
+        otherType4: PropTypes.any,      // 其他按钮类型
+        otherText5: PropTypes.any,          // 其他按钮文案
+        otherButton5: PropTypes.func,           // 其他事件
+        otherType5: PropTypes.any,      // 其他按钮类型
 
         style: PropTypes.object,        // 最外层容器样式
         bodyStyle: PropTypes.object,    // 内容容器样式
@@ -96,6 +111,21 @@ export default class ModalContent extends Component {
             onOk,
             onCancel,
             onReset,
+            otherText1,
+            otherButton1,
+            otherType1,
+            otherText2,
+            otherButton2,
+            otherType2,
+            otherText3,
+            otherButton3,
+            otherType3,
+            otherText4,
+            otherButton4,
+            otherType4,
+            otherText5,
+            otherButton5,
+            otherType5,
             children,
             ...others
         } = this.props;
@@ -120,6 +150,11 @@ export default class ModalContent extends Component {
                                 <>
                                     {onOk ? <Button type="primary" onClick={onOk} htmlType={okHtmlType}>{okText}</Button>: null}
                                     {onReset ? <Button onClick={onReset}>{resetText}</Button> : null}
+                                    {otherButton1 ? <Button type={otherType1} onClick={otherButton1}>{otherText1}</Button> : null}
+                                    {otherButton2 ? <Button type={otherType2} onClick={otherButton2}>{otherText2}</Button> : null}
+                                    {otherButton3 ? <Button type={otherType3} onClick={otherButton3}>{otherText3}</Button> : null}
+                                    {otherButton4 ? <Button type={otherType4} onClick={otherButton4}>{otherText4}</Button> : null}
+                                    {otherButton5 ? <Button type={otherType5} onClick={otherButton5}>{otherText5}</Button> : null}
                                     {onCancel ? <Button onClick={onCancel}>{cancelText}</Button> : null}
                                 </>
                             )}

@@ -11,7 +11,7 @@ import DocTemplateBase from "../../base/doc_templates"
 })
 class DocTemplate extends Component {
     state = {
-        personal: true,  // 是否个人中心
+        personal: false,  // 是否个人中心
     };
     render() {
         const {

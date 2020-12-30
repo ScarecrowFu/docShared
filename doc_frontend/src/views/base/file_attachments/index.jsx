@@ -295,7 +295,7 @@ export default class FileAttachmentBase extends Component {
                             />
                             <FormElement layout>
                                 <Button type="primary" htmlType="submit">搜索</Button>
-                                <Button onClick={() => this.form.resetFields()}>重置</Button>
+                                <Button onClick={() => {this.form.resetFields(); this.handleSubmit();}}>重置</Button>
                                 <Button type="primary"  onClick={() => this.setState({ visible: true })} icon={<UploadOutlined />}>上传附件</Button>
                                 <Button danger loading={deleting} disabled={disabledDelete} onClick={this.handleBatchDelete}>删除</Button>
                                 <Button type="dashed" onClick={() => this.setState({ addGroupVisible: true })}>添加分组</Button>

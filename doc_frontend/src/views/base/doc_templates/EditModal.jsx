@@ -5,8 +5,8 @@ import config from 'src/utils/Hoc/configHoc';
 import ModalContent from 'src/library/ModalHoc/ModalContent';
 import { createDocTemplate, retrieveDocTemplate, updateDocTemplate, getDocTemplateList } from 'src/apis/doc';
 import {messageDuration} from "src/config/settings"
-import MDEditor, {commands} from "@uiw/react-md-editor"
-import {ImportOutlined} from "@ant-design/icons"
+import {ImportOutlined} from "@ant-design/icons";
+import MarkdownEditor from 'src/components/MarkdownEditor'
 import './style.less'
 
 
@@ -162,19 +162,9 @@ class EditModal extends Component {
                             />
                         </div>
                     </div>
-                    <MDEditor
-                        id="content"
-                        name="content"
-                        value={this.state.content}
-                        height={650}
-                        commands={[
-                            commands.bold, commands.italic, commands.strikethrough, commands.hr, commands.title,
-                            commands.divider, commands.link, commands.quote, commands.code, commands.image,
-                            commands.unorderedListCommand, commands.orderedListCommand, commands.checkedListCommand,
-                            commands.codeEdit, commands.codeLive, commands.codePreview, commands.fullscreen,
-                            // Custom Toolbars
-                        ]}
-                        onChange={this.handleContentChange}
+                    <MarkdownEditor
+                        content={this.state.content}
+                        handleContentChange={this.handleContentChange}
                     />
                 </Form>
                 <Modal

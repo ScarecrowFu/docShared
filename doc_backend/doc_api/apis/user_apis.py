@@ -8,6 +8,7 @@ from doc_api.serializers.team_serializers import TeamGroupDetailSerializer, Team
     TeamGroupListSerializer
 from doc_api.filters.user_filters import UserParameterFilter
 from doc_api.utils.auth_helpers import get_jwt_token
+from rest_framework_jwt.views import refresh_jwt_token
 
 
 class UserViewSet(viewsets.ModelViewSet):

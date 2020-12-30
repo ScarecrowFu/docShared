@@ -81,6 +81,21 @@ export function getDocToc(instance_id) {
   });
 }
 
+export function getDocHistory(instance_id) {
+  return request({
+    url: `/api/docs/${instance_id}/history_list/`,
+    method: "get",
+  });
+}
+
+export function getDocHistoryDetail(instance_id, params) {
+  return request({
+    url: `/api/docs/${instance_id}/history_detail/`,
+    method: "get",
+    params
+  });
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 

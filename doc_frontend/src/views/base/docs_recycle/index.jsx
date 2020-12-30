@@ -49,7 +49,10 @@ export default class DocRecycleBase extends Component {
             { title: '文档标题', dataIndex: 'title', sorter: true, width: 100 },
             { title: '所属文集', dataIndex: 'c_doc', sorter: true, width: 100,
                 render: (value, record) => {
-                    return value.name;
+                    if (value) {
+                        return value.name;
+                    }
+                    return '-'
                 }
             },
             { title: '上级文档', dataIndex: 'parent_doc', sorter: true, width: 100,
@@ -298,7 +301,7 @@ export default class DocRecycleBase extends Component {
                             />
                             <FormElement layout>
                                 <Button type="primary" htmlType="submit">搜索</Button>
-                                <Button onClick={() => this.form.resetFields()}>重置</Button>
+                                <Button onClick={() => {this.form.resetFields(); this.handleSubmit();}}>重置</Button>
                                 <Button danger loading={deleting} disabled={disabledDelete} onClick={this.handleBatchRecover}>还原</Button>
                             </FormElement>
                         </FormRow>

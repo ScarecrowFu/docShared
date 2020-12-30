@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from doc_api.models import Doc, DocTag, DocTemplate
+from doc_api.models import Doc, DocTag, DocTemplate, DocHistory
 from doc_api.serializers.user_serializers import UserBaseSerializer
 from doc_api.serializers.c_doc_serializers import CollectedDocBaseSerializer
 from doc_api.utils.base_helpers import md_to_text
@@ -98,6 +98,16 @@ class DocBaseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Doc
         fields = ('id', 'title')
+
+
+class DocHistorySerializer(serializers.ModelSerializer):
+    doc = DocBaseSerializer(read_only=True)
+    creator = UserBaseSerializer(read_only=True)
+    created_time = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S', read_only=True)
+
+    class Meta:
+        model = DocHistory
+        fields = ('id', 'created_time', 'creator', 'doc')
 
 
 class DocDetailSerializer(serializers.ModelSerializer):

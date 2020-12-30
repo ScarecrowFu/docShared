@@ -67,6 +67,9 @@ class FileGroupViewSet(viewsets.ModelViewSet):
         query_params = self.request.query_params
         not_page = query_params.get('not_page', False)
         queryset = self.filter_queryset(self.get_queryset())
+        personal = query_params.get('personal', '')
+        if personal.lower() == 'true':
+            queryset = queryset.filter(creator=request.user)
         if not_page and not_page.lower() != 'false':
             serializer = self.get_serializer(queryset, many=True)
             result = {'success': True, 'messages': '获取素材分组不分页数据!',
@@ -133,7 +136,6 @@ class FileAttachmentViewSet(viewsets.ModelViewSet):
         file_md5 = request.data.get('file_md5', None)  # 完整文件的文件md5,用于确定文件合并后是否正确
         group_id = request.data.get('group', None)
         file_type = request.data.get('file_type', None)
-        print(request.data)
         if not chunk_file or not chunk_index or not chunks_num or not file_name:
             result = {'success': False,
                       'messages': '上传失败, 缺少指定参数值: chunk_file/chunk_index/chunks_num/file_name'}
@@ -233,6 +235,9 @@ class FileAttachmentViewSet(viewsets.ModelViewSet):
         query_params = self.request.query_params
         not_page = query_params.get('not_page', False)
         queryset = self.filter_queryset(self.get_queryset())
+        personal = query_params.get('personal', '')
+        if personal.lower() == 'true':
+            queryset = queryset.filter(creator=request.user)
         if not_page and not_page.lower() != 'false':
             serializer = self.get_serializer(queryset, many=True)
             result = {'success': True, 'messages': '获取素材不分页数据!',

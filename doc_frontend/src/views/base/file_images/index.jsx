@@ -367,7 +367,7 @@ export default class FileImagesBase extends Component {
                             />
                             <FormElement layout>
                                 <Button type="primary" htmlType="submit">搜索</Button>
-                                <Button onClick={() => this.form.resetFields()}>重置</Button>
+                                <Button onClick={() => {this.form.resetFields(); this.handleSubmit();}}>重置</Button>
                                 <Upload
                                     fileList={[]}
                                     customRequest={this.handleImgUpload}

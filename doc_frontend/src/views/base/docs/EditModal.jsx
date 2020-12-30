@@ -4,11 +4,10 @@ import {
     notification,
     Tooltip,
     Divider,
-    Typography,
     Form,
     Modal
 } from 'antd';
-import { ImportOutlined, PlusOutlined } from '@ant-design/icons';
+import { ImportOutlined, PlusOutlined, HistoryOutlined } from '@ant-design/icons';
 import FormElement from 'src/library/FormElement';
 import config from 'src/utils/Hoc/configHoc';
 import ModalContent from 'src/library/ModalHoc/ModalContent';
@@ -25,6 +24,8 @@ import {messageDuration} from "src/config/settings"
 import ADDCDocModal from 'src/views/base/c_docs/EditModal'
 import MarkdownEditor from 'src/components/MarkdownEditor'
 import './style.less';
+import FormRow from "src/library/FormRow"
+import EditHistory from './EditHistory'
 
 
 @config({
@@ -38,6 +39,7 @@ class EditModal extends Component {
         loading: false, // 页面加载loading
         data: {},       // 回显数据
         importTemplateVisible: false,  // 导入模板
+        HistoryVisible: false,  // 历史记录
         insertImageVisible: false,  // 插入图片
         addCDocVisible: false,  // 新增文集
         template_options: [],  // 模板选项
@@ -45,6 +47,7 @@ class EditModal extends Component {
         c_doc_options: [],       // 文集数据
         doc_options: [],       // 上级文档
         status: 10, // 文档状态
+        is_publish: false, // 是否发表
         content: '',  // 内容
     };
 
@@ -158,12 +161,14 @@ class EditModal extends Component {
                 this.setState({data: data.results});
                 let formData = {
                     'id': data.results.id,
-                    'c_doc': data.results.c_doc.id,
+                    'c_doc': data.results.c_doc? data.results.c_doc.id: null,
                     'title': data.results.title,
                     'sort': data.results.sort,
                 }
-                if (data.results.parent_doc) {
+                if (data.results.c_doc){
                     this.handleCDocSelect(data.results.c_doc.id);
+                }
+                if (data.results.parent_doc) {
                     formData.parent_doc = data.results.parent_doc.id;
                 }
                 if (data.results.tags) {
@@ -176,6 +181,11 @@ class EditModal extends Component {
                 this.form.setFieldsValue(formData);
                 this.setState({content: data.results.content});
                 this.setState({status: data.results.status});
+                console.log(data.results.status)
+                if (data.results.status === 20) {
+                    this.setState({is_publish: true});
+                }
+
             }, error => {
                 console.log(error.response);
             })
@@ -242,13 +252,15 @@ class EditModal extends Component {
     };
 
     handleDraftSubmit = () => {
-        console.log('handleDraftSubmit');
-        this.setState({ status: 10 });
+        this.setState({ status: 10 }, function () {
+            this.form.submit()
+        });
     };
 
     handlePublicSubmit = () => {
-        console.log('handlePublicSubmit');
-        this.setState({ status: 20 });
+        this.setState({ status: 20 }, function () {
+            this.form.submit()
+        });
     };
 
     handleContentChange = (values) => {
@@ -258,144 +270,113 @@ class EditModal extends Component {
 
 
     render() {
-        const {isEdit, onCancel} = this.props;
-        const {loading, doc_options } = this.state;
+        const {isEdit, onCancel, id} = this.props;
+        const {loading, doc_options, is_publish } = this.state;
         const formProps = {
             labelWidth: 80,
         };
-        const { Text } = Typography;
         return (
             <ModalContent
                 loading={loading}
                 cancelText="关 闭"
                 onCancel={onCancel}
+                otherText1={!is_publish? "草稿" : "撤回"}
+                otherType1={!is_publish? "primary" : "dashed"}
+                otherButton1={() => this.handleDraftSubmit()}
+                otherText2={!is_publish? "发表" : "修改"}
+                otherType2={!is_publish? "primary" : "primary"}
+                otherButton2={() => this.handlePublicSubmit()}
             >
                 <Form
                     ref={form => this.form = form}
                     onFinish={this.handleSubmit}
                 >
                     {isEdit ? <FormElement {...formProps} type="hidden" name="id"/> : null}
-                    <div styleName="flex-container">
-                        <div styleName="flex-item-left">
-                            <div styleName='flex-item'>
-                                <Text type="secondary">导入模板:</Text>
-                            </div>
+                    <FormRow>
+                        <div style={{"marginLeft": "50px"}}>
                             <Tooltip title="导入模板">
                                 <Button type="primary" shape="circle" icon={<ImportOutlined />} onClick={() => this.setState({ importTemplateVisible: true})} />
                             </Tooltip>
-                            <Divider dashed />
+                            <Tooltip title="历史记录">
+                                <Button type="primary" shape="circle" icon={<HistoryOutlined />} onClick={() => this.setState({ HistoryVisible: true})} />
+                            </Tooltip>
+                        </div>
 
-                            <div styleName='flex-item'>
-                                <Text type="secondary"><span style={{ color: 'red' }}>*</span>选择文集:</Text>
-                            </div>
-                            <FormElement
-                                showSearch
-                                type="select"
-                                styleName='flex-item'
-                                placeholder="选择文集"
-                                label="文集"
-                                showLabel={false}
-                                name="c_doc"
-                                options={this.state.c_doc_options}
-                                required
-                                width={'90%'}
-                                dropdownRender={menu => (
-                                    <div>
-                                        {menu}
-                                        <Divider style={{ margin: '4px 0' }} />
-                                        <div style={{ display: 'flex', flexWrap: 'nowrap', padding: 8 }}>
-                                            <Button
-                                                type="link"
-                                                size="small"
-                                                style={{ flex: 'none', padding: '8px', display: 'block', cursor: 'pointer' }}
-                                                onClick={() => this.setState({ addCDocVisible: true})}
-                                            >
-                                                <PlusOutlined /> 新增文集
-                                            </Button>
-                                        </div>
+                        <FormElement
+                            {...formProps}
+                            showSearch
+                            type="select"
+                            placeholder="选择文集"
+                            label="文集"
+                            name="c_doc"
+                            options={this.state.c_doc_options}
+                            required
+                            dropdownRender={menu => (
+                                <div>
+                                    {menu}
+                                    <Divider style={{ margin: '4px 0' }} />
+                                    <div style={{ display: 'flex', flexWrap: 'nowrap', padding: 8 }}>
+                                        <Button
+                                            type="link"
+                                            size="small"
+                                            style={{ flex: 'none', padding: '8px', display: 'block', cursor: 'pointer' }}
+                                            onClick={() => this.setState({ addCDocVisible: true})}
+                                        >
+                                            <PlusOutlined /> 新增文集
+                                        </Button>
                                     </div>
-                                )}
-                                onSelect={this.handleCDocSelect}
-                            />
+                                </div>
+                            )}
+                            onSelect={this.handleCDocSelect}
+                        />
+                        <FormElement
+                            {...formProps}
+                            showSearch
+                            type="select-tree"
+                            placeholder="上级文档"
+                            label="上级文档"
+                            name="parent_doc"
+                            dropdownStyle={{ maxHeight: 400, overflow: 'auto' }}
+                            allowClear
+                            treeDefaultExpandAll
+                            options={doc_options}
+                        />
+                        <FormElement
+                            {...formProps}
+                            showSearch
+                            type="select"
+                            placeholder="文档标签"
+                            label="标签"
+                            name="tags"
+                            mode="tags"
+                            options={this.state.tags_options}
+                            onChange={this.handleTagsChange}
+                            onDeselect={this.handleTagsDeselect}
+                            onSelect={this.handleTagsSelect}
+                        />
+                        <FormElement
+                            {...formProps}
+                            type="number"
+                            placeholder="文档排序值, 默认为99"
+                            label="排序"
+                            name="sort"
+                        />
+                    </FormRow>
 
-                            <div styleName='flex-item'>
-                                <Text type="secondary">上级文档:</Text>
-                            </div>
-                            <FormElement
-                                showSearch
-                                type="select-tree"
-                                styleName='flex-item'
-                                placeholder="上级文档"
-                                label="上级文档"
-                                showLabel={false}
-                                name="parent_doc"
-                                dropdownStyle={{ maxHeight: 400, overflow: 'auto' }}
-                                allowClear
-                                treeDefaultExpandAll
-                                options={doc_options}
-                            />
+                    <FormRow>
+                        <FormElement
+                            {...formProps}
+                            label="标题"
+                            name="title"
+                            required
+                            noSpace
+                        />
+                    </FormRow>
 
-                            <div styleName='flex-item'>
-                                <Text type="secondary">文档标签:</Text>
-                            </div>
-                            <FormElement
-                                showSearch
-                                type="select"
-                                styleName='flex-item'
-                                placeholder="文档标签"
-                                name="tags"
-                                mode="tags"
-                                width={'90%'}
-                                options={this.state.tags_options}
-                                onChange={this.handleTagsChange}
-                                onDeselect={this.handleTagsDeselect}
-                                onSelect={this.handleTagsSelect}
-                            />
-
-                            <div styleName='flex-item'>
-                                <Text type="secondary">文档排序:</Text>
-                            </div>
-                            <FormElement
-                                type="number"
-                                styleName='flex-item'
-                                placeholder="文档排序值, 默认为99"
-                                name="sort"
-                                width={'90%'}
-                            />
-                            <Divider dashed />
-                            {isEdit ?
-                                (this.state.status === 10
-                                        ? <Button styleName="form-button" htmlType="submit" onClick={this.handleDraftSubmit}>保存</Button>
-                                        : null
-                                )
-                                :
-                                <Button styleName="form-button" htmlType="submit" onClick={this.handleDraftSubmit}>保存</Button>
-                            }
-                            {isEdit?
-                                (this.state.status === 20
-                                        ? <Button styleName="form-button" htmlType="submit"  type="primary" onClick={this.handlePublicSubmit}>修改</Button>
-                                        : <Button styleName="form-button" htmlType="submit"  type="primary" onClick={this.handlePublicSubmit}>发表</Button>
-                                )
-                                :
-                                <Button styleName="form-button" htmlType="submit"  type="primary" onClick={this.handlePublicSubmit}>发表</Button>
-                            }
-
-
-                        </div>
-                        <div styleName="flex-item-right">
-                            <FormElement
-                                {...formProps}
-                                label="标题"
-                                name="title"
-                                required
-                                noSpace
-                            />
-                            <MarkdownEditor
-                                content={this.state.content}
-                                handleContentChange={this.handleContentChange}
-                            />
-                        </div>
-                    </div>
+                    <MarkdownEditor
+                        content={this.state.content}
+                        handleContentChange={this.handleContentChange}
+                    />
                 </Form>
 
                 <Modal
@@ -424,6 +405,14 @@ class EditModal extends Component {
                     handleCreatedCDoc={this.handleCreatedCDoc}
                     onOk={() => this.setState({ addCDocVisible: false }, () => this.handleCDocOptions())}
                     onCancel={() => this.setState({ addCDocVisible: false })}
+                    width='60%'
+                />
+
+                <EditHistory
+                    visible={this.state.HistoryVisible}
+                    id={id}
+                    onOk={() => this.setState({ HistoryVisible: false })}
+                    onCancel={() => this.setState({ HistoryVisible: false })}
                     width='60%'
                 />
             </ModalContent>

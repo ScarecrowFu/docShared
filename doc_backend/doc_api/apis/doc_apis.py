@@ -2,11 +2,11 @@ from rest_framework import viewsets, mixins, filters, status
 from rest_framework import permissions
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from doc_api.models import Doc, DocTemplate, DocTag
+from doc_api.models import Doc, DocTemplate, DocTag, DocHistory
 from doc_api.serializers.doc_serializers import DocListSerializer, DocDetailSerializer, DocActionSerializer
 from doc_api.serializers.doc_serializers import DocTagListSerializer, DocTagDetailSerializer, DocTagActionSerializer
 from doc_api.serializers.doc_serializers import DocTemplateListSerializer, DocTemplateDetailSerializer, \
-    DocTemplateActionSerializer
+    DocTemplateActionSerializer, DocHistorySerializer
 from doc_api.settings.conf import DocStatus
 from doc_api.filters.doc_filters import DocParameterFilter, DocTagParameterFilter, DocTemplateParameterFilter
 from django.db.models import Q
@@ -31,6 +31,9 @@ class DocViewSet(viewsets.ModelViewSet):
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         instance = Doc.objects.get(pk=int(serializer.data['id']))
+        # 保存最新一次记录
+        instance.pre_content = instance.content
+        instance.save()
         # todo 记录操作日志
         result = {'success': True, 'messages': f'新增文档:{instance.__str__()}',
                   'results': serializer.data}
@@ -45,13 +48,22 @@ class DocViewSet(viewsets.ModelViewSet):
 
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
+        parent_doc_id = request.data.get('parent_doc', None)
         instance = self.get_object()
         old_instance = self.get_object()
+        if parent_doc_id and int(parent_doc_id) == instance.id:
+            result = {'success': False, 'messages': f'上级文档不能为当前文档自身!'}
+            return Response(result, status=status.HTTP_400_BAD_REQUEST)
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
         if getattr(instance, '_prefetched_objects_cache', None):
             instance._prefetched_objects_cache = {}
+        # 保存最新一次记录
+        instance.pre_content = old_instance.content
+        instance.save()
+        # 历史记录
+        DocHistory.objects.create(doc=instance, content=instance.pre_content, creator=request.user)
         # todo 记录操作日志
         result = {'success': True, 'messages': f'修改文档:{instance.__str__()}!',
                   'results': serializer.data}
@@ -73,7 +85,7 @@ class DocViewSet(viewsets.ModelViewSet):
         if personal.lower() == 'true':
             queryset = queryset.filter(creator=request.user)
         if cooperate.lower() == 'true':
-            queryset = queryset.exclude(creator=request.user).\
+            queryset = queryset.exclude(creator=request.user). \
                 filter(Q(c_doc__users__user=request.user) | Q(c_doc__teams__team_group__members=request.user))
         queryset = queryset.distinct()
         if not_page and not_page.lower() != 'false':
@@ -152,11 +164,36 @@ class DocViewSet(viewsets.ModelViewSet):
         result = {'success': True, 'messages': f'获取当前文档:{instance.title}的目录信息', 'results': toc}
         return Response(result, status=status.HTTP_200_OK)
 
+    @action(methods=['GET'], detail=True)
+    def history_list(self, request, *args, **kwargs):
+        instance = self.get_object()
+        history_docs = DocHistory.objects.filter(doc=instance).order_by('-created_time').all()
+        serializer = self.get_serializer(history_docs, many=True)
+        result = {'success': True, 'messages': '获取文档历史记录不分页数据!',
+                  'results': serializer.data}
+        return Response(result, status=status.HTTP_200_OK)
+
+    @action(methods=['GET'], detail=True)
+    def history_detail(self, request, *args, **kwargs):
+        instance = self.get_object()
+        query_params = self.request.query_params
+        history_id = query_params.get('history_id', '')
+        history_doc = DocHistory.objects.get(pk=int(history_id))
+
+        result = {'success': True, 'messages': '获取文档历史揭露不分页数据!',
+                  'results': {
+                      'current_content': instance.content,
+                      'content': history_doc.content}
+                  }
+        return Response(result, status=status.HTTP_200_OK)
+
     def get_serializer_class(self):
         if self.action == 'list':
             return DocListSerializer
         elif self.action == 'retrieve':
             return DocDetailSerializer
+        elif self.action == 'history_list':
+            return DocHistorySerializer
         return DocActionSerializer
 
 
@@ -213,7 +250,7 @@ class DocTemplateViewSet(viewsets.ModelViewSet):
         options = query_params.get('options', '')
         if personal.lower() == 'true':
             queryset = queryset.filter(creator=request.user)
-        if options.lower() == 'true' and not request.user.is_admin:
+        if options.lower() == 'true':
             queryset = queryset.filter(creator=request.user)
         if not_page and not_page.lower() != 'false':
             serializer = self.get_serializer(queryset, many=True)
@@ -318,7 +355,7 @@ class DocTagViewSet(viewsets.ModelViewSet):
         options = query_params.get('options', '')
         if personal.lower() == 'true':
             queryset = queryset.filter(creator=request.user)
-        if options.lower() == 'true' and not request.user.is_admin:
+        if options.lower() == 'true':
             queryset = queryset.filter(creator=request.user)
         if not_page and not_page.lower() != 'false':
             serializer = self.get_serializer(queryset, many=True)
