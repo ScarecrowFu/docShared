@@ -16,6 +16,8 @@ import shutil
 from doc_api.utils.base_helpers import check_md5_sum, create_or_get_directory
 from doc_api.settings.conf import FileType
 import time
+from doc_api.settings.conf import CreateAction, UpdateAction, DeleteAction, UploadAction
+from doc_api.utils.action_log_helpers import action_log
 
 
 class FileGroupViewSet(viewsets.ModelViewSet):
@@ -33,7 +35,8 @@ class FileGroupViewSet(viewsets.ModelViewSet):
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         instance = FileGroup.objects.get(pk=int(serializer.data['id']))
-        # todo 记录操作日志
+        action_log(request=request, user=request.user, action_type=CreateAction, old_instance=None,
+                   instance=instance, action_info=f'新增素材分组:{instance.__str__()}')
         result = {'success': True, 'messages': f'新增素材分组:{instance.__str__()}',
                   'results': serializer.data}
         return Response(result, status=status.HTTP_200_OK, headers=headers)
@@ -41,7 +44,7 @@ class FileGroupViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = self.get_serializer(instance)
-        result = {'success': True, 'messages': f'获取素材分组信息:{instance.__str__()}!',
+        result = {'success': True, 'messages': f'获取素材分组信息:{instance.__str__()}',
                   'results': serializer.data}
         return Response(result, status=status.HTTP_200_OK)
 
@@ -54,8 +57,9 @@ class FileGroupViewSet(viewsets.ModelViewSet):
         self.perform_update(serializer)
         if getattr(instance, '_prefetched_objects_cache', None):
             instance._prefetched_objects_cache = {}
-        # todo 记录操作日志
-        result = {'success': True, 'messages': f'修改素材分组:{instance.__str__()}!',
+        action_log(request=request, user=request.user, action_type=UpdateAction, old_instance=old_instance,
+                   instance=instance, action_info=f'修改素材分组:{instance.__str__()}')
+        result = {'success': True, 'messages': f'修改素材分组:{instance.__str__()}',
                   'results': serializer.data}
         return Response(result, status=status.HTTP_200_OK)
 
@@ -72,7 +76,7 @@ class FileGroupViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(creator=request.user)
         if not_page and not_page.lower() != 'false':
             serializer = self.get_serializer(queryset, many=True)
-            result = {'success': True, 'messages': '获取素材分组不分页数据!',
+            result = {'success': True, 'messages': '获取素材分组不分页数据',
                       'results': serializer.data}
             return Response(result, status=status.HTTP_200_OK)
         else:
@@ -81,14 +85,15 @@ class FileGroupViewSet(viewsets.ModelViewSet):
                 serializer = self.get_serializer(page, many=True)
                 return self.get_paginated_response(serializer.data)
             serializer = self.get_serializer(queryset, many=True)
-            result = {'success': True, 'messages': '获取素材分组不分页数据!',
+            result = {'success': True, 'messages': '获取素材分组不分页数据',
                       'results': serializer.data}
             return Response(result, status=status.HTTP_200_OK)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
-        # todo 记录操作日志
+        action_log(request=request, user=request.user, action_type=DeleteAction, old_instance=None,
+                   instance=instance, action_info=f'删除素材分组:{instance.__str__()}')
         result = {'success': True, 'messages': f'删除素材分组:{instance.__str__()}'}
         return Response(result, status=status.HTTP_200_OK)
 
@@ -103,7 +108,8 @@ class FileGroupViewSet(viewsets.ModelViewSet):
             deleted_objects_names.append(instance.__str__())
         deleted_objects = queryset.filter(id__in=deleted_objects_ids).all()
         deleted_objects.delete()
-        # todo 记录操作日志
+        action_log(request=request, user=request.user, action_type=DeleteAction, old_instance=None,
+                   instance=None, action_info=f'批量删除素材分组:{deleted_objects_names}')
         result = {'success': True, 'messages': f'批量删除素材分组:{deleted_objects_names}'}
         return Response(result, status=status.HTTP_200_OK)
 
@@ -191,17 +197,18 @@ class FileAttachmentViewSet(viewsets.ModelViewSet):
                                                            file_size=os.path.getsize(save_file_path),
                                                            file_type=file_type, creator=request.user)
                 shutil.rmtree(base_chunk_path)
-                # todo 记录操作日志
+                action_log(request=request, user=request.user, action_type=UploadAction, old_instance=None,
+                           instance=attachment, action_info=f'上传素材:{attachment.__str__()}')
                 serializer = self.get_serializer(attachment)
                 results = serializer.data
                 results['uploaded'] = True
                 result = {'success': True, 'messages': f'新增素材:{attachment.__str__()}', 'results': results}
                 return Response(result, status=status.HTTP_200_OK)
             else:
-                result = {'success': False, 'messages': '合并文件失败, 请重新上传!'}
+                result = {'success': False, 'messages': '合并文件失败, 请重新上传'}
                 return Response(result, status=status.HTTP_400_BAD_REQUEST)
         else:
-            result = {'success': True, 'messages': f'成功上传文件:{file_name}, 分块:{chunk_index}!',
+            result = {'success': True, 'messages': f'成功上传文件:{file_name}, 分块:{chunk_index}',
                       'results': {'uploaded': False, 'chunk_index': chunk_index, 'file_name': file_name, }
                       }
             return Response(result, status=status.HTTP_200_OK)
@@ -209,7 +216,7 @@ class FileAttachmentViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = self.get_serializer(instance)
-        result = {'success': True, 'messages': f'获取素材信息:{instance.__str__()}!',
+        result = {'success': True, 'messages': f'获取素材信息:{instance.__str__()}',
                   'results': serializer.data}
         return Response(result, status=status.HTTP_200_OK)
 
@@ -222,8 +229,9 @@ class FileAttachmentViewSet(viewsets.ModelViewSet):
         self.perform_update(serializer)
         if getattr(instance, '_prefetched_objects_cache', None):
             instance._prefetched_objects_cache = {}
-        # todo 记录操作日志
-        result = {'success': True, 'messages': f'修改素材:{instance.__str__()}!',
+        action_log(request=request, user=request.user, action_type=UpdateAction, old_instance=old_instance,
+                   instance=instance, action_info=f'修改素材:{instance.__str__()}')
+        result = {'success': True, 'messages': f'修改素材:{instance.__str__()}',
                   'results': serializer.data}
         return Response(result, status=status.HTTP_200_OK)
 
@@ -240,7 +248,7 @@ class FileAttachmentViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(creator=request.user)
         if not_page and not_page.lower() != 'false':
             serializer = self.get_serializer(queryset, many=True)
-            result = {'success': True, 'messages': '获取素材不分页数据!',
+            result = {'success': True, 'messages': '获取素材不分页数据',
                       'results': serializer.data}
             return Response(result, status=status.HTTP_200_OK)
         else:
@@ -249,7 +257,7 @@ class FileAttachmentViewSet(viewsets.ModelViewSet):
                 serializer = self.get_serializer(page, many=True)
                 return self.get_paginated_response(serializer.data)
             serializer = self.get_serializer(queryset, many=True)
-            result = {'success': True, 'messages': '获取素材不分页数据!',
+            result = {'success': True, 'messages': '获取素材不分页数据',
                       'results': serializer.data}
             return Response(result, status=status.HTTP_200_OK)
 
@@ -262,7 +270,8 @@ class FileAttachmentViewSet(viewsets.ModelViewSet):
         except:
             pass
         self.perform_destroy(instance)
-        # todo 记录操作日志
+        action_log(request=request, user=request.user, action_type=DeleteAction, old_instance=None,
+                   instance=instance, action_info=f'删除素材:{instance.__str__()}')
         result = {'success': True, 'messages': f'删除素材:{instance.__str__()}'}
         return Response(result, status=status.HTTP_200_OK)
 
@@ -284,7 +293,8 @@ class FileAttachmentViewSet(viewsets.ModelViewSet):
             deleted_objects_names.append(instance.__str__())
         deleted_objects = queryset.filter(id__in=deleted_objects_ids).all()
         deleted_objects.delete()
-        # todo 记录操作日志
+        action_log(request=request, user=request.user, action_type=DeleteAction, old_instance=None,
+                   instance=None, action_info=f'批量删除素材:{deleted_objects_names}')
         result = {'success': True, 'messages': f'批量删除素材:{deleted_objects_names}'}
         return Response(result, status=status.HTTP_200_OK)
 

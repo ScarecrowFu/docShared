@@ -9,6 +9,8 @@ from doc_api.serializers.team_serializers import TeamGroupDetailSerializer, Team
 from doc_api.filters.user_filters import UserParameterFilter
 from doc_api.utils.auth_helpers import get_jwt_token
 from rest_framework_jwt.views import refresh_jwt_token
+from doc_api.settings.conf import CreateAction, UpdateAction, DeleteAction, ActiveAction, DisableAction
+from doc_api.utils.action_log_helpers import action_log
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -30,7 +32,8 @@ class UserViewSet(viewsets.ModelViewSet):
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         instance = User.objects.get(pk=int(serializer.data['id']))
-        # todo 记录操作日志
+        action_log(request=request, user=request.user, action_type=CreateAction, old_instance=None,
+                   instance=instance, action_info=f'新增用户:{instance.__str__()}')
         result = {'success': True, 'messages': f'新增用户:{instance.__str__()}',
                   'results': serializer.data}
         return Response(result, status=status.HTTP_200_OK, headers=headers)
@@ -38,7 +41,7 @@ class UserViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = self.get_serializer(instance)
-        result = {'success': True, 'messages': f'获取用户信息:{instance.__str__()}!',
+        result = {'success': True, 'messages': f'获取用户信息:{instance.__str__()}',
                   'results': serializer.data}
         return Response(result, status=status.HTTP_200_OK)
 
@@ -51,8 +54,9 @@ class UserViewSet(viewsets.ModelViewSet):
         self.perform_update(serializer)
         if getattr(instance, '_prefetched_objects_cache', None):
             instance._prefetched_objects_cache = {}
-        # todo 记录操作日志
-        result = {'success': True, 'messages': f'修改用户:{instance.__str__()}!',
+        action_log(request=request, user=request.user, action_type=UpdateAction, old_instance=old_instance,
+                   instance=instance, action_info=f'修改用户:{instance.__str__()}')
+        result = {'success': True, 'messages': f'修改用户:{instance.__str__()}',
                   'results': serializer.data}
         return Response(result, status=status.HTTP_200_OK)
 
@@ -67,7 +71,7 @@ class UserViewSet(viewsets.ModelViewSet):
         queryset = queryset.distinct()
         if not_page and not_page.lower() != 'false':
             serializer = self.get_serializer(queryset, many=True)
-            result = {'success': True, 'messages': '获取用户不分页数据!',
+            result = {'success': True, 'messages': '获取用户不分页数据',
                       'results': serializer.data}
             return Response(result, status=status.HTTP_200_OK)
         else:
@@ -76,7 +80,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 serializer = self.get_serializer(page, many=True)
                 return self.get_paginated_response(serializer.data)
             serializer = self.get_serializer(queryset, many=True)
-            result = {'success': True, 'messages': '获取用户不分页数据!',
+            result = {'success': True, 'messages': '获取用户不分页数据',
                       'results': serializer.data}
             return Response(result, status=status.HTTP_200_OK)
 
@@ -87,7 +91,8 @@ class UserViewSet(viewsets.ModelViewSet):
                       'messages': f'用户:{instance.__str__()}为当前账号，不能删除自己!若要删除，请使用其他管理员账号登录删除此用户'}
             return Response(result, status=status.HTTP_400_BAD_REQUEST)
         self.perform_destroy(instance)
-        # todo 记录操作日志
+        action_log(request=request, user=request.user, action_type=DeleteAction, old_instance=None,
+                   instance=instance, action_info=f'删除用户:{instance.__str__()}')
         result = {'success': True, 'messages': f'删除用户:{instance.__str__()}'}
         return Response(result, status=status.HTTP_200_OK)
 
@@ -100,17 +105,19 @@ class UserViewSet(viewsets.ModelViewSet):
         if active:
             instance.is_active = True
             instance.save()
-            # todo 记录操作日志
+            action_log(request=request, user=request.user, action_type=ActiveAction, old_instance=old_instance,
+                       instance=instance, action_info=f'启用用户:{instance.__str__()}')
             result = {'success': True, 'messages': f'启用用户:{instance.__str__()}'}
             return Response(result, status=status.HTTP_200_OK)
         else:
             if instance == request.user:
                 result = {'success': False,
-                          'messages': f'用户:{instance.__str__()}为当前账号，不能禁用自己!'}
+                          'messages': f'用户:{instance.__str__()}为当前账号，不能禁用自己'}
                 return Response(result, status=status.HTTP_400_BAD_REQUEST)
             instance.is_active = False
             instance.save()
-            # todo 记录操作日志
+            action_log(request=request, user=request.user, action_type=DisableAction, old_instance=old_instance,
+                       instance=instance, action_info=f'禁用用户:{instance.__str__()}')
             result = {'success': True, 'messages': f'禁用用户:{instance.__str__()}'}
             return Response(result, status=status.HTTP_200_OK)
 
@@ -124,7 +131,8 @@ class UserViewSet(viewsets.ModelViewSet):
             return Response({'messages': '请输入新密码', 'success': False}, status=status.HTTP_400_BAD_REQUEST)
         instance.set_password(new_password)
         instance.save()
-        # todo 记录操作日志
+        action_log(request=request, user=request.user, action_type=UpdateAction, old_instance=old_instance,
+                   instance=instance, action_info=f'重置用户密码:{instance.__str__()}')
         return Response({'messages': f'重置用户密码:{instance.__str__()}', 'success': True})
 
     @action(methods=['post'], detail=False)
@@ -137,16 +145,17 @@ class UserViewSet(viewsets.ModelViewSet):
         if instance.check_password(old_password):
             instance.set_password(new_password)
             instance.save()
-            # todo 记录操作日志
+            action_log(request=request, user=request.user, action_type=UpdateAction, old_instance=old_instance,
+                       instance=instance, action_info=f'修改个人密码:{instance.__str__()}')
             return Response({'messages': f'修改个人密码:{instance.__str__()}', 'success': True})
         else:
-            return Response({'messages': '原密码不正确!', 'success': False}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'messages': '原密码不正确', 'success': False}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(methods=['get'], detail=False)
     def info(self, request, *args, **kwargs):
         instance = request.user
         serializer = self.get_serializer(instance)
-        result = {'success': True, 'messages': f'获取用户个人信息:{instance.__str__()}!',
+        result = {'success': True, 'messages': f'获取用户个人信息:{instance.__str__()}',
                   'results': serializer.data}
         return Response(result, status=status.HTTP_200_OK)
 
@@ -170,7 +179,8 @@ class UserViewSet(viewsets.ModelViewSet):
             deleted_objects_names.append(instance.__str__())
         deleted_objects = queryset.filter(id__in=deleted_objects_ids).all()
         deleted_objects.delete()
-        # todo 记录操作日志
+        action_log(request=request, user=request.user, action_type=DeleteAction, old_instance=None,
+                   instance=None, action_info=f'批量删除用户:{deleted_objects_names}')
         result = {'success': True, 'messages': f'批量删除用户:{deleted_objects_names}'}
         return Response(result, status=status.HTTP_200_OK)
 
@@ -181,7 +191,8 @@ class UserViewSet(viewsets.ModelViewSet):
             result = {'success': True, 'messages': f'获取用户个人token', 'results': {'token': token}}
             return Response(result, status=status.HTTP_200_OK)
         if request.method == 'POST':
-            # todo
+            action_log(request=request, user=request.user, action_type=UpdateAction, old_instance=None,
+                       instance=None, action_info=f'更新用户个人token')
             token = get_jwt_token(request.user)
             result = {'success': True, 'messages': f'更新用户个人token', 'results': {'token': token}}
             return Response(result, status=status.HTTP_200_OK)
@@ -211,8 +222,9 @@ class TeamGroupViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
-        instance = User.objects.get(pk=int(serializer.data['id']))
-        # todo 记录操作日志
+        instance = TeamGroup.objects.get(pk=int(serializer.data['id']))
+        action_log(request=request, user=request.user, action_type=CreateAction, old_instance=None,
+                   instance=instance, action_info=f'新增团队:{instance.__str__()}')
         result = {'success': True, 'messages': f'新增团队:{instance.__str__()}',
                   'results': serializer.data}
         return Response(result, status=status.HTTP_200_OK, headers=headers)
@@ -220,7 +232,7 @@ class TeamGroupViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = self.get_serializer(instance)
-        result = {'success': True, 'messages': f'获取团队信息:{instance.__str__()}!',
+        result = {'success': True, 'messages': f'获取团队信息:{instance.__str__()}',
                   'results': serializer.data}
         return Response(result, status=status.HTTP_200_OK)
 
@@ -237,8 +249,9 @@ class TeamGroupViewSet(viewsets.ModelViewSet):
         self.perform_update(serializer)
         if getattr(instance, '_prefetched_objects_cache', None):
             instance._prefetched_objects_cache = {}
-        # todo 记录操作日志
-        result = {'success': True, 'messages': f'修改团队:{instance.__str__()}!',
+        action_log(request=request, user=request.user, action_type=UpdateAction, old_instance=old_instance,
+                   instance=instance, action_info=f'修改团队:{instance.__str__()}')
+        result = {'success': True, 'messages': f'修改团队:{instance.__str__()}',
                   'results': serializer.data}
         return Response(result, status=status.HTTP_200_OK)
 
@@ -253,7 +266,7 @@ class TeamGroupViewSet(viewsets.ModelViewSet):
         queryset = queryset.distinct()
         if not_page and not_page.lower() != 'false':
             serializer = self.get_serializer(queryset, many=True)
-            result = {'success': True, 'messages': '获取团队不分页数据!',
+            result = {'success': True, 'messages': '获取团队不分页数据',
                       'results': serializer.data}
             return Response(result, status=status.HTTP_200_OK)
         else:
@@ -262,14 +275,15 @@ class TeamGroupViewSet(viewsets.ModelViewSet):
                 serializer = self.get_serializer(page, many=True)
                 return self.get_paginated_response(serializer.data)
             serializer = self.get_serializer(queryset, many=True)
-            result = {'success': True, 'messages': '获取团队不分页数据!',
+            result = {'success': True, 'messages': '获取团队不分页数据',
                       'results': serializer.data}
             return Response(result, status=status.HTTP_200_OK)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
-        # todo 记录操作日志
+        action_log(request=request, user=request.user, action_type=DeleteAction, old_instance=None,
+                   instance=instance, action_info=f'删除团队:{instance.__str__()}')
         result = {'success': True, 'messages': f'删除团队:{instance.__str__()}'}
         return Response(result, status=status.HTTP_200_OK)
 
@@ -284,7 +298,8 @@ class TeamGroupViewSet(viewsets.ModelViewSet):
             deleted_objects_names.append(instance.__str__())
         deleted_objects = queryset.filter(id__in=deleted_objects_ids).all()
         deleted_objects.delete()
-        # todo 记录操作日志
+        action_log(request=request, user=request.user, action_type=DeleteAction, old_instance=None,
+                   instance=None, action_info=f'批量删除团队:{deleted_objects_names}')
         result = {'success': True, 'messages': f'批量删除团队:{deleted_objects_names}'}
         return Response(result, status=status.HTTP_200_OK)
 

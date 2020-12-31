@@ -156,7 +156,7 @@ class RegisterCode extends Component {
             .then(res => {
                 const data = res.data;
                 notification.success({
-                    message: '删除用户',
+                    message: '删除注册码',
                     description: data.messages,
                     duration: messageDuration,
                 });
@@ -178,7 +178,7 @@ class RegisterCode extends Component {
                     .then(res => {
                         const data = res.data;
                         notification.success({
-                            message: '批量删除用户',
+                            message: '批量删除注册码',
                             description: data.messages,
                             duration: messageDuration,
                         });
@@ -241,7 +241,7 @@ class RegisterCode extends Component {
                             />
                             <FormElement layout>
                                 <Button type="primary" htmlType="submit">搜索</Button>
-                                <Button onClick={() => this.form.resetFields()}>重置</Button>
+                                <Button onClick={() => {this.form.resetFields(); this.handleSubmit();}}>重置</Button>
                                 <Button type="primary" onClick={() => this.setState({ visible: true, id: null })}>添加</Button>
                                 <Button danger loading={deleting} disabled={disabledDelete} onClick={this.handleBatchDelete}>删除</Button>
                             </FormElement>

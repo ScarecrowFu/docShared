@@ -27,7 +27,7 @@ class AnonymousCollectedDocViewSet(viewsets.GenericViewSet, mixins.ListModelMixi
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = self.get_serializer(instance)
-        result = {'success': True, 'messages': f'获取文集信息:{instance.__str__()}!',
+        result = {'success': True, 'messages': f'获取文集信息:{instance.__str__()}',
                   'results': serializer.data}
         return Response(result, status=status.HTTP_200_OK)
 
@@ -40,7 +40,7 @@ class AnonymousCollectedDocViewSet(viewsets.GenericViewSet, mixins.ListModelMixi
         queryset = queryset.distinct()
         if not_page and not_page.lower() != 'false':
             serializer = self.get_serializer(queryset, many=True)
-            result = {'success': True, 'messages': '获取文集不分页数据!',
+            result = {'success': True, 'messages': '获取文集不分页数据',
                       'results': serializer.data}
             return Response(result, status=status.HTTP_200_OK)
         else:
@@ -49,7 +49,7 @@ class AnonymousCollectedDocViewSet(viewsets.GenericViewSet, mixins.ListModelMixi
                 serializer = self.get_serializer(page, many=True)
                 return self.get_paginated_response(serializer.data)
             serializer = self.get_serializer(queryset, many=True)
-            result = {'success': True, 'messages': '获取文集不分页数据!',
+            result = {'success': True, 'messages': '获取文集不分页数据',
                       'results': serializer.data}
             return Response(result, status=status.HTTP_200_OK)
 
@@ -93,7 +93,7 @@ class AnonymousDocViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = self.get_serializer(instance)
-        result = {'success': True, 'messages': f'获取文档信息:{instance.__str__()}!',
+        result = {'success': True, 'messages': f'获取文档信息:{instance.__str__()}',
                   'results': serializer.data}
         return Response(result, status=status.HTTP_200_OK)
 
@@ -107,7 +107,7 @@ class AnonymousDocViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins
         queryset = queryset.distinct()
         if not_page and not_page.lower() != 'false':
             serializer = self.get_serializer(queryset, many=True)
-            result = {'success': True, 'messages': '获取文档不分页数据!',
+            result = {'success': True, 'messages': '获取文档不分页数据',
                       'results': serializer.data}
             return Response(result, status=status.HTTP_200_OK)
         else:
@@ -116,7 +116,7 @@ class AnonymousDocViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins
                 serializer = self.get_serializer(page, many=True)
                 return self.get_paginated_response(serializer.data)
             serializer = self.get_serializer(queryset, many=True)
-            result = {'success': True, 'messages': '获取文档不分页数据!',
+            result = {'success': True, 'messages': '获取文档不分页数据',
                       'results': serializer.data}
             return Response(result, status=status.HTTP_200_OK)
 

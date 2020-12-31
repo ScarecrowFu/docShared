@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from doc_api.models import Announcement, RegisterCode, SystemSetting
+from doc_api.models import Announcement, RegisterCode, SystemSetting, EmailVerificationCode
 from doc_api.serializers.user_serializers import UserBaseSerializer
 import random
 
@@ -94,6 +94,54 @@ class RegisterCodeActionSerializer(serializers.ModelSerializer):
 #########################################################################################################
 
 
+class EmailVerificationCodeBaseSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = EmailVerificationCode
+        fields = ('id', 'email_name', 'verification_code')
+
+
+class EmailVerificationCodeDetailSerializer(serializers.ModelSerializer):
+    created_time = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S', read_only=True)
+    modified_time = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S', read_only=True)
+    # expired_time = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S', read_only=True)
+    creator = UserBaseSerializer(read_only=True)
+
+    class Meta:
+        model = EmailVerificationCode
+        fields = '__all__'
+
+
+class EmailVerificationCodeListSerializer(serializers.ModelSerializer):
+    created_time = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S', read_only=True)
+    modified_time = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S', read_only=True)
+    expired_time = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S', read_only=True)
+    creator = UserBaseSerializer(read_only=True)
+
+    class Meta:
+        model = EmailVerificationCode
+        fields = '__all__'
+
+
+class EmailVerificationCodeActionSerializer(serializers.ModelSerializer):
+    created_time = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S', read_only=True)
+    modified_time = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S', read_only=True)
+    creator = UserBaseSerializer(read_only=True)
+
+    def create(self, validated_data):
+        instance = super().create(validated_data)
+        instance.creator = self.context['request'].user
+        instance.save()
+        return instance
+
+    class Meta:
+        model = EmailVerificationCode
+        fields = '__all__'
+
+
+#########################################################################################################
+
+
 class SystemSettingBaseSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -124,7 +172,6 @@ class SystemSettingDetailSerializer(serializers.ModelSerializer):
                 return dict(obj.value)
             return obj.value
         except Exception as error:
-            print(error)
             return obj.value
 
     class Meta:
@@ -139,8 +186,6 @@ class SystemSettingListSerializer(serializers.ModelSerializer):
 
     def get_value(self, obj):
         try:
-            print(obj.set_type)
-            print(obj.value)
             if obj.set_type == 30:
                 return int(obj.value)
             if obj.set_type == 40:
@@ -156,12 +201,11 @@ class SystemSettingListSerializer(serializers.ModelSerializer):
                 return dict(obj.value)
             return obj.value
         except Exception as error:
-            print(error)
             return obj.value
 
     class Meta:
         model = SystemSetting
-        fields = ('id', 'key', 'name', 'value', 'set_type', 'created_time', 'creator')
+        fields = ('id', 'key', 'name', 'value', 'description', 'set_type', 'created_time', 'creator')
 
 
 class SystemSettingActionSerializer(serializers.ModelSerializer):

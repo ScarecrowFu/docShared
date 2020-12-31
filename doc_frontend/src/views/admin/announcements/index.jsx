@@ -244,7 +244,7 @@ class Announcement extends Component {
                             />
                             <FormElement layout>
                                 <Button type="primary" htmlType="submit">搜索</Button>
-                                <Button onClick={() => this.form.resetFields()}>重置</Button>
+                                <Button onClick={() => {this.form.resetFields(); this.handleSubmit();}}>重置</Button>
                                 <Button type="primary" onClick={() => this.setState({ visible: true, id: null })}>添加</Button>
                                 <Button danger loading={deleting} disabled={disabledDelete} onClick={this.handleBatchDelete}>删除</Button>
                             </FormElement>
@@ -282,6 +282,7 @@ class Announcement extends Component {
                     isEdit={id !== null}
                     onOk={() => this.setState({ visible: false }, () => this.handleSubmit())}
                     onCancel={() => this.setState({ visible: false })}
+                    width='60%'
                 />
             </PageContent>
         );

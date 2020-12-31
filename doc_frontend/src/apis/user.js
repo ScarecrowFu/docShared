@@ -13,14 +13,6 @@ export async function login(data) {
   });
 }
 
-export function verifyAuth(data) {
-  return request({
-    url: `/api/verify_auth/`,
-    method: "post",
-    data,
-  });
-}
-
 export function getInfo() {
   return request({
     url: "/api/users/info/",

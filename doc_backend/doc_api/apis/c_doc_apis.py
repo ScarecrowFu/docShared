@@ -14,6 +14,8 @@ from doc_api.filters.c_doc_filters import CollectedDocOrderingFilter, CollectedD
 from django.db.models import Q
 from doc_api.utils.report_helpers import ReportMD
 from django.conf import settings
+from doc_api.settings.conf import CreateAction, UpdateAction, DeleteAction, RecoverAction
+from doc_api.utils.action_log_helpers import action_log
 
 
 class CollectedDocViewSet(viewsets.ModelViewSet):
@@ -33,7 +35,8 @@ class CollectedDocViewSet(viewsets.ModelViewSet):
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         instance = CollectedDoc.objects.get(pk=int(serializer.data['id']))
-        # todo 记录操作日志
+        action_log(request=request, user=request.user, action_type=CreateAction, old_instance=None,
+                   instance=instance, action_info=f'新增文集:{instance.__str__()}')
         result = {'success': True, 'messages': f'新增文集:{instance.__str__()}',
                   'results': serializer.data}
         return Response(result, status=status.HTTP_200_OK, headers=headers)
@@ -41,7 +44,7 @@ class CollectedDocViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = self.get_serializer(instance)
-        result = {'success': True, 'messages': f'获取文集信息:{instance.__str__()}!',
+        result = {'success': True, 'messages': f'获取文集信息:{instance.__str__()}',
                   'results': serializer.data}
         return Response(result, status=status.HTTP_200_OK)
 
@@ -54,8 +57,9 @@ class CollectedDocViewSet(viewsets.ModelViewSet):
         self.perform_update(serializer)
         if getattr(instance, '_prefetched_objects_cache', None):
             instance._prefetched_objects_cache = {}
-        # todo 记录操作日志
-        result = {'success': True, 'messages': f'修改文集:{instance.__str__()}!',
+        action_log(request=request, user=request.user, action_type=UpdateAction, old_instance=old_instance,
+                   instance=instance, action_info=f'修改文集:{instance.__str__()}')
+        result = {'success': True, 'messages': f'修改文集:{instance.__str__()}',
                   'results': serializer.data}
         return Response(result, status=status.HTTP_200_OK)
 
@@ -82,7 +86,7 @@ class CollectedDocViewSet(viewsets.ModelViewSet):
         queryset = queryset.distinct()
         if not_page and not_page.lower() != 'false':
             serializer = self.get_serializer(queryset, many=True)
-            result = {'success': True, 'messages': '获取文集不分页数据!',
+            result = {'success': True, 'messages': '获取文集不分页数据',
                       'results': serializer.data}
             return Response(result, status=status.HTTP_200_OK)
         else:
@@ -91,14 +95,15 @@ class CollectedDocViewSet(viewsets.ModelViewSet):
                 serializer = self.get_serializer(page, many=True)
                 return self.get_paginated_response(serializer.data)
             serializer = self.get_serializer(queryset, many=True)
-            result = {'success': True, 'messages': '获取文集不分页数据!',
+            result = {'success': True, 'messages': '获取文集不分页数据',
                       'results': serializer.data}
             return Response(result, status=status.HTTP_200_OK)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
-        # todo 记录操作日志
+        action_log(request=request, user=request.user, action_type=DeleteAction, old_instance=None,
+                   instance=instance, action_info=f'删除文集:{instance.__str__()}')
         result = {'success': True, 'messages': f'删除文集:{instance.__str__()}'}
         return Response(result, status=status.HTTP_200_OK)
 
@@ -113,7 +118,8 @@ class CollectedDocViewSet(viewsets.ModelViewSet):
             deleted_objects_names.append(instance.__str__())
         deleted_objects = queryset.filter(id__in=deleted_objects_ids).all()
         deleted_objects.delete()
-        # todo 记录操作日志
+        action_log(request=request, user=request.user, action_type=DeleteAction, old_instance=None,
+                   instance=None, action_info=f'批量删除文集:{deleted_objects_names}')
         result = {'success': True, 'messages': f'批量删除文集:{deleted_objects_names}'}
         return Response(result, status=status.HTTP_200_OK)
 
@@ -199,7 +205,6 @@ class CollectedDocUserViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         c_doc_id = request.data.get('c_doc', False)
         user_id = request.data.get('user', False)
-        print(c_doc_id, user_id)
         c_doc_user = CollectedDocUser.objects.filter(c_doc__id=int(c_doc_id), user__id=int(user_id)).first()
         if c_doc_user:
             result = {'success': False, 'messages': f'文集用户成员:{c_doc_user.__str__()}已经存在, 请勿重复创建'}
@@ -207,7 +212,8 @@ class CollectedDocUserViewSet(viewsets.ModelViewSet):
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         instance = CollectedDocUser.objects.get(pk=int(serializer.data['id']))
-        # todo 记录操作日志
+        action_log(request=request, user=request.user, action_type=CreateAction, old_instance=None,
+                   instance=instance, action_info=f'新增文集用户成员:{instance.__str__()}')
         result = {'success': True, 'messages': f'新增文集用户成员:{instance.__str__()}',
                   'results': serializer.data}
         return Response(result, status=status.HTTP_200_OK, headers=headers)
@@ -215,7 +221,7 @@ class CollectedDocUserViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = self.get_serializer(instance)
-        result = {'success': True, 'messages': f'获取文集用户成员信息:{instance.__str__()}!',
+        result = {'success': True, 'messages': f'获取文集用户成员信息:{instance.__str__()}',
                   'results': serializer.data}
         return Response(result, status=status.HTTP_200_OK)
 
@@ -228,8 +234,9 @@ class CollectedDocUserViewSet(viewsets.ModelViewSet):
         self.perform_update(serializer)
         if getattr(instance, '_prefetched_objects_cache', None):
             instance._prefetched_objects_cache = {}
-        # todo 记录操作日志
-        result = {'success': True, 'messages': f'修改文集用户成员:{instance.__str__()}!',
+        action_log(request=request, user=request.user, action_type=UpdateAction, old_instance=old_instance,
+                   instance=instance, action_info=f'修改文集用户成员:{instance.__str__()}')
+        result = {'success': True, 'messages': f'修改文集用户成员:{instance.__str__()}',
                   'results': serializer.data}
         return Response(result, status=status.HTTP_200_OK)
 
@@ -248,7 +255,7 @@ class CollectedDocUserViewSet(viewsets.ModelViewSet):
         queryset = queryset.distinct()
         if not_page and not_page.lower() != 'false':
             serializer = self.get_serializer(queryset, many=True)
-            result = {'success': True, 'messages': '获取文集用户成员不分页数据!',
+            result = {'success': True, 'messages': '获取文集用户成员不分页数据',
                       'results': serializer.data}
             return Response(result, status=status.HTTP_200_OK)
         else:
@@ -257,14 +264,15 @@ class CollectedDocUserViewSet(viewsets.ModelViewSet):
                 serializer = self.get_serializer(page, many=True)
                 return self.get_paginated_response(serializer.data)
             serializer = self.get_serializer(queryset, many=True)
-            result = {'success': True, 'messages': '获取文集用户成员不分页数据!',
+            result = {'success': True, 'messages': '获取文集用户成员不分页数据',
                       'results': serializer.data}
             return Response(result, status=status.HTTP_200_OK)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
-        # todo 记录操作日志
+        action_log(request=request, user=request.user, action_type=DeleteAction, old_instance=None,
+                   instance=instance, action_info=f'删除文集用户成员:{instance.__str__()}')
         result = {'success': True, 'messages': f'删除文集用户成员:{instance.__str__()}'}
         return Response(result, status=status.HTTP_200_OK)
 
@@ -279,7 +287,8 @@ class CollectedDocUserViewSet(viewsets.ModelViewSet):
             deleted_objects_names.append(instance.__str__())
         deleted_objects = queryset.filter(id__in=deleted_objects_ids).all()
         deleted_objects.delete()
-        # todo 记录操作日志
+        action_log(request=request, user=request.user, action_type=DeleteAction, old_instance=None,
+                   instance=None, action_info=f'批量删除文集用户成员:{deleted_objects_names}')
         result = {'success': True, 'messages': f'批量删除文集用户成员:{deleted_objects_names}'}
         return Response(result, status=status.HTTP_200_OK)
 
@@ -311,7 +320,8 @@ class CollectedDocTeamViewSet(viewsets.ModelViewSet):
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         instance = CollectedDocTeam.objects.get(pk=int(serializer.data['id']))
-        # todo 记录操作日志
+        action_log(request=request, user=request.user, action_type=CreateAction, old_instance=None,
+                   instance=instance, action_info=f'新增文集团队成员:{instance.__str__()}')
         result = {'success': True, 'messages': f'新增文集团队成员:{instance.__str__()}',
                   'results': serializer.data}
         return Response(result, status=status.HTTP_200_OK, headers=headers)
@@ -319,7 +329,7 @@ class CollectedDocTeamViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = self.get_serializer(instance)
-        result = {'success': True, 'messages': f'获取文集用户团队信息:{instance.__str__()}!',
+        result = {'success': True, 'messages': f'获取文集用户团队信息:{instance.__str__()}',
                   'results': serializer.data}
         return Response(result, status=status.HTTP_200_OK)
 
@@ -332,8 +342,9 @@ class CollectedDocTeamViewSet(viewsets.ModelViewSet):
         self.perform_update(serializer)
         if getattr(instance, '_prefetched_objects_cache', None):
             instance._prefetched_objects_cache = {}
-        # todo 记录操作日志
-        result = {'success': True, 'messages': f'修改文集团队成员:{instance.__str__()}!',
+        action_log(request=request, user=request.user, action_type=UpdateAction, old_instance=old_instance,
+                   instance=instance, action_info=f'修改文集团队成员:{instance.__str__()}')
+        result = {'success': True, 'messages': f'修改文集团队成员:{instance.__str__()}',
                   'results': serializer.data}
         return Response(result, status=status.HTTP_200_OK)
 
@@ -352,7 +363,7 @@ class CollectedDocTeamViewSet(viewsets.ModelViewSet):
         queryset = queryset.distinct()
         if not_page and not_page.lower() != 'false':
             serializer = self.get_serializer(queryset, many=True)
-            result = {'success': True, 'messages': '获取文集团队成员不分页数据!',
+            result = {'success': True, 'messages': '获取文集团队成员不分页数据',
                       'results': serializer.data}
             return Response(result, status=status.HTTP_200_OK)
         else:
@@ -361,14 +372,15 @@ class CollectedDocTeamViewSet(viewsets.ModelViewSet):
                 serializer = self.get_serializer(page, many=True)
                 return self.get_paginated_response(serializer.data)
             serializer = self.get_serializer(queryset, many=True)
-            result = {'success': True, 'messages': '获取文集团队成员不分页数据!',
+            result = {'success': True, 'messages': '获取文集团队成员不分页数据',
                       'results': serializer.data}
             return Response(result, status=status.HTTP_200_OK)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
-        # todo 记录操作日志
+        action_log(request=request, user=request.user, action_type=DeleteAction, old_instance=None,
+                   instance=instance, action_info=f'删除文集团队成员:{instance.__str__()}')
         result = {'success': True, 'messages': f'删除文集团队成员:{instance.__str__()}'}
         return Response(result, status=status.HTTP_200_OK)
 
@@ -383,7 +395,8 @@ class CollectedDocTeamViewSet(viewsets.ModelViewSet):
             deleted_objects_names.append(instance.__str__())
         deleted_objects = queryset.filter(id__in=deleted_objects_ids).all()
         deleted_objects.delete()
-        # todo 记录操作日志
+        action_log(request=request, user=request.user, action_type=DeleteAction, old_instance=None,
+                   instance=None, action_info=f'批量删除文集团队成员:{deleted_objects_names}')
         result = {'success': True, 'messages': f'批量删除文集团队成员:{deleted_objects_names}'}
         return Response(result, status=status.HTTP_200_OK)
 

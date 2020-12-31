@@ -6,6 +6,8 @@ from rest_framework.response import Response
 from doc_api.models.user_models import User
 from django.contrib.auth import authenticate
 from doc_api.utils.auth_helpers import get_jwt_token, jwt_response_payload_handler
+from doc_api.settings.conf import AuthAction
+from doc_api.utils.action_log_helpers import action_log
 
 
 class Authentication(JSONWebTokenAPIView):
@@ -15,47 +17,28 @@ class Authentication(JSONWebTokenAPIView):
         username = request.data.get('username')
         password = request.data.get('password')
         if not username:
-            result = {'success': False, 'messages': '用户帐号名必须存在, 请发送用户名!'}
+            result = {'success': False, 'messages': '用户帐号名必须存在, 请发送用户名'}
             return Response(result, status=status.HTTP_400_BAD_REQUEST)
         if not password:
-            result = {'success': False, 'messages': '密码必须存在, 请发送密码!'}
+            result = {'success': False, 'messages': '密码必须存在, 请发送密码'}
             return Response(result, status=status.HTTP_400_BAD_REQUEST)
         user = User.objects.filter(username=username).first()
         if user:
             if not user.is_active or user.is_deleted:
-                result = {'success': False, 'messages': '当前用户已禁用或删除, 请使用其他用户!'}
+                result = {'success': False, 'messages': '当前用户已禁用或删除, 请使用其他用户'}
                 return Response(result, status=status.HTTP_403_FORBIDDEN)
             login_user = authenticate(username=username.strip(), password=password)
             if login_user is None:
-                result = {'success': False, 'messages': '用户名:{}密码错误, 请输入正确密码!'.format(username)}
+                result = {'success': False, 'messages': '用户名:{}密码错误, 请输入正确密码'.format(username)}
                 return Response(result, status=status.HTTP_403_FORBIDDEN)
         else:
-            result = {'success': False, 'messages': '用户名:{}不存在或无效, 请输入正确用户!'.format(username)}
+            result = {'success': False, 'messages': '用户名:{}不存在或无效, 请输入正确用户'.format(username)}
             return Response(result, status=status.HTTP_403_FORBIDDEN)
         # 认证成功
         token = get_jwt_token(login_user)
         response_data = jwt_response_payload_handler(token, login_user, request)
         response = Response(response_data, status=status.HTTP_200_OK)
-        # todo: 操作日志记录
+        action_log(request=request, user=request.user, action_type=AuthAction, old_instance=None,
+                   instance=None, action_info=f'登录系统')
         return response
-
-
-class VerifyAuthenticationToken(JSONWebTokenAPIView):
-
-    # serializer_class = VerifyJSONWebTokenSerializer
-
-    def post(self, request, *args, **kwargs):
-        token = request.data.get('token', '')
-        valid = False
-        try:
-            payload = jwt_decode_handler(token)
-            valid = True
-            result = {'success': True, 'messages': f'验证验证用户token信息:{payload}', 'results': {'valid': valid}}
-            return Response(result, status=status.HTTP_200_OK)
-        except Exception as error:
-            result = {'success': True, 'messages': f'验证验证用户信息发生错误:{error}',  'results': {'valid': valid}}
-            return Response(result, status=status.HTTP_200_OK)
-
-
-
 

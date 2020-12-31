@@ -11,12 +11,13 @@ from doc_api.settings.conf import DocStatus
 from doc_api.filters.doc_filters import DocParameterFilter, DocTagParameterFilter, DocTemplateParameterFilter
 from django.db.models import Q
 from doc_api.utils.md_helpers import extract_toc
+from doc_api.settings.conf import CreateAction, UpdateAction, DeleteAction, RecoverAction
+from doc_api.utils.action_log_helpers import action_log
 
 
 class DocViewSet(viewsets.ModelViewSet):
     """
     文档管理
-    # todo: 编辑器选择图片/附件
     """
     filter_backends = (filters.OrderingFilter, filters.SearchFilter, DocParameterFilter)
     search_fields = ('c_doc__name', 'title',)
@@ -34,7 +35,8 @@ class DocViewSet(viewsets.ModelViewSet):
         # 保存最新一次记录
         instance.pre_content = instance.content
         instance.save()
-        # todo 记录操作日志
+        action_log(request=request, user=request.user, action_type=CreateAction, old_instance=None, instance=instance,
+                   action_info=f'新增文档:{instance.__str__()}')
         result = {'success': True, 'messages': f'新增文档:{instance.__str__()}',
                   'results': serializer.data}
         return Response(result, status=status.HTTP_200_OK, headers=headers)
@@ -42,7 +44,7 @@ class DocViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = self.get_serializer(instance)
-        result = {'success': True, 'messages': f'获取文档信息:{instance.__str__()}!',
+        result = {'success': True, 'messages': f'获取文档信息:{instance.__str__()}',
                   'results': serializer.data}
         return Response(result, status=status.HTTP_200_OK)
 
@@ -52,7 +54,7 @@ class DocViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         old_instance = self.get_object()
         if parent_doc_id and int(parent_doc_id) == instance.id:
-            result = {'success': False, 'messages': f'上级文档不能为当前文档自身!'}
+            result = {'success': False, 'messages': f'上级文档不能为当前文档自身'}
             return Response(result, status=status.HTTP_400_BAD_REQUEST)
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
@@ -64,8 +66,9 @@ class DocViewSet(viewsets.ModelViewSet):
         instance.save()
         # 历史记录
         DocHistory.objects.create(doc=instance, content=instance.pre_content, creator=request.user)
-        # todo 记录操作日志
-        result = {'success': True, 'messages': f'修改文档:{instance.__str__()}!',
+        action_log(request=request, user=request.user, action_type=UpdateAction, old_instance=old_instance,
+                   instance=instance, action_info=f'修改文档:{instance.__str__()}')
+        result = {'success': True, 'messages': f'修改文档:{instance.__str__()}',
                   'results': serializer.data}
         return Response(result, status=status.HTTP_200_OK)
 
@@ -90,7 +93,7 @@ class DocViewSet(viewsets.ModelViewSet):
         queryset = queryset.distinct()
         if not_page and not_page.lower() != 'false':
             serializer = self.get_serializer(queryset, many=True)
-            result = {'success': True, 'messages': '获取文档不分页数据!',
+            result = {'success': True, 'messages': '获取文档不分页数据',
                       'results': serializer.data}
             return Response(result, status=status.HTTP_200_OK)
         else:
@@ -99,7 +102,7 @@ class DocViewSet(viewsets.ModelViewSet):
                 serializer = self.get_serializer(page, many=True)
                 return self.get_paginated_response(serializer.data)
             serializer = self.get_serializer(queryset, many=True)
-            result = {'success': True, 'messages': '获取文档不分页数据!',
+            result = {'success': True, 'messages': '获取文档不分页数据',
                       'results': serializer.data}
             return Response(result, status=status.HTTP_200_OK)
 
@@ -108,7 +111,8 @@ class DocViewSet(viewsets.ModelViewSet):
         instance.is_deleted = True
         instance.save()
         # self.perform_destroy(instance)
-        # todo 记录操作日志
+        action_log(request=request, user=request.user, action_type=DeleteAction, old_instance=None,
+                   instance=instance, action_info=f'删除文档:{instance.__str__()}')
         result = {'success': True, 'messages': f'删除文档:{instance.__str__()}'}
         return Response(result, status=status.HTTP_200_OK)
 
@@ -123,7 +127,8 @@ class DocViewSet(viewsets.ModelViewSet):
             deleted_objects_names.append(instance.__str__())
         deleted_objects = queryset.filter(id__in=deleted_objects_ids)
         deleted_objects.update(is_deleted=True)
-        # todo 记录操作日志
+        action_log(request=request, user=request.user, action_type=DeleteAction, old_instance=None,
+                   instance=None, action_info=f'批量删除文档:{deleted_objects_names}')
         result = {'success': True, 'messages': f'批量删除文档:{deleted_objects_names}'}
         return Response(result, status=status.HTTP_200_OK)
 
@@ -138,7 +143,8 @@ class DocViewSet(viewsets.ModelViewSet):
         instance.is_deleted = False
         instance.save()
         # self.perform_destroy(instance)
-        # todo 记录操作日志
+        action_log(request=request, user=request.user, action_type=RecoverAction, old_instance=None,
+                   instance=instance, action_info=f'还原文档:{instance.__str__()}')
         result = {'success': True, 'messages': f'还原文档:{instance.__str__()}'}
         return Response(result, status=status.HTTP_200_OK)
 
@@ -153,7 +159,8 @@ class DocViewSet(viewsets.ModelViewSet):
             recover_objects_names.append(instance.__str__())
         recover_objects = queryset.filter(id__in=recover_objects_ids)
         recover_objects.update(is_deleted=False)
-        # todo 记录操作日志
+        action_log(request=request, user=request.user, action_type=RecoverAction, old_instance=None,
+                   instance=None, action_info=f'批量还原文档:{recover_objects_names}')
         result = {'success': True, 'messages': f'批量还原文档:{recover_objects_names}'}
         return Response(result, status=status.HTTP_200_OK)
 
@@ -169,7 +176,7 @@ class DocViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         history_docs = DocHistory.objects.filter(doc=instance).order_by('-created_time').all()
         serializer = self.get_serializer(history_docs, many=True)
-        result = {'success': True, 'messages': '获取文档历史记录不分页数据!',
+        result = {'success': True, 'messages': '获取文档历史记录不分页数据',
                   'results': serializer.data}
         return Response(result, status=status.HTTP_200_OK)
 
@@ -180,7 +187,7 @@ class DocViewSet(viewsets.ModelViewSet):
         history_id = query_params.get('history_id', '')
         history_doc = DocHistory.objects.get(pk=int(history_id))
 
-        result = {'success': True, 'messages': '获取文档历史揭露不分页数据!',
+        result = {'success': True, 'messages': '获取文档历史揭露不分页数据',
                   'results': {
                       'current_content': instance.content,
                       'content': history_doc.content}
@@ -212,7 +219,8 @@ class DocTemplateViewSet(viewsets.ModelViewSet):
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         instance = DocTemplate.objects.get(pk=int(serializer.data['id']))
-        # todo 记录操作日志
+        action_log(request=request, user=request.user, action_type=CreateAction, old_instance=None,
+                   instance=instance, action_info=f'新增文档模板:{instance.__str__()}')
         result = {'success': True, 'messages': f'新增文档模板:{instance.__str__()}',
                   'results': serializer.data}
         return Response(result, status=status.HTTP_200_OK, headers=headers)
@@ -220,7 +228,7 @@ class DocTemplateViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = self.get_serializer(instance)
-        result = {'success': True, 'messages': f'获取文档模板信息:{instance.__str__()}!',
+        result = {'success': True, 'messages': f'获取文档模板信息:{instance.__str__()}',
                   'results': serializer.data}
         return Response(result, status=status.HTTP_200_OK)
 
@@ -233,8 +241,9 @@ class DocTemplateViewSet(viewsets.ModelViewSet):
         self.perform_update(serializer)
         if getattr(instance, '_prefetched_objects_cache', None):
             instance._prefetched_objects_cache = {}
-        # todo 记录操作日志
-        result = {'success': True, 'messages': f'修改文档模板:{instance.__str__()}!',
+        action_log(request=request, user=request.user, action_type=UpdateAction, old_instance=old_instance,
+                   instance=instance, action_info=f'修改文档模板:{instance.__str__()}')
+        result = {'success': True, 'messages': f'修改文档模板:{instance.__str__()}',
                   'results': serializer.data}
         return Response(result, status=status.HTTP_200_OK)
 
@@ -254,7 +263,7 @@ class DocTemplateViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(creator=request.user)
         if not_page and not_page.lower() != 'false':
             serializer = self.get_serializer(queryset, many=True)
-            result = {'success': True, 'messages': '获取文档模板不分页数据!',
+            result = {'success': True, 'messages': '获取文档模板不分页数据',
                       'results': serializer.data}
             return Response(result, status=status.HTTP_200_OK)
         else:
@@ -263,14 +272,15 @@ class DocTemplateViewSet(viewsets.ModelViewSet):
                 serializer = self.get_serializer(page, many=True)
                 return self.get_paginated_response(serializer.data)
             serializer = self.get_serializer(queryset, many=True)
-            result = {'success': True, 'messages': '获取文档模板不分页数据!',
+            result = {'success': True, 'messages': '获取文档模板不分页数据',
                       'results': serializer.data}
             return Response(result, status=status.HTTP_200_OK)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
-        # todo 记录操作日志
+        action_log(request=request, user=request.user, action_type=DeleteAction, old_instance=None,
+                   instance=instance, action_info=f'删除文档模板:{instance.__str__()}')
         result = {'success': True, 'messages': f'删除文档模板:{instance.__str__()}'}
         return Response(result, status=status.HTTP_200_OK)
 
@@ -285,7 +295,8 @@ class DocTemplateViewSet(viewsets.ModelViewSet):
             deleted_objects_names.append(instance.__str__())
         deleted_objects = queryset.filter(id__in=deleted_objects_ids).all()
         deleted_objects.delete()
-        # todo 记录操作日志
+        action_log(request=request, user=request.user, action_type=DeleteAction, old_instance=None,
+                   instance=None, action_info=f'批量删除文档模板:{deleted_objects_names}')
         result = {'success': True, 'messages': f'批量删除文档模板:{deleted_objects_names}'}
         return Response(result, status=status.HTTP_200_OK)
 
@@ -317,7 +328,8 @@ class DocTagViewSet(viewsets.ModelViewSet):
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         instance = DocTag.objects.get(pk=int(serializer.data['id']))
-        # todo 记录操作日志
+        action_log(request=request, user=request.user, action_type=CreateAction, old_instance=None,
+                   instance=instance, action_info=f'新增文档标签:{instance.__str__()}')
         result = {'success': True, 'messages': f'新增文档标签:{instance.__str__()}',
                   'results': serializer.data}
         return Response(result, status=status.HTTP_200_OK, headers=headers)
@@ -325,7 +337,7 @@ class DocTagViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = self.get_serializer(instance)
-        result = {'success': True, 'messages': f'获取文档标签信息:{instance.__str__()}!',
+        result = {'success': True, 'messages': f'获取文档标签信息:{instance.__str__()}',
                   'results': serializer.data}
         return Response(result, status=status.HTTP_200_OK)
 
@@ -338,8 +350,9 @@ class DocTagViewSet(viewsets.ModelViewSet):
         self.perform_update(serializer)
         if getattr(instance, '_prefetched_objects_cache', None):
             instance._prefetched_objects_cache = {}
-        # todo 记录操作日志
-        result = {'success': True, 'messages': f'修改文档标签:{instance.__str__()}!',
+        action_log(request=request, user=request.user, action_type=UpdateAction, old_instance=old_instance,
+                   instance=instance, action_info=f'修改文档标签:{instance.__str__()}')
+        result = {'success': True, 'messages': f'修改文档标签:{instance.__str__()}',
                   'results': serializer.data}
         return Response(result, status=status.HTTP_200_OK)
 
@@ -359,7 +372,7 @@ class DocTagViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(creator=request.user)
         if not_page and not_page.lower() != 'false':
             serializer = self.get_serializer(queryset, many=True)
-            result = {'success': True, 'messages': '获取文档标签不分页数据!',
+            result = {'success': True, 'messages': '获取文档标签不分页数据',
                       'results': serializer.data}
             return Response(result, status=status.HTTP_200_OK)
         else:
@@ -368,14 +381,15 @@ class DocTagViewSet(viewsets.ModelViewSet):
                 serializer = self.get_serializer(page, many=True)
                 return self.get_paginated_response(serializer.data)
             serializer = self.get_serializer(queryset, many=True)
-            result = {'success': True, 'messages': '获取文档标签不分页数据!',
+            result = {'success': True, 'messages': '获取文档标签不分页数据',
                       'results': serializer.data}
             return Response(result, status=status.HTTP_200_OK)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
-        # todo 记录操作日志
+        action_log(request=request, user=request.user, action_type=DeleteAction, old_instance=None,
+                   instance=instance, action_info=f'删除文档标签:{instance.__str__()}')
         result = {'success': True, 'messages': f'删除文档标签:{instance.__str__()}'}
         return Response(result, status=status.HTTP_200_OK)
 
@@ -390,7 +404,8 @@ class DocTagViewSet(viewsets.ModelViewSet):
             deleted_objects_names.append(instance.__str__())
         deleted_objects = queryset.filter(id__in=deleted_objects_ids).all()
         deleted_objects.delete()
-        # todo 记录操作日志
+        action_log(request=request, user=request.user, action_type=DeleteAction, old_instance=None,
+                   instance=None, action_info=f'批量删除文档标签:{deleted_objects_names}')
         result = {'success': True, 'messages': f'批量删除文档标签:{deleted_objects_names}'}
         return Response(result, status=status.HTTP_200_OK)
 

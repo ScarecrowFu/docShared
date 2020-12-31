@@ -9,6 +9,7 @@ class SystemSetting(models.Model):
     name = models.CharField(max_length=255, verbose_name='名称')
     value = models.CharField(max_length=255, verbose_name='内容')
     set_type = models.IntegerField(default=10, choices=dict_for_model_choices(SettingType), verbose_name='类型')
+    description = models.TextField(blank=True, verbose_name="描述")
     creator = models.ForeignKey('User', null=True, blank=True, on_delete=models.SET_NULL, verbose_name='创建者',
                                 related_name='created_settings')
     created_time = models.DateTimeField(auto_now_add=True, verbose_name='创建日期')

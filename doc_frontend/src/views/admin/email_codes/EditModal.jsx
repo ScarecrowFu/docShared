@@ -3,15 +3,15 @@ import {Form, notification} from 'antd';
 import FormElement from 'src/library/FormElement';
 import config from 'src/utils/Hoc/configHoc';
 import ModalContent from 'src/library/ModalHoc/ModalContent';
-import { createAnnouncement, retrieveAnnouncement, updateAnnouncement } from 'src/apis/announcement';
+import { createEmailCode, retrieveEmailCode, updateEmailCode, getVerificationTypes } from 'src/apis/email_code';
 import {messageDuration} from "src/config/settings";
-import validationRule from 'src/utils/validationRule';
-import MarkdownEditor from 'src/components/MarkdownEditor'
+import validationRule from "../../../utils/validationRule";
+import moment from "moment";
 
 
 @config({
     modal: {
-        title: props => props.isEdit ? '修改公告' : '添加公告',
+        title: props => props.isEdit ? '修改验证码' : '添加验证码',
         maskClosable: true
     },
 })
@@ -19,11 +19,22 @@ class EditModal extends Component {
     state = {
         loading: false, // 页面加载loading
         data: {},       // 回显数据
-        content: '',       // 公告内容
+        verification_types: null,           // 验证码类型
     };
+
+    handleVerificationTypes = () => {
+        getVerificationTypes()
+            .then(res => {
+                const data = res.data;
+                this.setState({ verification_types: data.results });
+            }, error => {
+                console.log(error.response);
+            })
+    }
 
     componentDidMount() {
         const {isEdit} = this.props;
+        this.handleVerificationTypes();
         if (isEdit) {
             this.fetchData();
         }
@@ -33,11 +44,11 @@ class EditModal extends Component {
         if (this.state.loading) return;
         const {id} = this.props;
         this.setState({loading: true});
-        retrieveAnnouncement(id)
+        retrieveEmailCode(id)
             .then(res => {
-                const data = res.data;
+                let data = res.data;
+                data.results.expired_time = moment(data.results.expired_time)
                 this.setState({data: data.results});
-                this.setState({content: data.results.content});
                 this.form.setFieldsValue(data.results);
             }, error => {
                 console.log(error.response);
@@ -51,12 +62,8 @@ class EditModal extends Component {
         const {id} = this.props;
         const successTip = isEdit ? '修改成功！' : '添加成功！';
         this.setState({loading: true});
-        let params = {
-            ...values,
-            content: this.state.content,
-        }
         if (isEdit){
-            updateAnnouncement(id, params)
+            updateEmailCode(id, values)
                 .then(res => {
                     const data = res.data;
                     const {onOk} = this.props;
@@ -71,7 +78,7 @@ class EditModal extends Component {
                 })
                 .finally(() => this.setState({loading: false}));
         } else {
-            createAnnouncement(params)
+            createEmailCode(values)
                 .then(res => {
                     const data = res.data;
                     const {onOk} = this.props;
@@ -89,16 +96,19 @@ class EditModal extends Component {
 
     };
 
-    handleContentChange = (values) => {
-        this.setState({content: values});
-    };
-
     render() {
         const {isEdit, onCancel} = this.props;
-        const {loading, data } = this.state;
+        const {loading, data, verification_types } = this.state;
         const formProps = {
             labelWidth: 100,
         };
+        console.log('verification_types', verification_types);
+        const types_options = [];
+        if (verification_types) {
+            Object.keys(verification_types).forEach(function(key) {
+                types_options.push({'value': parseInt(key), 'label': verification_types[key]});
+            });
+        }
         return (
             <ModalContent
                 loading={loading}
@@ -116,31 +126,43 @@ class EditModal extends Component {
 
                     <FormElement
                         {...formProps}
-                        label="标题"
-                        name="title"
+                        type="email"
+                        label="电子邮箱"
+                        name="email_name"
                         required
                         noSpace
+                        // disabled={isEdit}
+                        rules={[validationRule.email()]}
                     />
-                    <FormElement
-                        {...formProps}
-                        label="跳转链接"
-                        name="link"
-                        noSpace
-                        rules={[validationRule.link()]}
-                    />
+
                     <FormElement
                         {...formProps}
                         type="select"
-                        label="是否发布"
-                        name="is_publish"
-                        options={[
-                            {value: true, label: '是'},
-                            {value: false, label: '否'},
-                        ]}
+                        label="验证码类型"
+                        name="verification_type"
+                        required
+                        noSpace
+                        options={types_options}
+                        // disabled={isEdit}
                     />
-                    <MarkdownEditor
-                        content={this.state.content}
-                        handleContentChange={this.handleContentChange}
+
+                    <FormElement
+                        {...formProps}
+                        label="验证码"
+                        name="verification_code"
+                        required
+                        noSpace
+                        // disabled={isEdit}
+                    />
+
+                    <FormElement
+                        {...formProps}
+                        type="date-time"
+                        label="过期时间"
+                        name="expired_time"
+                        required
+                        format="YYYY-MM-DD HH:mm:ss"
+                        // disabled={isEdit}
                     />
                 </Form>
             </ModalContent>

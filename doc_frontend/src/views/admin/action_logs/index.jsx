@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {Button, Form, notification} from 'antd';
+import {Button, Form} from 'antd';
 import PageContent from 'src/layouts/PageContent';
 import config from 'src/utils/Hoc/configHoc';
 import QueryBar from 'src/library/QueryBar';
@@ -8,11 +8,8 @@ import FormElement from 'src/library/FormElement';
 import Table from 'src/library/Table';
 import Operator from 'src/library/Operator';
 import Pagination from 'src/library/Pagination';
-import batchDeleteConfirm from 'src/components/BatchDeleteConfirm';
-import {bulkDeleteAnnouncement, deleteAnnouncement, getAnnouncementList } from 'src/apis/announcement';
+import { getActionLogList, getActionTypes } from 'src/apis/action_log';
 import {getUserList} from 'src/apis/user';
-import {messageDuration} from "src/config/settings";
-import { yesOrNoTag } from 'src/utils/tagRender';
 import EditModal from "./EditModal"
 
 
@@ -35,17 +32,12 @@ class Announcement extends Component {
         id: null,           // 需要修改的数据id
         ordering: null,           // 排序
         user_options: [],           // 用户选项
+        action_types: {},           // 操作类型
     };
 
     columns = [
-        { title: '标题', dataIndex: 'title', sorter: true, width: 100 },
-        { title: '是否发布', dataIndex: 'is_publish', sorter: true, width: 100,
-            render: (value, record)  => {
-                return yesOrNoTag(value)
-            }
-        },
         {
-            title: '用户', dataIndex: 'creator', sorter: true, width: 100,
+            title: '用户', dataIndex: 'user', sorter: true, width: 100,
             render: (value, record) => {
                 if (value) {
                     return value.nickname;
@@ -54,29 +46,48 @@ class Announcement extends Component {
 
             }
         },
-        { title: '创建时间', dataIndex: 'created_time', sorter: true, width: 100 },
+        { title: '操作对象', dataIndex: 'content_object', sorter: true, width: 100,
+            render: (value, record)  => {
+                if (value) {
+                    return value.model + '-' + value.name
+                }
+                return '-'
+            }
+        },
+        { title: '操作类型', dataIndex: 'action_type', sorter: true, width: 100,
+            render: (value, record)  => {
+                if (value) {
+                    return this.state.action_types[value]
+                }
+                return '-'
+            }
+            },
+        { title: 'IP地址', dataIndex: 'remote_ip', sorter: true, width: 100 },
+        { title: '操作时间', dataIndex: 'created_time', sorter: true, width: 100 },
         {
             title: '操作', dataIndex: 'operator', width: 120,
             render: (value, record) => {
-                const { id, title } = record;
+                const { id } = record;
                 const items = [
                     {
-                        label: '编辑',
+                        label: '详情',
                         onClick: () => this.setState({ visible: true, id }),
-                    },
-                    {
-                        label: '删除',
-                        color: 'red',
-                        confirm: {
-                            title: `您确定删除"${title}"?`,
-                            onConfirm: () => this.handleDelete(id),
-                        },
                     },
                 ];
                 return <Operator items={items}/>;
             },
         },
     ];
+
+    handleActionTypes = () => {
+        getActionTypes()
+            .then(res => {
+                const data = res.data;
+                this.setState({ action_types: data.results });
+            }, error => {
+                console.log(error.response);
+            })
+    }
 
     handleUserOptions = () => {
         getUserList({'not_page': true})
@@ -94,6 +105,7 @@ class Announcement extends Component {
 
     componentDidMount() {
         this.handleUserOptions();
+        this.handleActionTypes();
         this.handleSubmit();
     }
 
@@ -122,7 +134,7 @@ class Announcement extends Component {
             params['ordering'] = this.state.ordering;
         }
         this.setState({ loading: true });
-        getAnnouncementList(params)
+        getActionLogList(params)
             .then(res => {
                 const data = res.data;
                 const dataSource = data?.results || [];
@@ -152,72 +164,31 @@ class Announcement extends Component {
         }
     };
 
-    handleDelete = (id) => {
-        if (this.state.deleting) return;
-        this.setState({ deleting: true });
-        deleteAnnouncement(id)
-            .then(res => {
-                const data = res.data;
-                notification.success({
-                    message: '删除用户',
-                    description: data.messages,
-                    duration: messageDuration,
-                });
-                this.handleSubmit();
-            }, error => {
-                console.log(error.response);
-            })
-            .finally(() => this.setState({ deleting: false }));
-    };
-
-
-    handleBatchDelete = () => {
-        if (this.state.deleting) return;
-        this.setState({ deleting: true });
-        const { selectedRowKeys } = this.state;
-        batchDeleteConfirm(selectedRowKeys.length)
-            .then(() => {
-                bulkDeleteAnnouncement({'deleted_objects': selectedRowKeys})
-                    .then(res => {
-                        const data = res.data;
-                        notification.success({
-                            message: '批量删除用户',
-                            description: data.messages,
-                            duration: messageDuration,
-                        });
-                        this.setState({ selectedRowKeys: [] });
-                        this.handleSubmit();
-                    }, error => {
-                        console.log(error.response);
-                    })
-                    .catch(function (error) {
-                        console.log(error);
-                    })
-                    .finally(() => this.setState({ deleting: false }));
-            })
-            .catch(function (error) {
-                console.log(error);
-            })
-            .finally(() => this.setState({ deleting: false }));
-    };
 
     render() {
         const {
             loading,
-            deleting,
             dataSource,
             selectedRowKeys,
             total,
             pageNum,
             pageSize,
             visible,
+            action_types,
             id,
         } = this.state;
 
         const formProps = {
-            width: 200,
+            width: 250,
+            labelWidth: 60,
         };
-        const disabledDelete = !selectedRowKeys?.length;
+
+        const types_options = [];
+        if (action_types) {
+            Object.keys(action_types).forEach(function(key) {
+                types_options.push({'value': parseInt(key), 'label': action_types[key]});
+            });
+        }
         return (
             <PageContent>
                 <QueryBar>
@@ -227,7 +198,7 @@ class Announcement extends Component {
                                 {...formProps}
                                 label="关键字"
                                 name="search"
-                                placeholder="标题"
+                                placeholder="操作信息"
                             />
                             <FormElement
                                 {...formProps}
@@ -237,6 +208,13 @@ class Announcement extends Component {
                                 options={this.state.user_options}
                             />
                             <FormElement
+                                {...formProps}
+                                type="select"
+                                label="操作类型"
+                                name="action_type"
+                                options={types_options}
+                            />
+                            <FormElement
                                 width={300}
                                 type="date-range"
                                 label="创建时间"
@@ -244,9 +222,7 @@ class Announcement extends Component {
                             />
                             <FormElement layout>
                                 <Button type="primary" htmlType="submit">搜索</Button>
-                                <Button onClick={() => this.form.resetFields()}>重置</Button>
-                                <Button type="primary" onClick={() => this.setState({ visible: true, id: null })}>添加</Button>
-                                <Button danger loading={deleting} disabled={disabledDelete} onClick={this.handleBatchDelete}>删除</Button>
+                                <Button onClick={() => {this.form.resetFields(); this.handleSubmit();}}>重置</Button>
                             </FormElement>
                         </FormRow>
                     </Form>
@@ -282,6 +258,7 @@ class Announcement extends Component {
                     isEdit={id !== null}
                     onOk={() => this.setState({ visible: false }, () => this.handleSubmit())}
                     onCancel={() => this.setState({ visible: false })}
+                    width="60%"
                 />
             </PageContent>
         );

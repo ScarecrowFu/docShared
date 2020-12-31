@@ -47,12 +47,37 @@ RegisterCodeStatus = {
     10: '有效',
 }
 
+AuthAction = 10
+CreateAction = 100
+UpdateAction = 110
+DeleteAction = 120
+RecoverAction = 130
+ExportAction = 140
+ImportAction = 150
+UploadAction = 160
+ActiveAction = 170
+DisableAction = 180
+
+ActionType = {
+    AuthAction: '认证',
+    CreateAction: '新增',
+    UpdateAction: '修改',
+    DeleteAction: '删除',
+    RecoverAction: '还原',
+    ExportAction: '导出',
+    ImportAction: '导入',
+    UploadAction: '上传',
+    ActiveAction: '启动',
+    DisableAction: '禁用',
+}
+
 WebsiteSet = [
     {'key': 'site_name', 'name': '网站名称', 'value': '司马府邸', 'set_type': 10, 'description': '请输入站点名称'},
     {'key': 'site_sub_title', 'name': '子标题', 'value': '', 'set_type': 10, 'description': '请输入站点子标题'},
     {'key': 'site_keyword', 'name': '关键词', 'value': '', 'set_type': 20, 'description': '请输入站点关键字, 使用逗号分割'},
     {'key': 'site_description', 'name': '站点描述', 'value': '', 'set_type': 20, 'description': '请输入简短的描述'},
-    {'key': 'site_case_number', 'name': '备案号', 'value': '', 'set_type': 10, 'description': '请输入网站备案号'},
+    {'key': 'site_use_help', 'name': '使用手册', 'value': '', 'set_type': 10, 'description': '请输入使用手册的访问连接'},
+    {'key': 'site_config_help', 'name': '配置手册', 'value': '', 'set_type': 10, 'description': '请输入配置手册的访问连接'},
 ]
 
 BaseSet = [

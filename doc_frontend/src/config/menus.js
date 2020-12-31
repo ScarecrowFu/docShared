@@ -33,6 +33,7 @@ export default function getMenus(userId, menuType='front') {
         {key: 'announcement', parentKey: 'system_manage', text: '公告管理', icon: 'database', path: '/admin/system/announcements', order: 500},
         {key: 'action_log', parentKey: 'system_manage', text: '日志管理', icon: 'interaction', path: '/admin/system/action_logs', order: 500},
         {key: 'reg_code', parentKey: 'system_manage', text: '注册码管理', icon: 'codepen', path: '/admin/system/reg_codes', order: 500},
+        {key: 'email_code', parentKey: 'system_manage', text: '验证码管理', icon: 'mail', path: '/admin/system/email_codes', order: 500},
 
         {key: 'system_setting', text: '站点设置', icon: 'setting',  order: 400},
         {key: 'website_set', parentKey: 'system_setting', text: '站点信息', icon: 'setting', path: '/admin/setting/website_set', order: 400},
