@@ -11,7 +11,6 @@ export default function Footer (props) {
             Copyright <CopyrightOutlined /> <a rel="noreferrer" href="https://github.com/ScarecrowFu" target="_blank">司马扶妖</a>
             <FieldTimeOutlined /> 2020 - {year}
             <MailOutlined /> fualan1990@gmail.com
-            <Divider />
         </div>
     );
 }

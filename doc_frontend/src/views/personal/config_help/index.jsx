@@ -1,5 +1,6 @@
 import React, {Component} from 'react';
 import config from 'src/utils/Hoc/configHoc';
+import './style.less'
 
 
 
@@ -14,7 +15,14 @@ class ConfigHelp extends Component {
     };
     render() {
         return (
-           <h1> todo </h1>
+            <div>
+                <div styleName="right">
+                    <div styleName="right-inner">
+                        <div styleName="code">404</div>
+                        <div styleName="message">当前尚无配置手册说明</div>
+                    </div>
+                </div>
+            </div>
         );
     }
 }

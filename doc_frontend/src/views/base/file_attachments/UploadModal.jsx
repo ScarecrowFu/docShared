@@ -33,15 +33,38 @@ class UploadModal extends Component {
         console.log('handleBeforeUpload file:' + JSON.stringify(file));
         console.log('handleBeforeUpload file.file:' + JSON.stringify(file.file));
         console.log('handleBeforeUpload file type:' + JSON.stringify(file.type));
-        const isLt2M = file.size / 1024 / 1024  < 200;
-        if (!isLt2M) {
-            notification.error({
-                message: '文件大小错误',
-                description: '附件超过200M限制，不允许上传',
-                duration: messageDuration,
-            });
+        if (this.state.file_type === 20) {
+            const isJPG = file.type === 'image/jpeg';
+            const isJPEG = file.type === 'image/jpeg';
+            const isGIF = file.type === 'image/gif';
+            const isPNG = file.type === 'image/png';
+            const isLt2M = file.size / 1024 / 1024 < 10;
+            if (!(isJPG || isJPEG || isPNG || isGIF)) {
+                notification.error({
+                    message: '文件格式错误',
+                    description: '只能上传JPG、JPEG、PNG、GIF 格式的图片',
+                    duration: messageDuration,
+                });
+            } else if (!isLt2M) {
+                notification.error({
+                    message: '文件大小错误',
+                    description: '图片超过10M限制，不允许上传',
+                    duration: messageDuration,
+                });
+            }
+            return (isJPG || isJPEG || isPNG) && isLt2M;
+        } else {
+            const isLt2M = file.size / 1024 / 1024  < 200;
+            if (!isLt2M) {
+                notification.error({
+                    message: '文件大小错误',
+                    description: '附件超过200M限制，不允许上传',
+                    duration: messageDuration,
+                });
+            }
+            return isLt2M;
         }
-        return isLt2M;
+
     };
 
 
@@ -159,7 +182,7 @@ class UploadModal extends Component {
 
     render() {
         const {onCancel} = this.props;
-        const {loading, dataSource } = this.state;
+        const {loading, dataSource, file_type } = this.state;
         const { Dragger } = Upload;
         return (
             <ModalContent
@@ -180,7 +203,7 @@ class UploadModal extends Component {
                     </p>
                     <p className="ant-upload-text">Click or drag file to this area to upload</p>
                     <p className="ant-upload-hint">
-                        支持多个或单个文件上传， 最大文件限制为200M
+                        {file_type === 20? '只能上传JPG、JPEG、PNG、GIF 格式的图片, 最大图片限制为200M' : '支持多个或单个文件上传， 最大文件限制为200M'}
                     </p>
                 </Dragger>
             </ModalContent>

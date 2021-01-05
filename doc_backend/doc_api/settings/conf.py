@@ -72,7 +72,7 @@ ActionType = {
 }
 
 WebsiteSet = [
-    {'key': 'site_name', 'name': '网站名称', 'value': '司马府邸', 'set_type': 10, 'description': '请输入站点名称'},
+    {'key': 'site_name', 'name': '网站名称', 'value': 'DocShared', 'set_type': 10, 'description': '请输入站点名称'},
     {'key': 'site_sub_title', 'name': '子标题', 'value': '', 'set_type': 10, 'description': '请输入站点子标题'},
     {'key': 'site_keyword', 'name': '关键词', 'value': '', 'set_type': 20, 'description': '请输入站点关键字, 使用逗号分割'},
     {'key': 'site_description', 'name': '站点描述', 'value': '', 'set_type': 20, 'description': '请输入简短的描述'},

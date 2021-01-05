@@ -1,7 +1,7 @@
 from django.conf.urls import url, include
 from rest_framework import routers
 from doc_api.apis import auth_apis, user_apis, c_doc_apis, doc_apis, file_apis, sys_manage_apis, anonymous_apis, \
-    actionlog_apis
+    actionlog_apis, statistics_apis
 
 router = routers.DefaultRouter()
 
@@ -27,10 +27,12 @@ router.register('sys_set', sys_manage_apis.SystemSettingViewSet, basename='sys_s
 
 router.register('anonymous_c_docs', anonymous_apis.AnonymousCollectedDocViewSet, basename='anonymous_c_docs')
 router.register('anonymous_docs', anonymous_apis.AnonymousDocViewSet, basename='anonymous_docs')
+router.register('anonymous_set', anonymous_apis.SystemSettingViewSet, basename='anonymous_set')
 
 
 urlpatterns = [
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     url(r'^', include(router.urls), name='api-index'),
     url(r'^auth/$', auth_apis.Authentication.as_view(), name='authentication'),
+    url(r'^dashboard_statistics/$', statistics_apis.DashboardStatisticsViewSet.as_view(), name='dashboard_statistics'),
 ]

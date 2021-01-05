@@ -32,3 +32,11 @@ export function saveSystemSettingSpecifyList(data) {
   });
 }
 
+export function anonymousSettingSpecifyList(params) {
+  return request({
+    url: "/api/anonymous_set/specify_set/",
+    method: "get",
+    params,
+  });
+}
+

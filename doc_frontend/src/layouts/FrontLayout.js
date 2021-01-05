@@ -1,12 +1,13 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import {Spin} from 'antd';
-import {Helmet} from 'react-helmet';
+// import {Helmet} from 'react-helmet';
 import {withRouter} from 'react-router-dom';
 import Header from 'src/layouts/Header';
 import {connect} from 'src/models';
 import {PAGE_FRAME_LAYOUT} from 'src/models/settings';
 import './BasicLayout.less';
+import CustomHelmet from "src/layouts/Helmet"
 
 @withRouter
 @connect(state => {
@@ -43,11 +44,12 @@ class FrontLayout extends Component {
         } = this.props;
 
         const titleText = title?.text || title;
-        const titleIsString = typeof titleText === 'string';
+        // const titleIsString = typeof titleText === 'string';
 
         return (
             <div styleName="base-frame" className="no-print">
-                <Helmet title={titleIsString ? 'docShared ' + titleText : 'docShared '}/>
+                {/*<Helmet title={titleIsString ? 'docShared ' + titleText : 'docShared '}/>*/}
+                <CustomHelmet request={true} titleText={titleText}/>
                 <Header headerType="front"/>
                 <div styleName="global-loading" style={{display: globalLoading ? 'block' : 'none'}}>
                     <Spin spinning size="large" tip={globalLoadingTip}/>

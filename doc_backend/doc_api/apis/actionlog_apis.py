@@ -22,7 +22,10 @@ class ActionLogViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.Re
     def list(self, request, *args, **kwargs):
         query_params = self.request.query_params
         not_page = query_params.get('not_page', False)
+        personal = query_params.get('personal', '')
         queryset = self.filter_queryset(self.get_queryset())
+        if personal.lower() == 'true':
+            queryset = queryset.filter(user=request.user)
         queryset = queryset.distinct()
         if not_page and not_page.lower() != 'false':
             serializer = self.get_serializer(queryset, many=True)

@@ -89,7 +89,8 @@ class PageContent extends Component {
                 >
                     {children}
                 </div>
-                {footer ? <div styleName="footer"><Footer/></div> : null}
+                {/*{footer ? <div styleName="footer"><Footer/></div> : null}*/}
+                <div styleName="footer"><Footer/></div>
             </div>
         );
     }

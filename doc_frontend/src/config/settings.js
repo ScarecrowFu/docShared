@@ -11,6 +11,10 @@ module.exports = {
     keyPrefix: "doc",
     // 登录信息保存名称
     authInfoKey: "authInfo",
+    // 站点信息
+    SiteInfoKey: "siteInfo",
+    // 基础设置
+    BaseSetInfoKey: "baseSetInfo",
     // 是否显示页面底部版权信息
     footerCopyright: true,
     // 是否开启主题配置按钮

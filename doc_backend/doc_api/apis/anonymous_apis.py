@@ -1,9 +1,12 @@
 from rest_framework import viewsets, mixins, filters, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from doc_api.models import Doc, CollectedDoc
+from doc_api.models import Doc, CollectedDoc, SystemSetting
 from doc_api.serializers.doc_serializers import DocListSerializer, DocDetailSerializer, DocActionSerializer
 from doc_api.serializers.c_doc_serializers import CollectedDocListSerializer, CollectedDocActionSerializer, CollectedDocDetailSerializer
+from doc_api.serializers.sys_manage_serializers import SystemSettingActionSerializer, SystemSettingDetailSerializer, \
+    SystemSettingListSerializer
+from doc_api.settings.conf import WebsiteSet, BaseSet, EmailSet
 from doc_api.settings.conf import DocStatus
 from doc_api.filters.doc_filters import DocParameterFilter
 from doc_api.filters.c_doc_filters import CollectedDocOrderingFilter, CollectedDocParameterFilter
@@ -138,3 +141,43 @@ class AnonymousDocViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins
         elif self.action == 'retrieve':
             return DocDetailSerializer
         return DocActionSerializer
+
+
+class SystemSettingViewSet(viewsets.GenericViewSet):
+    """
+    匿名游客访问接口
+    """
+    filter_backends = (filters.OrderingFilter, filters.SearchFilter,)
+    search_fields = ('key', 'name', 'value', 'set_type',)
+    ordering_fields = ('key', 'name', 'value', 'set_type', 'creator', 'created_time')
+    queryset = SystemSetting.objects.order_by('-id').all()
+    permission_classes = ()
+    authentication_classes = ()
+
+    @action(methods=['GET'], detail=False)
+    def specify_set(self, request, *args, **kwargs):
+        """获取个人操作日志"""
+        query_params = self.request.query_params
+        set_classify = query_params.get('set_classify', 'WebsiteSet')
+        saving_settings = []
+        if set_classify == 'WebsiteSet':
+            saving_settings = WebsiteSet
+        if set_classify == 'BaseSet':
+            saving_settings = BaseSet
+        return_settings = {}
+        for saving_setting in saving_settings:
+            system_setting = SystemSetting.objects.filter(key=saving_setting['key']).first()
+            if system_setting:
+                saving_setting['value'] = system_setting.value
+            return_settings[saving_setting['key']] = saving_setting['value']
+        result = {'success': True, 'messages': '获取系统设置信息',
+                  'results': return_settings}
+        return Response(result, status=status.HTTP_200_OK)
+
+    def get_serializer_class(self):
+        if self.action == 'retrieve':
+            return SystemSettingDetailSerializer
+        if self.action == 'list' or self.action == 'specify_set':
+            return SystemSettingListSerializer
+        return SystemSettingActionSerializer
+

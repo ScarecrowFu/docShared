@@ -80,7 +80,7 @@ bodyStyle|object|-|内容容器样式
 
 ```
 /path/to/models/user-center.js --> userCenter;
-/path/to/models/user.js --> user;
+/path/to/models/index.js --> user;
 ```
 
 ## 组件与redux进行连接

@@ -2,8 +2,8 @@ import {session} from 'src/utils/storage';
 import {getNodeByPropertyAndValue, convertToTree} from 'src/utils/tree';
 import {pathToRegexp} from 'path-to-regexp';
 import {ROUTE_BASE_NAME} from 'src/routers/AppRouter';
-import {authInfoKey} from 'src/config/settings'
-import {isObjEmpty} from 'src/utils'
+import {authInfoKey} from 'src/config/settings';
+import {isObjEmpty} from 'src/utils';
 const LOGIN_USER_STORAGE_KEY = authInfoKey;
 
 const localStorage = window.localStorage;
@@ -48,6 +48,7 @@ export function getLoginUser() {
     }
     return loginUser ? JSON.parse(loginUser) : null;
 }
+
 
 /**
  * 清除当前用户信息

@@ -3,6 +3,7 @@ import config from 'src/utils/Hoc/configHoc';
 import PageContent from "src/layouts/PageContent"
 import './style.less'
 import SetBase from './setBase'
+import {Alert} from "antd"
 
 
 @config({
@@ -18,6 +19,13 @@ class BaseSet extends Component {
     render() {
         return (
             <PageContent>
+                <Alert
+                    message="Tips"
+                    description="该配置暂未生效, 后续将完善"
+                    type="warning"
+                    showIcon
+                    closable
+                />
                 <SetBase set_classify={this.state.set_classify}/>
             </PageContent>
 

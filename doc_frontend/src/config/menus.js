@@ -2,10 +2,12 @@
 /*
 * 菜单显示数据 返回Promise各式，支持前端硬编码、异步获取菜单数据
 * */
+import {getSiteInfo, setSiteInfoRequest} from 'src/utils/info'
+
+
 
 export default function getMenus(userId, menuType='front') {
     // 若由后端返回可使用菜单, 在这里根据 userId 请求相关菜单权限
-    console.log('config getMenus: ', userId, menuType);
     const frontMenu = [
         {key: 'home', text: '首页', icon: 'home', path: '/', order: 10},
     ]
@@ -64,13 +66,29 @@ export default function getMenus(userId, menuType='front') {
         {key: 'password_set', parentKey: 'personal_setting', text: '修改密码', icon: 'gateway', path: '/personal/setting/password_set', order: 1600},
         {key: 'token_set', parentKey: 'personal_setting', text: '账号token', icon: 'gold', path: '/personal/setting/token_set', order: 1600},
 
-        {key: 'config_help', text: '配置手册', icon: 'gift', path: '/personal/config_help', order: 1500},
-        {key: 'use_help', text: '使用手册', icon: 'shop', path: '/personal/use_help', order: 1500},
+        // {key: 'config_help', text: '配置手册', icon: 'gift', path: '/personal/config_help', order: 1500},
+        // {key: 'use_help', text: '使用手册', icon: 'shop', path: '/personal/use_help', order: 1500},
     ]
+
+    setSiteInfoRequest();
 
     if (menuType === 'admin') {
         return Promise.resolve(adminMenu);
     } else if (menuType === 'personal') {
+        let siteInfo = getSiteInfo();
+        let site_use_help = siteInfo?.site_use_help? siteInfo.site_use_help : null
+        let site_config_help = siteInfo?.site_config_help? siteInfo.site_config_help : null
+        if (site_config_help !== '' && site_config_help !== null && site_config_help !== undefined) {
+            personalMenu.push({key: 'config_help', text: '配置手册', icon: 'gift', url: site_config_help, target: '_blank', order: 1500})
+        } else {
+            personalMenu.push({key: 'config_help', text: '配置手册', icon: 'gift', path: '/personal/config_help', order: 1500})
+            console.log('push')
+        }
+        if (site_use_help !== '' && site_use_help !== null && site_use_help !== undefined) {
+            personalMenu.push({key: 'use_help', text: '使用手册', icon: 'shop', url: site_use_help, target: '_blank', order: 1500})
+        } else {
+            personalMenu.push({key: 'use_help', text: '使用手册', icon: 'shop', path: '/personal/use_help', order: 1500})
+        }
         return Promise.resolve(personalMenu);
     } else {
         return Promise.resolve(frontMenu);

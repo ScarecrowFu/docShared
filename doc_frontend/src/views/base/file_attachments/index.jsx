@@ -55,42 +55,51 @@ export default class FileAttachmentBase extends Component {
         selected_group: 'all',  // 选择的分组
     };
 
-    columns = [
-        { title: '名称', dataIndex: 'file_name', sorter: true, width: 200,
-            render: (value, record) => {
-            const renderIcon = (<Image src={handleFileTypeIcon(value)}/>);
-                return <span>{renderIcon} <a  rel="noreferrer" href={`${baseURL}media/${record.file_path}`} target='_blank'>{value }</a></span>;
-            }
-        },
-        { title: '大小', dataIndex: 'file_size', sorter: true, width: 100 },
-        {
-            title: '用户', dataIndex: 'creator', sorter: true, width: 100,
-            render: (value, record) => {
-                if (value) {
-                    return value.nickname;
+    handleTableColumn = () => {
+        let columns = [
+            { title: '名称', dataIndex: 'file_name', sorter: true, width: 200,
+                render: (value, record) => {
+                    const renderIcon = (<Image src={handleFileTypeIcon(value)}/>);
+                    return <span>{renderIcon} <a  rel="noreferrer" href={`${baseURL}media/${record.file_path}`} target='_blank'>{value }</a></span>;
                 }
-                return '';
-            }
-        },
-        { title: '创建时间', dataIndex: 'created_time', sorter: true, width: 100 },
-        {
-            title: '操作', dataIndex: 'operator', width: 120,
-            render: (value, record) => {
-                const { id, file_name } = record;
-                const items = [
-                    {
-                        label: '删除',
-                        color: 'red',
-                        confirm: {
-                            title: `您确定删除"${file_name}"?`,
-                            onConfirm: () => this.handleDelete(id),
-                        },
-                    },
-                ];
-                return <Operator items={items}/>;
             },
-        },
-    ];
+            { title: '大小', dataIndex: 'file_size', sorter: true, width: 100 },
+        ];
+        if (!this.props.personal) {
+            columns = columns.concat([
+                {
+                    title: '用户', dataIndex: 'creator', sorter: true, width: 100,
+                    render: (value, record) => {
+                        if (value) {
+                            return value.nickname;
+                        }
+                        return '';
+                    }
+                },
+            ])
+        }
+        columns = columns.concat([
+            { title: '创建时间', dataIndex: 'created_time', sorter: true, width: 100 },
+            {
+                title: '操作', dataIndex: 'operator', width: 120,
+                render: (value, record) => {
+                    const { id, file_name } = record;
+                    const items = [
+                        {
+                            label: '删除',
+                            color: 'red',
+                            confirm: {
+                                title: `您确定删除"${file_name}"?`,
+                                onConfirm: () => this.handleDelete(id),
+                            },
+                        },
+                    ];
+                    return <Operator items={items}/>;
+                },
+            },
+        ]);
+        return columns;
+    }
 
     handleUserOptions = () => {
         getUserList({'not_page': true})
@@ -222,6 +231,7 @@ export default class FileAttachmentBase extends Component {
         if (this.state.deleting) return;
         this.setState({ deleting: true });
         const { selectedRowKeys } = this.state;
+        console.log('selectedRowKeys', selectedRowKeys);
         batchDeleteConfirm(selectedRowKeys.length)
             .then(() => {
                 bulkDeleteFileAttachment({'deleted_objects': selectedRowKeys})
@@ -329,7 +339,7 @@ export default class FileAttachmentBase extends Component {
                         onChange: selectedRowKeys => this.setState({ selectedRowKeys }),
                     }}
                     loading={loading}
-                    columns={this.columns}
+                    columns={this.handleTableColumn()}
                     dataSource={dataSource}
                     rowKey="id"
                     serialNumber={false}

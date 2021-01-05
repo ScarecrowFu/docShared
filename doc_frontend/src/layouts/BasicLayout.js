@@ -1,16 +1,17 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import {Spin} from 'antd';
-import {Helmet} from 'react-helmet';
 import {withRouter} from 'react-router-dom';
 import PageHead from 'src/layouts/PageHead';
 import Header from 'src/layouts/Header';
 import Side from 'src/layouts/Side';
 import PageTabs from 'src/layouts/PageTabs';
+import CustomHelmet from 'src/layouts/Helmet'
 import {connect} from 'src/models';
 import {getLoginUser, getSelectedMenuByPath, setLoginUser} from 'src/utils/userAuth';
 import {PAGE_FRAME_LAYOUT} from 'src/models/settings';
 import './BasicLayout.less';
+
 
 @withRouter
 @connect(state => {
@@ -247,7 +248,7 @@ class BasicLayout extends Component {
         if (isSideMenu && !isMobile) pageHead = null;
 
         const titleText = title?.text || title;
-        const titleIsString = typeof titleText === 'string';
+        // const titleIsString = typeof titleText === 'string';
 
         const topSpaceClass = ['content-top-space'];
 
@@ -258,7 +259,8 @@ class BasicLayout extends Component {
         const sideWidthSpace = hasSide ? sideWidth : 0;
         return (
             <div styleName="base-frame" className="no-print">
-                <Helmet title={titleIsString ? 'docShared ' + titleText : 'docShared '}/>
+                {/*<Helmet title={titleIsString ? 'docShared ' + titleText : 'docShared '}/>*/}
+                <CustomHelmet request={true} titleText={titleText}/>
                 <Header/>
                 <Side layout={layout} theme={theme}/>
                 <div styleName={topSpaceClass.join(' ')} className={topSpaceClass.join(' ')}/>
