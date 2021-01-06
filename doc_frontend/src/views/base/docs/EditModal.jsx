@@ -194,12 +194,15 @@ class EditModal extends Component {
 
 
     componentDidMount() {
-        const {isEdit} = this.props;
+        const {isEdit, visibleType, c_doc_id} = this.props;
         this.handleCDocOptions();
         this.handleTemplateOptions();
         this.handleTagOptions();
-        if (isEdit) {
+        if (isEdit || visibleType === 'clone') {
             this.fetchData();
+        }
+        if (visibleType === 'add' && c_doc_id) {
+            this.handleCreatedCDoc(c_doc_id)
         }
     }
 
@@ -270,7 +273,7 @@ class EditModal extends Component {
 
 
     render() {
-        const {isEdit, onCancel, id} = this.props;
+        const {isEdit, onCancel, id, visibleType} = this.props;
         const {loading, doc_options, is_publish } = this.state;
         const formProps = {
             labelWidth: 80,
@@ -280,11 +283,11 @@ class EditModal extends Component {
                 loading={loading}
                 cancelText="关 闭"
                 onCancel={onCancel}
-                otherText1={!is_publish? "草稿" : "撤回"}
-                otherType1={!is_publish? "primary" : "dashed"}
+                otherText1={!is_publish || visibleType === 'clone'? "草稿" : "撤回"}
+                otherType1={!is_publish || visibleType === 'clone'? "primary" : "dashed"}
                 otherButton1={() => this.handleDraftSubmit()}
-                otherText2={!is_publish? "发表" : "修改"}
-                otherType2={!is_publish? "primary" : "primary"}
+                otherText2={!is_publish || visibleType === 'clone'? "发表" : "修改"}
+                otherType2={!is_publish || visibleType === 'clone'? "primary" : "primary"}
                 otherButton2={() => this.handlePublicSubmit()}
             >
                 <Form

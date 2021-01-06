@@ -2,6 +2,7 @@ import React, {Component} from 'react';
 import {Button} from 'antd';
 import config from 'src/utils/Hoc/configHoc';
 import './style.less';
+import {toHome} from "src/utils/userAuth"
 
 @config({
     router: true,
@@ -46,7 +47,7 @@ class Error404 extends Component {
                         <div styleName="code">404</div>
                         <div styleName="message">页面不存在</div>
                         <div styleName="buttons">
-                            <Button type="primary" onClick={() => this.props.history.replace('/')}>返回首页</Button>
+                            <Button type="primary" onClick={() => toHome()}>返回首页</Button>
                             {history.length >= 2 ? <Button type="primary" onClick={this.handleGoBack}>返回上一步（{time})</Button> : null}
                         </div>
                     </div>

@@ -112,7 +112,7 @@ export default class HomeBase extends Component {
                                                                     <Timeline>
                                                                             {action_log_data.map(function (item) {
                                                                                     return (
-                                                                                        <Timeline.Item >
+                                                                                        <Timeline.Item key={item.id}>
                                                                                                 <Text>{item.user?.nickname}</Text>
                                                                                                 <Text type="success">{item.action_info}</Text>
                                                                                                 <Text type="secondary"> {item.created_time}</Text>

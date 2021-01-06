@@ -37,7 +37,10 @@ import gfm from 'remark-gfm';
 import {getLoginUser, toHome} from "src/utils/userAuth";
 import ValidPermModal from "./ValidPermModal"
 import {messageDuration} from "src/config/settings";
+import EditHistory from 'src/views/base/docs/EditHistory';
+import EditExport from 'src/views/base/c_docs/EditExport';
 import './style.less';
+import EditModal from "src/views/base/docs/EditModal"
 
 
 
@@ -60,6 +63,10 @@ class Home extends Component {
         doc_toc: null, // 文档目录
         login_user: null, // 当前是否已存在认证用户
         perm_confirm_visible: false, // 验证访问码对话框
+        HistoryVisible: false,
+        visibleExport: false,     // 导出
+        visible: false,     // 新增/克隆/导出
+        visibleType: 'add',     //  add/clone/edit
     };
 
     // 验证当前用户对文集的权限
@@ -253,10 +260,15 @@ class Home extends Component {
 
     // 回到文集信息， 重置当前文档
     onReSetDoc() {
-        this.setState({ search_docs: null });
-        this.setState({ current_doc: null });
-        this.setState({ current_doc_toc: [] });
-        this.setState({ doc_toc: null });
+        if (this.state.current_doc) {
+            this.setState({ search_docs: null });
+            this.setState({ current_doc: null });
+            this.setState({ current_doc_toc: [] });
+            this.setState({ doc_toc: null });
+        } else {
+            toHome();
+        }
+
     }
 
     handleSearchDoc = async () => {
@@ -275,6 +287,24 @@ class Home extends Component {
             }, error => {
                 console.log(error.response);
             })
+    }
+
+    handleEdit = () => {
+        const {
+            c_doc,
+            current_doc,
+            visibleType,
+        } = this.state;
+        if (visibleType === 'add' || visibleType === 'clone'){
+            this.handleGetLatestDoc(c_doc.id);
+            this.handleGetCDocOptions(c_doc.id);
+        } else if (visibleType === 'edit') {
+            this.handleGetCDocOptions(c_doc.id);
+            this.handleGetCurrentDoc(current_doc.id);
+            this.handleGetDocToc();
+        } else {
+            window.location.reload();
+        }
     }
 
     render() {
@@ -316,9 +346,9 @@ class Home extends Component {
         const renderDocToc = (doc_toc) =>{
             console.log('doc_toc', doc_toc);
             return (
-                doc_toc.map(item =>
+                doc_toc.map((item, index) =>
                     (
-                        <Link key={item.level + item.name} href={'#' + item.name.toLowerCase().replace(/\W/g, '-')} title={item.name}>
+                        <Link key={index} href={'#' + item.name.toLowerCase().replace(/\W/g, '-')} title={item.name}>
                             {item.children.length > 0? renderDocToc(item.children): null}
                         </Link>
                     )
@@ -369,49 +399,49 @@ class Home extends Component {
                                 <Button  shape="circle" icon={<RollbackOutlined />} onClick={ () => this.onReSetDoc()}/>
                             </Tooltip>
                             {
-                                c_doc?.member_perm >= 10?
+                                c_doc?.member_perm >= 10 && current_doc?
                                     <Tooltip title="历史版本" styleName="form-element">
-                                        <Button type="dashed" shape="circle" icon={<HistoryOutlined />} />
+                                        <Button type="dashed" shape="circle" icon={<HistoryOutlined />} onClick={() => this.setState({ HistoryVisible: true})}/>
                                     </Tooltip>
                                     : null
                             }
                             {
                                 c_doc?.member_perm >= 10?
                                     <Tooltip title="导出" styleName="form-element">
-                                        <Button type="dashed" shape="circle" icon={<ExportOutlined />} />
+                                        <Button type="dashed" shape="circle" icon={<ExportOutlined />} onClick={() => this.setState({ visibleExport: true })}/>
                                     </Tooltip>
                                     : null
                             }
                             {
                                 login_user?
                                     <Tooltip title="新增" styleName="form-element">
-                                        <Button shape="circle" icon={<FileAddOutlined />} />
+                                        <Button shape="circle" icon={<FileAddOutlined />} onClick={() => this.setState({ visible: true, visibleType: 'add' })}/>
                                     </Tooltip>
                                     : null
                             }
                             {
-                                login_user?
+                                login_user && current_doc?
                                     <Tooltip title="克隆" styleName="form-element">
-                                        <Button shape="circle" icon={<CopyOutlined />} />
+                                        <Button shape="circle" icon={<CopyOutlined />} onClick={() => this.setState({ visible: true, visibleType: 'clone' })}/>
                                     </Tooltip>
                                     : null
                             }
                             {
-                                c_doc?.member_perm >= 20?
+                                c_doc?.member_perm >= 20 && current_doc?
                                     <Tooltip title="编辑" styleName="form-element">
-                                        <Button  shape="circle" icon={<EditOutlined />} />
+                                        <Button  shape="circle" icon={<EditOutlined />} onClick={() => this.setState({ visible: true, visibleType: 'edit' })}/>
                                     </Tooltip>
                                     : null
                             }
                             {
-                                (c_doc?.member_perm === 20 && login_user?.id === c_doc?.creator?.id) || (c_doc?.member_perm >= 30)?
+                                (c_doc?.member_perm === 20 && login_user?.id === c_doc?.creator?.id && current_doc) || (c_doc?.member_perm >= 30 && current_doc)?
                                     <Tooltip title="删除" styleName="form-element">
                                         <Button type="dashed" shape="circle" icon={<DeleteOutlined />} />
                                     </Tooltip>
                                     : null
                             }
                             {
-                                c_doc?.member_perm >= 30?
+                                c_doc?.member_perm >= 30 && current_doc?
                                     <Tooltip title="文集设置" styleName="form-element">
                                         <Button type="dashed" shape="circle" icon={<RadiusSettingOutlined />} />
                                     </Tooltip>
@@ -425,7 +455,9 @@ class Home extends Component {
                 <div styleName="page-detail">
                     <div styleName="page-docs">
                         <Anchor offsetTop={50}>
-                            <Button type="link" onClick={ () => this.onReSetDoc()}> <Title>{c_doc.name}</Title></Button>
+                            <Button type="link" onClick={ () => this.onReSetDoc()}>
+                                <Title level={2}>{c_doc.name}</Title>
+                            </Button>
                             <Divider />
                             {
                                 doc_options.length
@@ -530,6 +562,33 @@ class Home extends Component {
                         id={c_doc.id}
                         onOk={() => this.setState({ perm_confirm_visible: false })}
                         onCancel={() => this.setState({ perm_confirm_visible: false}, () => toHome())}
+                    />
+
+                    <EditHistory
+                        visible={this.state.HistoryVisible}
+                        id={current_doc?.id}
+                        onOk={() => this.setState({ HistoryVisible: false })}
+                        onCancel={() => this.setState({ HistoryVisible: false })}
+                        width='60%'
+                    />
+
+                    <EditExport
+                        visible={this.state.visibleExport}
+                        id={c_doc?.id}
+                        onOk={() => this.setState({ visibleExport: false })}
+                        onCancel={() => this.setState({ visibleExport: false })}
+                        width='60%'
+                    />
+
+                    <EditModal
+                        visible={this.state.visible}
+                        id={current_doc?.id}
+                        // c_doc_id={c_doc?.id}
+                        visibleType={this.state.visibleType}
+                        isEdit={current_doc?.id !== null && this.state.visibleType === 'edit'}
+                        onOk={() => this.setState({ visible: false }, () =>  this.handleEdit())}
+                        onCancel={() => this.setState({ visible: false })}
+                        width='80%'
                     />
 
                 </div>
