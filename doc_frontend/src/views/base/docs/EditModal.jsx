@@ -300,9 +300,14 @@ class EditModal extends Component {
                             <Tooltip title="导入模板">
                                 <Button type="primary" shape="circle" icon={<ImportOutlined />} onClick={() => this.setState({ importTemplateVisible: true})} />
                             </Tooltip>
-                            <Tooltip title="历史记录">
-                                <Button type="primary" shape="circle" icon={<HistoryOutlined />} onClick={() => this.setState({ HistoryVisible: true})} />
-                            </Tooltip>
+                            {isEdit ?
+                                <Tooltip title="历史记录">
+                                    <Button type="primary" shape="circle" icon={<HistoryOutlined/>}
+                                            onClick={() => this.setState({HistoryVisible: true})}/>
+                                </Tooltip>
+                                :
+                                null
+                            }
                         </div>
 
                         <FormElement

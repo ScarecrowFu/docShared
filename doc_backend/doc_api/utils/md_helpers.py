@@ -11,9 +11,10 @@ def extract_toc_text(text):
         match = markdown_reg.match(line)
         if match is not None:
             level, text = match.groups()
-            level_key[len(level)] = text
-            # tab = ((len(level) - 1) * 2) * " "
-            toc_tree.append({'level': len(level), 'name': text, 'parent': level_key[len(level) - 1]})
+            if len(level) <= 5:
+                level_key[len(level)] = text
+                # tab = ((len(level) - 1) * 2) * " "
+                toc_tree.append({'level': len(level), 'name': text, 'parent': level_key[len(level) - 1]})
     return toc_tree
 
 
