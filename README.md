@@ -69,6 +69,10 @@ cd docShared
 进入后端代码目录 `cd doc_backend`，安装依赖库
 
 ```shell script
+python3 -m venv venv && source venv/bin/activate
+```
+
+```shell script
 pip install -r requirements.txt
 ```
 
@@ -144,4 +148,4 @@ npm start
 
 # 使用手册
 
-[配置手册]()
+[使用手册]()
