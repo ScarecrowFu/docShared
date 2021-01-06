@@ -73,7 +73,7 @@ python3 -m venv venv && source venv/bin/activate
 ```
 
 ```shell script
-pip install -r requirements.txt
+pip install -r requirements.txt -i https://mirrors.aliyun.com/pypi/simple --trusted-host=mirrors.aliyun.com
 ```
 
 ## 3、初始化数据库
@@ -81,7 +81,7 @@ pip install -r requirements.txt
 运行如下命令生成数据库迁移
 
 ```shell script
-python manage.py makemigrations 
+python manage.py makemigrations doc_api
 ```
 
 ```shell script

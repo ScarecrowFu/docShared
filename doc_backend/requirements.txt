@@ -13,7 +13,6 @@ importlib-metadata==2.0.0
 loguru==0.5.3
 Markdown==3.3.1
 Pillow==8.0.0
-pkg-resources==0.0.0
 pyee==7.0.4
 PyJWT==1.7.1
 pyppeteer==0.2.2
