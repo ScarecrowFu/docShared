@@ -14,7 +14,11 @@ DocShared 是一个适合个人或团队的在线文档分享工具，它可以�
 
 ![./docs/images/index.png](./docs/images/index.png)
 
+----
+
 ![./docs/images/index.png](./docs/images/personal.png)
+
+----
 
 ![./docs/images/index.png](./docs/images/admin.png)
 
@@ -156,8 +160,8 @@ npm start
 
 # 配置手册
 
-[配置手册]()
+[配置手册]
 
 # 使用手册
 
-[使用手册]()
+[使用手册]
