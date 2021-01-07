@@ -13,6 +13,7 @@ import {getUserList} from 'src/apis/user';
 import {messageDuration} from "src/config/settings";
 import EditModal from "./EditModal"
 import PropTypes from "prop-types"
+import {getCDocList} from "../../../apis/c_doc"
 
 
 export default class DocBase extends Component {
@@ -43,11 +44,12 @@ export default class DocBase extends Component {
         statusTypes: {},
         status_options: [],           // 状态选项
         user_options: [],           // 用户选项
+        c_doc_options: [],       // 文集数据
     };
 
     handleTableColumn = () => {
         let columns = [
-            { title: '文档标题', dataIndex: 'title', sorter: true, width: 100 },
+            { title: '文档标题', dataIndex: 'title', sorter: true, width: 200 },
             { title: '所属文集', dataIndex: 'c_doc', sorter: true, width: 100,
                 render: (value, record) => {
                     if (value) {
@@ -58,7 +60,7 @@ export default class DocBase extends Component {
 
                 }
             },
-            { title: '上级文档', dataIndex: 'parent_doc', sorter: true, width: 100,
+            { title: '上级文档', dataIndex: 'parent_doc', sorter: true, width: 200,
                 render: (value, record) => {
                     if (value) {
                         return value.title;
@@ -83,11 +85,12 @@ export default class DocBase extends Component {
         }
         columns = columns.concat([
             { title: '创建时间', dataIndex: 'created_time', sorter: true, width: 100 },
-            { title: '文档状态', dataIndex: 'status', sorter: true, width: 100,
+            { title: '文档状态', dataIndex: 'status', sorter: true, width: 50,
                 render: (value, record) => {
                     return this.state.statusTypes[value];
                 }
             },
+            { title: '排序值', dataIndex: 'sort', sorter: true, width: 50 },
             {
                 title: '操作', dataIndex: 'operator', width: 120,
                 render: (value, record) => {
@@ -119,6 +122,21 @@ export default class DocBase extends Component {
         ]);
         return columns;
     }
+
+    handleCDocOptions = () => {
+        getCDocList({'not_page': true, 'options': true})
+            .then(res => {
+                const data = res.data;
+                const c_doc_options = [];
+                data.results.forEach(function (item) {
+                    c_doc_options.push({'value': item.id, 'label': item.name})
+                });
+                this.setState({ c_doc_options: c_doc_options });
+
+            }, error => {
+                console.log(error.response);
+            })
+    };
 
     handleStatusTypes = () => {
         getDocStatus()
@@ -152,6 +170,7 @@ export default class DocBase extends Component {
     componentDidMount() {
         this.handleStatusTypes();
         this.handleUserOptions();
+        this.handleCDocOptions();
         this.handleSubmit();
     }
 
@@ -292,6 +311,13 @@ export default class DocBase extends Component {
                                 label="关键字"
                                 name="search"
                                 placeholder="标题"
+                            />
+                            <FormElement
+                                {...formProps}
+                                type="select"
+                                label="文集"
+                                name="c_doc"
+                                options={this.state.c_doc_options}
                             />
                             <FormElement
                                 {...formProps}

@@ -69,7 +69,7 @@ class CollectedDocListSerializer(serializers.ModelSerializer):
             return 0
 
     def get_latest_doc(self, obj):
-        doc = obj.docs.filter(status=20).order_by('-created_time').first()
+        doc = obj.docs.filter(status=20, is_deleted=False).order_by('-created_time').first()
         if doc:
             return {'id': doc.id, 'title': doc.title}
         else:

@@ -30,17 +30,14 @@ import {
     EditOutlined, CopyOutlined, HistoryOutlined, ExportOutlined,
     DeleteOutlined, RadiusSettingOutlined, SearchOutlined} from '@ant-design/icons';
 import Footer from "src/layouts/Footer";
-import ReactMarkdown from 'react-markdown';
-import {Prism as SyntaxHighlighter} from 'react-syntax-highlighter';
-import {dark} from 'react-syntax-highlighter/dist/esm/styles/prism';
-import gfm from 'remark-gfm';
 import {getLoginUser, toHome} from "src/utils/userAuth";
 import ValidPermModal from "./ValidPermModal"
 import {messageDuration} from "src/config/settings";
 import EditHistory from 'src/views/base/docs/EditHistory';
 import EditExport from 'src/views/base/c_docs/EditExport';
 import './style.less';
-import EditModal from "src/views/base/docs/EditModal"
+import EditModal from "src/views/base/docs/EditModal";
+import MarkdownRender  from "src/components/MarkdownRender";
 
 
 
@@ -174,7 +171,15 @@ class Home extends Component {
         if (this.state.login_user != null) {
             getDocListFun = getDocList;
         }
-        let params = {'not_page': true, 'c_doc': c_id, 'tree': true, 'status': 20, 'search': search};
+        let params = {
+            'not_page': true,
+            'c_doc': c_id,
+            'ordering': '-sort,-created_time',
+            'tree': true,
+            'status': 20,
+            'search': search,
+            'is_deleted': false
+        };
         getDocListFun(params)
             .then(res => {
                 const data = res.data;
@@ -191,7 +196,13 @@ class Home extends Component {
         if (this.state.login_user != null) {
             getDocListFun = getDocList;
         }
-        let params = {'c_doc': c_id, 'page_size': 5, 'ordering': '-created_time', 'status': 20};
+        let params = {
+            'c_doc': c_id,
+            'page_size': 5,
+            'ordering': '-created_time',
+            'status': 20,
+            'is_deleted': false
+        };
         getDocListFun(params)
             .then(res => {
                 const data = res.data;
@@ -278,7 +289,14 @@ class Home extends Component {
         if (this.state.login_user != null) {
             getDocListFun = getDocList;
         }
-        let params = {...values, 'not_page': true, 'c_doc': this.state.c_doc.id, 'ordering': '-created_time', 'status': 20};
+        let params = {
+            ...values,
+            'not_page': true,
+            'c_doc': this.state.c_doc.id,
+            'ordering': '-sort,-created_time',
+            'status': 20,
+            'is_deleted': false
+        };
         getDocListFun(params)
             .then(res => {
                 const data = res.data;
@@ -356,28 +374,6 @@ class Home extends Component {
             );
         }
 
-        // markdown 渲染标题信息
-        const flatten = (text, child) => {
-            return typeof child === 'string'
-                ? text + child
-                : React.Children.toArray(child.props.children).reduce(flatten, text)
-        }
-
-        // markdown 渲染标题信息
-        const HeadingRenderer = (props) => {
-            let children = React.Children.toArray(props.children)
-            let text = children.reduce(flatten, '')
-            let slug = text.toLowerCase().replace(/\W/g, '-');
-            return React.createElement('h' + props.level, {id: slug}, props.children)
-        }
-
-        // markdown 渲染标题信息
-        const renderers = {
-            code: ({language, value}) => {
-                return <SyntaxHighlighter style={dark} language={language} children={value} />
-            },
-            heading: HeadingRenderer,
-        }
 
         return (
             <div>
@@ -487,12 +483,7 @@ class Home extends Component {
                                     </Text>
                                 </div>
                                 <Divider />
-                                <ReactMarkdown
-                                    renderers={renderers}
-                                    plugins={[gfm]}
-                                >
-                                    {current_doc.content}
-                                </ReactMarkdown>
+                                <MarkdownRender content={current_doc.content} />
                             </div>
                             :
                             <div styleName="detail-page-content">
@@ -552,6 +543,7 @@ class Home extends Component {
                             (
                                 <Anchor offsetTop={60}>
                                     {renderDocToc(doc_toc)}
+                                    {/*<MarkdownRender content={current_doc.content} only_toc={true}/>*/}
                                 </Anchor>
                             ) : <Anchor offsetTop={60} style={{'textAlign': 'center'}}>暂无目录</Anchor>
                         }

@@ -167,7 +167,7 @@ class DocListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Doc
-        fields = ('id', 'c_doc', 'parent_doc', 'child_docs', 'title', 'created_time', 'status', 'creator', 'member_perm', 'content_text')
+        fields = ('id', 'c_doc', 'parent_doc', 'child_docs', 'title', 'created_time', 'status', 'creator', 'sort', 'member_perm', 'content_text')
 
 
 class DocActionSerializer(serializers.ModelSerializer):

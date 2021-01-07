@@ -8,7 +8,6 @@ def extract_toc_text(text):
     level_key = {0: '', 1: '', 2: '', 3: '', 4: '', 5: ''}
     toc_tree = []
     text = re.sub(r'```(.|\n).*?```', '', text)
-    print(text)
     for line in text.split('\n'):
         match = markdown_reg.match(line)
         if match is not None:
