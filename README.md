@@ -5,9 +5,19 @@ DocShared 是基于Python + React 开发的在线文档管理系统，使用Djan
 
 DocShared 是一个适合个人或团队的在线文档分享工具，它可以加快团队之间沟通的效率，可以作为个人和团队的文档，知识和笔记管理工具
 
-## 预览地址:
+# 预览地址:
 
-[DocShared]()
+[DocShared](doc_demo.fualan.com)(网站尚在备案中, 暂无法访问, 请自行按照 “部署安装教程” 部署访问)
+
+
+## 项目截图
+
+![./docs/images/index.png](./docs/images/index.png)
+
+![./docs/images/index.png](./docs/images/personal.png)
+
+![./docs/images/index.png](./docs/images/admin.png)
+
 
 # 功能
 
@@ -35,7 +45,7 @@ DocShared 是一个适合个人或团队的在线文档分享工具，它可以�
 
 个人设置：个人信息、修改密码、账号Token管理
 
-# 管理后台
+## 管理后台
 
 用户管理： 新建，删除，编辑，禁用，启用，重置密码
 
@@ -141,6 +151,8 @@ npm start
 8. 用户禁用/启用
 
 9. 回收站清空
+
+10. 文档全文搜索
 
 # 配置手册
 
