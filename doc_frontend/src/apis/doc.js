@@ -74,12 +74,6 @@ export function getDocStatus(params) {
 }
 
 
-export function getDocToc(instance_id) {
-  return request({
-    url: `/api/docs/${instance_id}/doc_toc/`,
-    method: "get",
-  });
-}
 
 export function getDocHistory(instance_id) {
   return request({
@@ -225,13 +219,5 @@ export function anonymousGetDocStatus(params) {
     url: "/api/anonymous_docs/doc_status/",
     method: "get",
     params,
-  });
-}
-
-export function anonymousGetDocToc(instance_id, data) {
-  return request({
-    url: `/api/anonymous_docs/${instance_id}/doc_toc/`,
-    method: "get",
-    data,
   });
 }

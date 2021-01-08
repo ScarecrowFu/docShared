@@ -7,6 +7,8 @@ import anchor from 'markdown-it-anchor';
 import lists from 'markdown-it-task-lists';
 import table from 'markdown-it-multimd-table';
 import './style.less'
+import {Anchor} from "antd"
+
 /**
  * 操作封装，Markdown 渲染等庄
  */
@@ -23,11 +25,32 @@ export default class MarkdownRender extends Component {
         only_toc: false,
     };
 
-    state = {};
+    state = {
+        toc : null,
+    };
+
+
+
+    // 渲染文档目录
+    renderDocToc = (toc_element) =>{
+        const tags = toc_element.querySelectorAll('li');
+        const { Link } = Anchor;
+        const _that = this;
+        return [...tags].map(function (item, index) {
+            const children = item.childNodes;
+            console.log(item.getAttribute('title'), 'parent', item.parentNode)
+            console.log(item.getAttribute('title'), 'children', children)
+            return (
+                <Link key={index} href={item.getAttribute('href')} title={item.getAttribute('title')}>
+                    {children.length > 0 ? _that.renderDocToc(children) : null}
+                </Link>
+            )
+        });
+    }
 
     handlerRender = (content) => {
         let render_content = content;
-        let render_toc = '';
+        let render_toc = 'test';
         const {content_toc, only_toc} = this.props;
         const md = new MarkdownIt({
             highlight: function (str, lang) {
@@ -46,14 +69,26 @@ export default class MarkdownRender extends Component {
         });
         md.use(anchor, { permalink: true, permalinkBefore: true, permalinkSymbol: '§' } )
         md.use(toc, { listType: 'ul', callback: function (html, ast) {
-                // render_toc = html;
                 let div = document.createElement('div');
-                div.innerHTML = html.replace(/<ul>/g, '').replace(/<\/ul>/g, '').replace(/<nav class="table-of-contents">/g, '').replace(/<\/nav>/g, '');
-                const li_tags = div.getElementsByTagName('li');
-
-                console.log('toc html', html);
-                console.log('render_toc html', div.innerHTML);
-                console.log('div.getElementsByTagName(\'li\') html', div.getElementsByTagName('li'));
+                div.innerHTML = html;
+                const li_tags = div.querySelectorAll('li');
+                li_tags.forEach(li_tag => {
+                    const child = li_tag.childNodes[0];
+                    for (let i = 0; i < child.attributes.length; i++) {
+                        const attr = child.attributes[i]
+                        li_tag.setAttribute(attr.name, attr.value)
+                        li_tag.getAttribute(attr.name, attr.value)
+                    }
+                    li_tag.setAttribute('title', child.textContent);
+                    child.remove();
+                })
+                render_toc = div.innerHTML.replace(/<ul>/g, '')
+                    .replace(/<\/ul>/g, '')
+                    .replace(/<nav class="table-of-contents">/g, '')
+                    .replace(/<\/nav>/g, '')
+                console.log('render_toc', render_toc);
+                div.innerHTML = render_toc;
+                render_toc = div;
             } })
         md.use(lists)
         md.use(table)
@@ -66,14 +101,16 @@ export default class MarkdownRender extends Component {
     }
 
     render() {
-        const {content} = this.props;
+        const {content, only_toc} = this.props;
 
         return (
-            <div>
-                <article styleName="markdown-body" >
-                    <div dangerouslySetInnerHTML={{__html: this.handlerRender(content)}}/>
-                </article>
-            </div>
+            only_toc? this.renderDocToc(this.handlerRender(content)) :
+                <div>
+                    <article styleName="markdown-body" >
+                        <div dangerouslySetInnerHTML={{__html: this.handlerRender(content)}}/>
+                    </article>
+                </div>
+
 
         );
     }

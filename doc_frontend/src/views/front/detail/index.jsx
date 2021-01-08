@@ -19,10 +19,8 @@ import FormElement from "src/library/FormElement";
 import {
     getDocList,
     retrieveDoc,
-    getDocToc,
     anonymousGetDocList,
     anonymousRetrieveDoc,
-    anonymousGetDocToc,
 } from "src/apis/doc";
 import {anonymousRetrieveCDoc, retrieveCDoc} from "src/apis/c_doc"
 import {
@@ -41,6 +39,7 @@ import MarkdownRender  from "src/components/MarkdownRender";
 
 
 
+
 @config({
     path: '/detail/:c_id',
     noAuth: true,
@@ -54,10 +53,8 @@ class Home extends Component {
         c_id: null,           // 当前文集ID
         doc_options: [],  // 文集下的文档选项
         current_doc: null,  //当前展示的文档
-        current_doc_toc: [],  //当前展示的文档目录
         latest_docs: [], // 最新文档
         search_docs: null, // 搜索文档
-        doc_toc: null, // 文档目录
         login_user: null, // 当前是否已存在认证用户
         perm_confirm_visible: false, // 验证访问码对话框
         HistoryVisible: false,
@@ -212,20 +209,6 @@ class Home extends Component {
             })
     };
 
-    // 获取最新文档
-    handleGetDocToc = () => {
-        let getDocTocFun = anonymousGetDocToc;
-        if (this.state.login_user != null) {
-            getDocTocFun = getDocToc;
-        }
-        getDocTocFun(this.state.current_doc.id)
-            .then(res => {
-                const data = res.data;
-                this.setState({ doc_toc: data.results });
-            }, error => {
-                console.log(error.response);
-            })
-    };
 
     componentDidMount() {
         const login_user = getLoginUser();
@@ -235,9 +218,6 @@ class Home extends Component {
             this.fetchCDocData(params.c_id);
             this.handleGetCDocOptions(params.c_id);
             this.handleGetLatestDoc(params.c_id);
-            if (this.state.current_doc) {
-                this.handleGetDocToc();
-            }
         });
     }
 
@@ -251,7 +231,6 @@ class Home extends Component {
             .then(res => {
                 const data = res.data;
                 this.setState({ current_doc: data.results });
-                this.handleGetDocToc();
             }, error => {
                 console.log(error.response);
             })
@@ -259,13 +238,11 @@ class Home extends Component {
 
     // 选择文档
     onSelectDocTree = (selectedKeys, info) => {
-        this.setState({ current_doc_toc: [] });
         this.handleGetCurrentDoc(selectedKeys[0]);
     }
 
     // 选择文档
     onSelectDoc(value) {
-        this.setState({ current_doc_toc: [] });
         this.handleGetCurrentDoc(value);
     }
 
@@ -274,8 +251,6 @@ class Home extends Component {
         if (this.state.current_doc) {
             this.setState({ search_docs: null });
             this.setState({ current_doc: null });
-            this.setState({ current_doc_toc: [] });
-            this.setState({ doc_toc: null });
         } else {
             toHome();
         }
@@ -319,7 +294,6 @@ class Home extends Component {
         } else if (visibleType === 'edit') {
             this.handleGetCDocOptions(c_doc.id);
             this.handleGetCurrentDoc(current_doc.id);
-            this.handleGetDocToc();
         } else {
             window.location.reload();
         }
@@ -329,14 +303,12 @@ class Home extends Component {
 
         const { TabPane } = Tabs;
         const { Title, Paragraph, Text } = Typography;
-        const { Link } = Anchor;
         const {
             c_doc,
             perm_confirm_visible,
             current_doc,
             doc_options,
             latest_docs,
-            doc_toc,
             login_user,
             search_docs,
         } = this.state;
@@ -359,21 +331,6 @@ class Home extends Component {
                 </Timeline>
             );
         }
-
-        // 渲染文档目录
-        const renderDocToc = (doc_toc) =>{
-            console.log('doc_toc', doc_toc);
-            return (
-                doc_toc.map((item, index) =>
-                    (
-                        <Link key={index} href={'#' + item.name.toLowerCase().replace(/\W/g, '-')} title={item.name}>
-                            {item.children.length > 0? renderDocToc(item.children): null}
-                        </Link>
-                    )
-                )
-            );
-        }
-
 
         return (
             <div>
@@ -539,14 +496,11 @@ class Home extends Component {
                             </div>
                     }
                     <div styleName="page-toc">
-                        {doc_toc?
-                            (
-                                <Anchor offsetTop={60}>
-                                    {renderDocToc(doc_toc)}
-                                    {/*<MarkdownRender content={current_doc.content} only_toc={true}/>*/}
-                                </Anchor>
-                            ) : <Anchor offsetTop={60} style={{'textAlign': 'center'}}>暂无目录</Anchor>
-                        }
+                        {current_doc?
+                            <Anchor offsetTop={60}>
+                                <MarkdownRender content={current_doc.content} only_toc={true}/>
+                            </Anchor>
+                        : null}
                     </div>
 
                     <ValidPermModal
