@@ -82,17 +82,17 @@ WebsiteSet = [
 
 BaseSet = [
     {'key': 'can_register', 'name': '开启注册', 'value': True, 'set_type': 60, 'description': '开启此选项, 允许用户注册'},
+    {'key': 'verify_register', 'name': '启动注册验证', 'value': False, 'set_type': 60, 'description': '开启此选项, 用户注册后需要通过邮箱获取验证码激活用户'},
     {'key': 'use_reg_code', 'name': '启用注册码', 'value': True, 'set_type': 60, 'description': '开启此选项, 用户需要使用注册码才能注册'},
     {'key': 'site_wide_login', 'name': '全站登录', 'value': False, 'set_type': 60, 'description': '开启此选项, 所有页面均需要登录'},
     {'key': 'can_download', 'name': '文集下载', 'value': False, 'set_type': 60, 'description': '开启此选项, 文集允许导出文件以供下载，文集拥有者可进行进一步控制特定文集是否开放导出'},
-    {'key': 'enable_email', 'name': '启用邮箱', 'value': False, 'set_type': 60, 'description': '开启此选项, 重要信息将以邮箱通知（开启此选项后还需进行邮箱信息配置）'},
     {'key': 'max_image_size', 'name': '最大图片上传', 'value': 1024*10, 'set_type': 40, 'description': '请输入最大文件上传限制, 为空则表示不限制, 单位为KB'},
     {'key': 'max_upload_size', 'name': '最大附件上传', 'value': 1024*200, 'set_type': 40, 'description': '请输入最大文件上传限制, 为空则表示不限制, 单位为KB'},
     {'key': 'upload_type', 'name': '上传附件类型', 'value': '', 'set_type': 20, 'description': '请输入文件格式限制, 以逗号分割, 为空则表示不限制'},
-    {'key': 'statistical_code', 'name': '统计代码', 'value': '', 'set_type': 20, 'description': '如果需要第三方统计功能, 请将代码输入'},
-    {'key': 'advertising1', 'name': '广告位1', 'value': '', 'set_type': 20, 'description': '如果需要显示广告, 请将代码输入'},
-    {'key': 'advertising2', 'name': '广告位2', 'value': '', 'set_type': 20, 'description': '如果需要显示广告, 请将代码输入'},
-    {'key': 'advertising3', 'name': '广告位3', 'value': '', 'set_type': 20, 'description': '如果需要显示广告, 请将代码输入'},
+    # {'key': 'statistical_code', 'name': '统计代码', 'value': '', 'set_type': 20, 'description': '如果需要第三方统计功能, 请将代码输入'},
+    # {'key': 'advertising1', 'name': '广告位1', 'value': '', 'set_type': 20, 'description': '如果需要显示广告, 请将代码输入'},
+    # {'key': 'advertising2', 'name': '广告位2', 'value': '', 'set_type': 20, 'description': '如果需要显示广告, 请将代码输入'},
+    # {'key': 'advertising3', 'name': '广告位3', 'value': '', 'set_type': 20, 'description': '如果需要显示广告, 请将代码输入'},
 ]
 
 

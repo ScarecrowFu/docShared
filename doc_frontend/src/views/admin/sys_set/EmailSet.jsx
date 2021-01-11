@@ -21,8 +21,8 @@ class EmailSet extends Component {
             <PageContent>
                 <Alert
                     message="Tips"
-                    description="该配置暂未生效, 后续将完善"
-                    type="warning"
+                    description="测试邮箱配置前, 请先保存"
+                    type="success"
                     showIcon
                     closable
                 />

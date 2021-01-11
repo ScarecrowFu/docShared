@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from doc_api.models import Announcement, RegisterCode, SystemSetting, EmailVerificationCode
 from doc_api.serializers.user_serializers import UserBaseSerializer
-import random
+from doc_api.utils.base_helpers import md_to_text
 
 
 class AnnouncementBaseSerializer(serializers.ModelSerializer):
@@ -24,10 +24,14 @@ class AnnouncementDetailSerializer(serializers.ModelSerializer):
 class AnnouncementListSerializer(serializers.ModelSerializer):
     created_time = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S', read_only=True)
     creator = UserBaseSerializer(read_only=True)
+    desc = serializers.SerializerMethodField(read_only=True)
+
+    def get_desc(self, obj):
+        return md_to_text(obj.content)
 
     class Meta:
         model = Announcement
-        fields = ('id', 'title', 'link', 'is_publish', 'creator', 'created_time')
+        fields = ('id', 'title', 'link', 'is_publish', 'creator', 'created_time', 'desc')
 
 
 class AnnouncementActionSerializer(serializers.ModelSerializer):

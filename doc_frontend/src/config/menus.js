@@ -2,7 +2,7 @@
 /*
 * 菜单显示数据 返回Promise各式，支持前端硬编码、异步获取菜单数据
 * */
-import {getSiteInfo, setSiteInfoRequest} from 'src/utils/info'
+import {getSiteInfo, setSiteInfoRequest, setBaseSetInfoRequest} from 'src/utils/info'
 
 
 
@@ -71,6 +71,7 @@ export default function getMenus(userId, menuType='front') {
     ]
 
     setSiteInfoRequest();
+    setBaseSetInfoRequest();
 
     if (menuType === 'admin') {
         return Promise.resolve(adminMenu);

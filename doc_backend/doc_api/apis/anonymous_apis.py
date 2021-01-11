@@ -128,13 +128,6 @@ class AnonymousDocViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins
         result = {'success': True, 'messages': f'获取文档状态类别:', 'results': DocStatus}
         return Response(result, status=status.HTTP_200_OK)
 
-    @action(methods=['GET'], detail=True)
-    def doc_toc(self, request, *args, **kwargs):
-        instance = self.get_object()
-        toc = extract_toc(instance.content)
-        result = {'success': True, 'messages': f'获取当前文档:{instance.title}的目录信息', 'results': toc}
-        return Response(result, status=status.HTTP_200_OK)
-
     def get_serializer_class(self):
         if self.action == 'list':
             return DocListSerializer

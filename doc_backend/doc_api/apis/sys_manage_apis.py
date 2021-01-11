@@ -17,6 +17,7 @@ from doc_api.settings.conf import WebsiteSet, BaseSet, EmailSet
 from doc_api.settings.conf import VerificationType
 from doc_api.settings.conf import CreateAction, UpdateAction, DeleteAction, RecoverAction
 from doc_api.utils.action_log_helpers import action_log
+from doc_api.utils.email_helpers import send_email
 
 
 class AnnouncementViewSet(viewsets.ModelViewSet):
@@ -357,6 +358,17 @@ class SystemSettingViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixin
             result = {'success': True, 'messages': '获取系统设置',
                       'results': serializer.data}
             return Response(result, status=status.HTTP_200_OK)
+
+    @action(methods=['POST'], detail=False)
+    def test_email(self, request, *args, **kwargs):
+        try:
+            send_email(subject='DocShared 测试邮件', html_content='该邮件来自于DocShared, 用于测试邮箱配置是否正确, 请勿回复',
+                       to_list=['fu_hurt@163.com'])
+            result = {'success': True, 'messages': '邮箱设置可正常发送邮件'}
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as error:
+            result = {'success': False, 'messages': f'无法发送邮件, 请检查邮箱设置是否正确: {error}'}
+            return Response(result, status=status.HTTP_400_BAD_REQUEST)
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()

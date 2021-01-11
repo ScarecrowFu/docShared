@@ -8,7 +8,7 @@ import Table from 'src/library/Table';
 import Operator from 'src/library/Operator';
 import Pagination from 'src/library/Pagination';
 import batchDeleteConfirm from 'src/components/BatchDeleteConfirm';
-import {recoverDoc, getDocList, getDocStatus, bulkRecoverDoc} from 'src/apis/doc';
+import {recoverDoc, getDocList, getDocStatus, bulkRecoverDoc, deleteDoc, bulkDeleteDoc} from 'src/apis/doc';
 import {getUserList} from 'src/apis/user';
 import {messageDuration} from "src/config/settings";
 import PropTypes from "prop-types"
@@ -92,10 +92,17 @@ export default class DocRecycleBase extends Component {
                     const items = [
                         {
                             label: '还原',
-                            color: 'blue',
                             confirm: {
                                 title: `您确定还原"${title}"?`,
                                 onConfirm: () => this.handleRecover(id),
+                            },
+                        },
+                        {
+                            label: '清空',
+                            color: 'red',
+                            confirm: {
+                                title: `您确定清空"${title}"?`,
+                                onConfirm: () => this.handleDelete(id),
                             },
                         },
                     ];
@@ -216,6 +223,24 @@ export default class DocRecycleBase extends Component {
             .finally(() => this.setState({ deleting: false }));
     };
 
+    handleDelete = (id) => {
+        if (this.state.deleting) return;
+        this.setState({ deleting: true });
+        deleteDoc(id, {'clear': true})
+            .then(res => {
+                const data = res.data;
+                notification.success({
+                    message: '清空文档',
+                    description: data.messages,
+                    duration: messageDuration,
+                });
+                this.handleSubmit();
+            }, error => {
+                console.log(error.response);
+            })
+            .finally(() => this.setState({ deleting: false }));
+    };
+
 
     handleBatchRecover = () => {
         if (this.state.deleting) return;
@@ -228,6 +253,36 @@ export default class DocRecycleBase extends Component {
                         const data = res.data;
                         notification.success({
                             message: '批量还原文档',
+                            description: data.messages,
+                            duration: messageDuration,
+                        });
+                        this.setState({ selectedRowKeys: [] });
+                        this.handleSubmit();
+                    }, error => {
+                        console.log(error.response);
+                    })
+                    .catch(function (error) {
+                        console.log(error);
+                    })
+                    .finally(() => this.setState({ deleting: false }));
+            })
+            .catch(function (error) {
+                console.log(error);
+            })
+            .finally(() => this.setState({ deleting: false }));
+    };
+
+    handleBatchDelete = () => {
+        if (this.state.deleting) return;
+        this.setState({ deleting: true });
+        const { selectedRowKeys } = this.state;
+        batchDeleteConfirm(selectedRowKeys.length)
+            .then(() => {
+                bulkDeleteDoc({'deleted_objects': selectedRowKeys, 'clear': true})
+                    .then(res => {
+                        const data = res.data;
+                        notification.success({
+                            message: '批量清空文档',
                             description: data.messages,
                             duration: messageDuration,
                         });
@@ -303,6 +358,7 @@ export default class DocRecycleBase extends Component {
                                 <Button type="primary" htmlType="submit">搜索</Button>
                                 <Button onClick={() => {this.form.resetFields(); this.handleSubmit();}}>重置</Button>
                                 <Button danger loading={deleting} disabled={disabledDelete} onClick={this.handleBatchRecover}>还原</Button>
+                                <Button danger loading={deleting} disabled={disabledDelete} onClick={this.handleBatchDelete}>清空</Button>
                             </FormElement>
                         </FormRow>
                     </Form>

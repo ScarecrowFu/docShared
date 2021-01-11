@@ -107,28 +107,39 @@ class DocViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        instance.is_deleted = True
-        instance.save()
-        # self.perform_destroy(instance)
+        clear = request.data.get('clear', False)
+        if clear:
+            self.perform_destroy(instance)
+            messages = f'清空文档:{instance.__str__()}'
+        else:
+            instance.is_deleted = True
+            instance.save()
+            messages = f'删除文档:{instance.__str__()}'
         action_log(request=request, user=request.user, action_type=DeleteAction, old_instance=None,
-                   instance=instance, action_info=f'删除文档:{instance.__str__()}')
-        result = {'success': True, 'messages': f'删除文档:{instance.__str__()}'}
+                   instance=instance, action_info=messages)
+        result = {'success': True, 'messages': messages}
         return Response(result, status=status.HTTP_200_OK)
 
     @action(methods=['POST', 'DELETE'], detail=False)
     def bulk_delete(self, request, *args, **kwargs):
         # 批量删除
         deleted_objects_ids = request.data.get('deleted_objects', [])
+        clear = request.data.get('clear', False)
         queryset = self.get_queryset()
         deleted_objects_names = []
         for deleted_object_id in deleted_objects_ids:
             instance = Doc.objects.get(pk=int(deleted_object_id))
             deleted_objects_names.append(instance.__str__())
         deleted_objects = queryset.filter(id__in=deleted_objects_ids)
-        deleted_objects.update(is_deleted=True)
+        if clear:
+            deleted_objects.delete()
+            messages = f'批量清空文档:{deleted_objects_names}'
+        else:
+            deleted_objects.update(is_deleted=True)
+            messages = f'批量删除文档:{deleted_objects_names}'
         action_log(request=request, user=request.user, action_type=DeleteAction, old_instance=None,
-                   instance=None, action_info=f'批量删除文档:{deleted_objects_names}')
-        result = {'success': True, 'messages': f'批量删除文档:{deleted_objects_names}'}
+                   instance=None, action_info=messages)
+        result = {'success': True, 'messages': messages}
         return Response(result, status=status.HTTP_200_OK)
 
     @action(methods=['GET'], detail=False)

@@ -1,17 +1,19 @@
 import React, {Component} from 'react';
 import {Helmet} from 'react-helmet';
-import {Input, Button, Form } from 'antd';
+import {Input, Button, Form, notification} from 'antd';
 import {LockOutlined, UserOutlined} from '@ant-design/icons';
-import {setLoginUser, toHome} from 'src/utils/userAuth';
+import {toLogin} from 'src/utils/userAuth';
 import config from 'src/utils/Hoc/configHoc';
 import Banner from './banner/index';
-import { login } from 'src/apis/user'
+import { ForgetPassword } from 'src/apis/user'
 import './style.less';
-import {ROUTE_BASE_NAME} from "../../routers/AppRouter"
+import {ROUTE_BASE_NAME} from "src/routers/AppRouter"
+import validationRule from "src/utils/validationRule"
+import {messageDuration} from "src/config/settings"
 import {getBaseSetInfo, setBaseSetInfoRequest} from "../../utils/info"
 
 @config({
-    path: '/login',
+    path: '/forget_password',
     noFrame: true,
     noAuth: true,
 })
@@ -54,11 +56,16 @@ class Login extends Component {
 
         this.setState({loading: true, message: ''});
 
-        login(values)
+        ForgetPassword(values)
             .then(res => {
                 const data = res.data
-                setLoginUser(data.user);
-                toHome();
+                notification.success({
+                    message: '验证成功',
+                    description: data.messages,
+                    duration: messageDuration,
+                });
+                this.setState({message: data.messages});
+                setTimeout(() => toLogin(), 3000);
             }, error => {
                 console.log(error.response)
             })
@@ -73,12 +80,13 @@ class Login extends Component {
 
         return (
             <div styleName="root" className="login-bg">
-                <Helmet title="欢迎登陆"/>
+                <Helmet title="忘记密码"/>
                 <div styleName="left">
                     <Banner/>
                 </div>
                 <div styleName="right">
                     <div styleName="box">
+                        <div styleName="error-tip">{message}</div>
                         <Form
                             ref={form => this.form = form}
                             name="login"
@@ -86,7 +94,7 @@ class Login extends Component {
                             onFinish={this.handleSubmit}
                         >
                             <div styleName={formItemStyleName}>
-                                <div styleName="header">欢迎登录</div>
+                                <div styleName="header">忘记密码</div>
                             </div>
 
                             <div styleName={formItemStyleName}>
@@ -97,14 +105,16 @@ class Login extends Component {
                                     <Input allowClear autoFocus prefix={<UserOutlined className="site-form-item-icon"/>} placeholder="用户名"/>
                                 </Form.Item>
                             </div>
+
                             <div styleName={formItemStyleName}>
                                 <Form.Item
-                                    name="password"
-                                    rules={[{required: true, message: '请输入密码'}]}
+                                    name="email"
+                                    rules={[{required: true, message: '请输入邮箱'}, validationRule.email()]}
                                 >
-                                    <Input.Password prefix={<LockOutlined className="site-form-item-icon"/>} placeholder="密码"/>
+                                    <Input prefix={<LockOutlined className="site-form-item-icon"/>} placeholder="邮箱"/>
                                 </Form.Item>
                             </div>
+
                             <div styleName={formItemStyleName}>
                                 <Form.Item shouldUpdate={true} style={{marginBottom: 12}}>
                                     {() => (
@@ -118,7 +128,7 @@ class Login extends Component {
                                                 this.form?.getFieldsError().filter(({errors}) => errors.length).length
                                             }
                                         >
-                                            登录
+                                            验证
                                         </Button>
                                     )}
                                 </Form.Item>
@@ -126,14 +136,12 @@ class Login extends Component {
 
                             <div styleName={formItemStyleName}>
                                 <Button type="link" onClick={ () => window.location.href =  `${ROUTE_BASE_NAME}/`}>首 页</Button>
+                                <Button type="link" onClick={ () => window.location.href =  `${ROUTE_BASE_NAME}/login`}>返回登录</Button>
                                 {this.state.can_register? <Button type="link" onClick={ () => window.location.href =  `${ROUTE_BASE_NAME}/register`}>注 册</Button> : null}
-
-                                <Button type="link" onClick={ () => window.location.href =  `${ROUTE_BASE_NAME}/forget_password`}>忘记密码</Button>
                             </div>
 
-
                         </Form>
-                        <div styleName="error-tip">{message}</div>
+
                     </div>
                 </div>
             </div>

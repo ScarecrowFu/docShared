@@ -2,10 +2,11 @@ import React, {Component} from 'react';
 import {Button, Form, Input, InputNumber, notification, Switch} from 'antd';
 import PageContent from "src/layouts/PageContent"
 import './style.less'
-import {getSystemSettingSpecifyList, saveSystemSettingSpecifyList} from 'src/apis/sys_set'
+import {getSystemSettingSpecifyList, saveSystemSettingSpecifyList, systemSettingTestEmail} from 'src/apis/sys_set'
 import {InfoCircleOutlined} from '@ant-design/icons';
 import {messageDuration} from "src/config/settings"
 import PropTypes from "prop-types"
+import {setBaseSetInfoRequest, setSiteInfoRequest} from "src/utils/info"
 
 
 export default class SetBase extends Component {
@@ -42,6 +43,8 @@ export default class SetBase extends Component {
             .then(res => {
                 const data = res.data;
                 this.getSetList();
+                setSiteInfoRequest(true);
+                setBaseSetInfoRequest(true);
                 notification.success({
                     message: '修改成功！',
                     description: data.messages,
@@ -75,6 +78,23 @@ export default class SetBase extends Component {
         this.getSetList();
     }
 
+    handleTestEmail = () => {
+        if (this.state.loading) return;
+        this.setState({loading: true});
+        systemSettingTestEmail()
+            .then(res => {
+                const data = res.data;
+                notification.success({
+                    message: '设置成功！',
+                    description: data.messages,
+                    duration: messageDuration,
+                });
+            }, error => {
+                console.log(error.response);
+            })
+            .finally(() => this.setState({loading: false}));
+    }
+
     render() {
         const listItems = this.state.dataSource.map((item) =>
             <Form.Item
@@ -90,7 +110,7 @@ export default class SetBase extends Component {
         );
 
         return (
-            <PageContent>
+            <PageContent footer={false}>
                 <Form
                     ref={form => this.form = form}
                     layout="vertical"
@@ -104,6 +124,20 @@ export default class SetBase extends Component {
                             htmlType="submit"
                         >保 存</Button>
                     </Form.Item>
+
+                    {this.props.set_classify === 'EmailSet' ?
+                        <Form.Item styleName="formItem">
+                            <Button
+                                danger
+                                loading={this.state.loading}
+                                disabled={this.state.loading}
+                                type="dashed"
+                                onClick={this.handleTestEmail}>测试邮箱
+                            </Button>
+                        </Form.Item>
+                        :
+                        null
+                    }
                 </Form>
             </PageContent>
 

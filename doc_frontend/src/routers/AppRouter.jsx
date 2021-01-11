@@ -64,7 +64,7 @@ class AppRouter extends Component {
                             if (queryNoFrame === 'true') return null;
                             return <BasicLayout {...props}/>;
                         } else {
-                            if (pathname.startsWith('/login')) {
+                            if (pathname.startsWith('/login') || pathname.startsWith('/register') || pathname.startsWith('/forget_password')) {
                                 return null;
                             }
                             return <FrontLayout {...props}/>;

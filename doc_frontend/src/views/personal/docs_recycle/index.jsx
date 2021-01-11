@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 import config from 'src/utils/Hoc/configHoc';
-import DocRecycleBase from "../../base/docs_recycle"
+import DocRecycleBase from "src/views/base/docs_recycle"
 
 
 @config({

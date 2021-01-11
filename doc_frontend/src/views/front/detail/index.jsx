@@ -12,6 +12,7 @@ import {
     Descriptions,
     Typography,
     Tooltip,
+    Tag,
     notification
 } from "antd";
 import FormRow from "src/library/FormRow";
@@ -24,9 +25,8 @@ import {
 } from "src/apis/doc";
 import {anonymousRetrieveCDoc, retrieveCDoc} from "src/apis/c_doc"
 import {
-    FieldTimeOutlined, RollbackOutlined, FileAddOutlined,
-    EditOutlined, CopyOutlined, HistoryOutlined, ExportOutlined,
-    DeleteOutlined, RadiusSettingOutlined, SearchOutlined} from '@ant-design/icons';
+    FieldTimeOutlined, RollbackOutlined, FileAddOutlined, TagOutlined,
+    EditOutlined, CopyOutlined, HistoryOutlined, ExportOutlined, SearchOutlined} from '@ant-design/icons';
 import Footer from "src/layouts/Footer";
 import {getLoginUser, toHome} from "src/utils/userAuth";
 import ValidPermModal from "./ValidPermModal"
@@ -386,20 +386,6 @@ class Home extends Component {
                                     </Tooltip>
                                     : null
                             }
-                            {
-                                (c_doc?.member_perm === 20 && login_user?.id === c_doc?.creator?.id && current_doc) || (c_doc?.member_perm >= 30 && current_doc)?
-                                    <Tooltip title="删除" styleName="form-element">
-                                        <Button type="dashed" shape="circle" icon={<DeleteOutlined />} />
-                                    </Tooltip>
-                                    : null
-                            }
-                            {
-                                c_doc?.member_perm >= 30 && current_doc?
-                                    <Tooltip title="文集设置" styleName="form-element">
-                                        <Button type="dashed" shape="circle" icon={<RadiusSettingOutlined />} />
-                                    </Tooltip>
-                                    : null
-                            }
                         </FormRow>
                     </Form>
                 </div>
@@ -436,6 +422,7 @@ class Home extends Component {
                                         <Space>
                                             {current_doc.creator? current_doc.creator.nickname: ''}
                                             <FieldTimeOutlined /> {current_doc.created_time}
+                                            <TagOutlined /> {current_doc.tags? current_doc.tags.map(item =>(<Tag key={item.id}>{item.name}</Tag> )) : null}
                                         </Space>
                                     </Text>
                                 </div>
@@ -529,7 +516,7 @@ class Home extends Component {
                     <EditModal
                         visible={this.state.visible}
                         id={current_doc?.id}
-                        // c_doc_id={c_doc?.id}
+                        c_doc_id={c_doc?.id}
                         visibleType={this.state.visibleType}
                         isEdit={current_doc?.id !== null && this.state.visibleType === 'edit'}
                         onOk={() => this.setState({ visible: false }, () =>  this.handleEdit())}

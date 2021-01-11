@@ -28,7 +28,7 @@ class PageContent extends Component {
     };
 
     static defaultProps = {
-        footer: false,
+        footer: true,
     };
 
     componentWillUnmount() {
@@ -89,8 +89,8 @@ class PageContent extends Component {
                 >
                     {children}
                 </div>
-                {/*{footer ? <div styleName="footer"><Footer/></div> : null}*/}
-                <div styleName="footer"><Footer/></div>
+                {footer ? <div styleName="footer"><Footer/></div> : null}
+                {/*<div styleName="footer"><Footer/></div>*/}
             </div>
         );
     }

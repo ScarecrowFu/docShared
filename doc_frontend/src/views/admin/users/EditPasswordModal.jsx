@@ -91,7 +91,7 @@ class EditPasswordModal extends Component {
                                     if (!value || getFieldValue('password') === value) {
                                         return Promise.resolve();
                                     }
-                                    return Promise.reject('两次密码吧不相同');
+                                    return Promise.reject('两次密码不相同');
                                 },
                             }),
                         ]}

@@ -32,6 +32,14 @@ export function saveSystemSettingSpecifyList(data) {
   });
 }
 
+export function systemSettingTestEmail(data) {
+  return request({
+    url: "/api/sys_set/test_email/",
+    method: "post",
+    data,
+  });
+}
+
 export function anonymousSettingSpecifyList(params) {
   return request({
     url: "/api/anonymous_set/specify_set/",

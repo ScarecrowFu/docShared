@@ -34,5 +34,7 @@ urlpatterns = [
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     url(r'^', include(router.urls), name='api-index'),
     url(r'^auth/$', auth_apis.Authentication.as_view(), name='authentication'),
+    url(r'^register/$', auth_apis.Register.as_view(), name='register'),
+    url(r'^forget_password/$', auth_apis.ForgetPassword.as_view(), name='forget_password'),
     url(r'^dashboard_statistics/$', statistics_apis.DashboardStatisticsViewSet.as_view(), name='dashboard_statistics'),
 ]

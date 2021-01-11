@@ -13,6 +13,22 @@ export async function login(data) {
   });
 }
 
+export async function register(data) {
+  return request({
+    url: "/api/register/",
+    method: "post",
+    data,
+  });
+}
+
+export async function ForgetPassword(data) {
+  return request({
+    url: "/api/forget_password/",
+    method: "post",
+    data,
+  });
+}
+
 export function getInfo() {
   return request({
     url: "/api/users/info/",
@@ -23,13 +39,6 @@ export function getInfo() {
 export function logout() {
   return request({
     url: "/api/users/logout/",
-    method: "post",
-  });
-}
-
-export function register() {
-  return request({
-    url: "/register",
     method: "post",
   });
 }

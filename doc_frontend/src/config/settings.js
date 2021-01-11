@@ -26,5 +26,5 @@ module.exports = {
     // 消息框默认消失时间 s
     messageDuration: 3,
     // 默认最长请求时间
-    requestTimeout: 10000,
+    requestTimeout: 60000,
 };

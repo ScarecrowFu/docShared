@@ -10,6 +10,7 @@ export function getSiteInfo() {
 }
 
 export function setSiteInfo(siteInfo = {}) {
+    // sessionStorage.removeItem(SITE_INFO_STORAGE_KEY);
     const siteInfoStr = JSON.stringify(siteInfo);
     sessionStorage.setItem(SITE_INFO_STORAGE_KEY, siteInfoStr);
 }
@@ -20,21 +21,36 @@ export function getBaseSetInfo() {
 }
 
 export function setBaseSetInfo(baseSetInfo = {}) {
+    // sessionStorage.removeItem(BASE_SET_INFO_STORAGE_KEY);
     const baseSetInfoStr = JSON.stringify(baseSetInfo);
     sessionStorage.setItem(BASE_SET_INFO_STORAGE_KEY, baseSetInfoStr);
 }
 
 
 
-export async function setSiteInfoRequest() {
+export async function setSiteInfoRequest(reset=false) {
     let siteInfo = getSiteInfo();
     let site_use_help = siteInfo?.site_use_help? siteInfo.site_use_help : null
     let site_config_help = siteInfo?.site_config_help? siteInfo.site_config_help : null
-    if (site_use_help === null || !site_config_help  === null) {
+    if (site_use_help === null || !site_config_help  === null || reset) {
         await anonymousSettingSpecifyList()
             .then(res => {
                 const results = res.data?.results;
                 setSiteInfo(results);
+            }, error => {
+                console.log(error.response);
+            })
+    }
+}
+
+
+export async function setBaseSetInfoRequest(reset=false) {
+    let baseInfo = getBaseSetInfo();
+    if (baseInfo === null || reset) {
+        await anonymousSettingSpecifyList({'set_classify': 'BaseSet'})
+            .then(res => {
+                const results = res.data?.results;
+                setBaseSetInfo(results);
             }, error => {
                 console.log(error.response);
             })
