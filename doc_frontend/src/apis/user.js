@@ -29,6 +29,22 @@ export async function ForgetPassword(data) {
   });
 }
 
+export async function ResetPassword(data) {
+  return request({
+    url: "/api/reset_password/",
+    method: "post",
+    data,
+  });
+}
+
+export async function Validation(params) {
+  return request({
+    url: "/api/validation/",
+    method: "get",
+    params,
+  });
+}
+
 export function getInfo() {
   return request({
     url: "/api/users/info/",

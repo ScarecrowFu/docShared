@@ -79,7 +79,7 @@ class HeaderUser extends Component {
                 {/*{!isObjEmpty(user) ? (<Item><Link to="/settings"><SettingOutlined/>设置</Link></Item>) : null}*/}
                 {!isObjEmpty(user) ? (<Menu.Divider/>) : null}
                 {!isObjEmpty(user) ? (<Item key="logout"><LogoutOutlined/>退出登录</Item>) : <Item key="login"><LoginOutlined/>登录</Item>}
-                {!isObjEmpty(user) ? null : <Item key="register"><LoginOutlined/>注册</Item>}
+                {/*{!isObjEmpty(user) ? null : <Item key="register"><LoginOutlined/>注册</Item>}*/}
 
             </Menu>
         );

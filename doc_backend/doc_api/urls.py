@@ -36,5 +36,7 @@ urlpatterns = [
     url(r'^auth/$', auth_apis.Authentication.as_view(), name='authentication'),
     url(r'^register/$', auth_apis.Register.as_view(), name='register'),
     url(r'^forget_password/$', auth_apis.ForgetPassword.as_view(), name='forget_password'),
+    url(r'^reset_password/$', auth_apis.ReSetPassword.as_view(), name='reset_password'),
+    url(r'^validation/$', auth_apis.Validation.as_view(), name='validation'),
     url(r'^dashboard_statistics/$', statistics_apis.DashboardStatisticsViewSet.as_view(), name='dashboard_statistics'),
 ]

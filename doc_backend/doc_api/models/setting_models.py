@@ -27,17 +27,36 @@ class SystemSetting(models.Model):
 class EmailVerificationCode(models.Model):
     email_name = models.EmailField(verbose_name='电子邮箱')
     # 10为注册, 20为忘记密码
-    verification_type = models.CharField(max_length=50, choices=dict_for_model_choices(VerificationType),
-                                         verbose_name='验证码类型')
+    verification_type = models.IntegerField(default=10, choices=dict_for_model_choices(VerificationType),
+                                            verbose_name='验证码类型')
     verification_code = models.CharField(max_length=10, verbose_name='验证码')
     expired_time = models.DateTimeField(verbose_name='过期时间')
+    # 状态：0表示不可用，10表示有效，默认为10
+    status = models.IntegerField(default=10, verbose_name='验证码状态')
     creator = models.ForeignKey('User', null=True, blank=True, on_delete=models.SET_NULL, verbose_name='创建者',
                                 related_name='created_email_codes')
     created_time = models.DateTimeField(auto_now_add=True, verbose_name='创建日期')
     modified_time = models.DateTimeField(auto_now=True, verbose_name='修改日期')
 
     def __str__(self):
-        return '{}:{}'.format(self.verification_type,self.email_name)
+        return '{}:{}'.format(self.verification_type, self.email_name)
+
+    def save(self, *args, **kwargs):
+        if not self.id:
+            code_str = '0123456789qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM'
+            random_code = ''.join(random.sample(code_str, k=10))
+            random_code_used = EmailVerificationCode.objects.filter(verification_code=random_code).count()
+            if random_code_used > 0:  # 已存在此注册码，继续生成一个注册码
+                is_code = False
+                while is_code is False:
+                    random_code = ''.join(random.sample(code_str, k=10))
+                    random_code_used = EmailVerificationCode.objects.filter(verification_code=random_code).count()
+                    if random_code_used > 0:  # 已存在此注册码，继续生成一个注册码
+                        is_code = False
+                    else:  # 数据库中不存在此注册码，跳出循环
+                        is_code = True
+            self.verification_code = random_code
+        super(EmailVerificationCode, self).save(*args, **kwargs)
 
     class Meta:
         db_table = 'email_verification_code'

@@ -9,9 +9,10 @@ import Table from 'src/library/Table';
 import Operator from 'src/library/Operator';
 import Pagination from 'src/library/Pagination';
 import batchDeleteConfirm from 'src/components/BatchDeleteConfirm';
-import {bulkDeleteEmailCode, deleteEmailCode, getEmailCodeList, getVerificationTypes } from 'src/apis/email_code';
+import {bulkDeleteEmailCode, deleteEmailCode, getEmailCodeList, getVerificationTypes, getEmailCodeStatus } from 'src/apis/email_code';
 import {messageDuration} from "src/config/settings";
-import EditModal from "./EditModal"
+import EditModal from "./EditModal";
+import './style.less';
 
 
 
@@ -32,7 +33,8 @@ class RegisterCode extends Component {
         visible: false,     // 添加、修改弹框
         id: null,           // 需要修改的数据id
         ordering: null,           // 排序
-        verification_types: [],           // 验证码类型
+        verification_types: {},           // 验证码类型
+        code_status: {},
     };
 
     columns = [
@@ -91,6 +93,7 @@ class RegisterCode extends Component {
 
     componentDidMount() {
         this.handleVerificationTypes();
+        this.handleCodeStatus();
         this.handleSubmit();
     }
 
@@ -198,6 +201,22 @@ class RegisterCode extends Component {
             .finally(() => this.setState({ deleting: false }));
     };
 
+    setRowClassName = (record) => {
+        const { status } = record;
+        console.log('status', record, status === 0);
+        return status===0? 'row_style' : ''
+    }
+
+    handleCodeStatus = () => {
+        getEmailCodeStatus()
+            .then(res => {
+                const data = res.data;
+                this.setState({ code_status: data.results });
+            }, error => {
+                console.log(error.response);
+            })
+    }
+
     render() {
         const {
             loading,
@@ -209,12 +228,25 @@ class RegisterCode extends Component {
             pageSize,
             visible,
             id,
+            verification_types,
+            code_status,
         } = this.state;
 
         const formProps = {
             width: 200,
         };
         const disabledDelete = !selectedRowKeys?.length;
+
+        const types_options = [];
+        Object.keys(verification_types).forEach(function(key) {
+            types_options.push({'value': key, 'label': verification_types[key]});
+        });
+
+        const status_options = [];
+        Object.keys(code_status).forEach(function(key) {
+            status_options.push({'value': key, 'label': code_status[key]});
+        });
+
         return (
             <PageContent>
                 <QueryBar>
@@ -227,6 +259,20 @@ class RegisterCode extends Component {
                                 placeholder="验证码/邮箱"
                             />
                             <FormElement
+                                {...formProps}
+                                type="select"
+                                label="类型"
+                                name="verification_type"
+                                options={types_options}
+                            />
+                            <FormElement
+                                {...formProps}
+                                type="select"
+                                label="状态"
+                                name="status"
+                                options={status_options}
+                            />
+                            <FormElement
                                 width={300}
                                 type="date-range"
                                 label="创建时间"
@@ -235,7 +281,7 @@ class RegisterCode extends Component {
                             <FormElement layout>
                                 <Button type="primary" htmlType="submit">搜索</Button>
                                 <Button onClick={() => {this.form.resetFields(); this.handleSubmit();}}>重置</Button>
-                                <Button type="primary" onClick={() => this.setState({ visible: true, id: null })}>添加</Button>
+                                {/*<Button type="primary" onClick={() => this.setState({ visible: true, id: null })}>添加</Button>*/}
                                 <Button danger loading={deleting} disabled={disabledDelete} onClick={this.handleBatchDelete}>删除</Button>
                             </FormElement>
                         </FormRow>
@@ -247,6 +293,7 @@ class RegisterCode extends Component {
                         selectedRowKeys,
                         onChange: selectedRowKeys => this.setState({ selectedRowKeys }),
                     }}
+                    rowClassName={this.setRowClassName}
                     loading={loading}
                     columns={this.columns}
                     dataSource={dataSource}

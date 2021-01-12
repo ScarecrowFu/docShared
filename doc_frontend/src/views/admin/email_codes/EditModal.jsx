@@ -20,6 +20,7 @@ class EditModal extends Component {
         loading: false, // 页面加载loading
         data: {},       // 回显数据
         verification_types: null,           // 验证码类型
+        status: 10
     };
 
     handleVerificationTypes = () => {
@@ -49,6 +50,7 @@ class EditModal extends Component {
                 let data = res.data;
                 data.results.expired_time = moment(data.results.expired_time)
                 this.setState({data: data.results});
+                this.setState({status: data.results.status});
                 this.form.setFieldsValue(data.results);
             }, error => {
                 console.log(error.response);
@@ -98,7 +100,7 @@ class EditModal extends Component {
 
     render() {
         const {isEdit, onCancel} = this.props;
-        const {loading, data, verification_types } = this.state;
+        const {loading, data, verification_types, status } = this.state;
         const formProps = {
             labelWidth: 100,
         };
@@ -131,7 +133,7 @@ class EditModal extends Component {
                         name="email_name"
                         required
                         noSpace
-                        // disabled={isEdit}
+                        disabled={status===0}
                         rules={[validationRule.email()]}
                     />
 
@@ -143,16 +145,15 @@ class EditModal extends Component {
                         required
                         noSpace
                         options={types_options}
-                        // disabled={isEdit}
+                        disabled={status===0}
                     />
-
                     <FormElement
                         {...formProps}
                         label="验证码"
                         name="verification_code"
                         required
                         noSpace
-                        // disabled={isEdit}
+                        disabled={status===0}
                     />
 
                     <FormElement
@@ -162,7 +163,7 @@ class EditModal extends Component {
                         name="expired_time"
                         required
                         format="YYYY-MM-DD HH:mm:ss"
-                        // disabled={isEdit}
+                        disabled={status===0}
                     />
                 </Form>
             </ModalContent>

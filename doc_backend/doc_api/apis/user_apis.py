@@ -18,7 +18,7 @@ class UserViewSet(viewsets.ModelViewSet):
     filter_backends = (filters.OrderingFilter, filters.SearchFilter, UserParameterFilter)
     search_fields = ('username', 'nickname', 'email', 'gender', 'phone', 'title', 'created_time')
     ordering_fields = ('username', 'nickname', 'email', 'phone', 'gender', 'title', 'is_active', 'is_admin', 'created_time')
-    filterset_fields = ('username', 'nickname', 'email', 'phone', 'gender', 'title', 'is_active', 'is_admin', 'created_time')
+    filterset_fields = ('username', 'nickname', 'email', 'phone', 'gender', 'title', 'is_active', 'is_admin', 'created_time', 'register_code')
     queryset = User.objects.filter(is_deleted=False).order_by('-id').all()
     permission_classes = (permissions.IsAuthenticated, )
 

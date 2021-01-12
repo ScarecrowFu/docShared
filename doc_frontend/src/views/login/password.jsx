@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 import {Helmet} from 'react-helmet';
-import {Input, Button, Form, notification} from 'antd';
+import {Input, Button, Form, notification, Modal} from 'antd';
 import {LockOutlined, UserOutlined} from '@ant-design/icons';
 import {toLogin} from 'src/utils/userAuth';
 import config from 'src/utils/Hoc/configHoc';
@@ -10,7 +10,7 @@ import './style.less';
 import {ROUTE_BASE_NAME} from "src/routers/AppRouter"
 import validationRule from "src/utils/validationRule"
 import {messageDuration} from "src/config/settings"
-import {getBaseSetInfo, setBaseSetInfoRequest} from "../../utils/info"
+import {getBaseSetInfo, setBaseSetInfoRequest} from "src/utils/info"
 
 @config({
     path: '/forget_password',
@@ -23,6 +23,7 @@ class Login extends Component {
         message: '',
         isMount: false,
         can_register: false,
+        isModalVisible: false,
     };
 
     componentDidMount() {
@@ -65,7 +66,8 @@ class Login extends Component {
                     duration: messageDuration,
                 });
                 this.setState({message: data.messages});
-                setTimeout(() => toLogin(), 3000);
+                this.setState({isModalVisible: true});
+                // setTimeout(() => toLogin(), 3000);
             }, error => {
                 console.log(error.response)
             })
@@ -75,7 +77,7 @@ class Login extends Component {
     };
 
     render() {
-        const {loading, message, isMount} = this.state;
+        const {loading, message, isMount, isModalVisible} = this.state;
         const formItemStyleName = isMount ? 'form-item active' : 'form-item';
 
         return (
@@ -144,6 +146,14 @@ class Login extends Component {
 
                     </div>
                 </div>
+
+                <Modal title="忘记密码"
+                       visible={isModalVisible}
+                       onOk={() => {this.setState({isModalVisible: true});toLogin()}}
+                       onCancel={() => {this.setState({isModalVisible: true});toLogin()}}
+                >
+                    <p>{this.state.message}</p>
+                </Modal>
             </div>
         );
     }

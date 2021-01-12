@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {Button, Form, notification} from 'antd';
+import {Button, Form, notification, Tag} from 'antd';
 import PageContent from 'src/layouts/PageContent';
 import config from 'src/utils/Hoc/configHoc';
 import QueryBar from 'src/library/QueryBar';
@@ -9,7 +9,7 @@ import Table from 'src/library/Table';
 import Operator from 'src/library/Operator';
 import Pagination from 'src/library/Pagination';
 import batchDeleteConfirm from 'src/components/BatchDeleteConfirm';
-import {bulkDeleteRegisterCode, deleteRegisterCode, getRegisterCodeList } from 'src/apis/reg_code';
+import {bulkDeleteRegisterCode, deleteRegisterCode, getRegisterCodeList, getRegisterCodeStatus } from 'src/apis/reg_code';
 import {getUserList} from 'src/apis/user';
 import {messageDuration} from "src/config/settings";
 import EditModal from "./EditModal"
@@ -34,13 +34,23 @@ class RegisterCode extends Component {
         id: null,           // 需要修改的数据id
         ordering: null,           // 排序
         user_options: [],           // 用户选项
+        code_status: {},
     };
 
     columns = [
         { title: '注册邀请码', dataIndex: 'code', sorter: true, width: 100 },
         { title: '有效注册数量', dataIndex: 'all_cnt', sorter: true, width: 100 },
         { title: '已使用数量', dataIndex: 'used_cnt', sorter: true, width: 100 },
-        { title: '注册码状态', dataIndex: 'status', sorter: true, width: 100 },
+        { title: '注册码状态', dataIndex: 'status', sorter: true, width: 100,
+            render: (value, record) => {
+                let color = value ? 'green' : 'volcano';
+                return (
+                    <Tag color={color}>
+                        {this.state.code_status[value]}
+                    </Tag>
+                );
+
+            }},
         {
             title: '用户', dataIndex: 'creator', sorter: true, width: 100,
             render: (value, record) => {
@@ -89,8 +99,19 @@ class RegisterCode extends Component {
             })
     }
 
+    handleCodeStatus = () => {
+        getRegisterCodeStatus()
+            .then(res => {
+                const data = res.data;
+                this.setState({ code_status: data.results });
+            }, error => {
+                console.log(error.response);
+            })
+    }
+
     componentDidMount() {
         this.handleUserOptions();
+        this.handleCodeStatus();
         this.handleSubmit();
     }
 
@@ -209,12 +230,18 @@ class RegisterCode extends Component {
             pageSize,
             visible,
             id,
+            code_status,
         } = this.state;
 
         const formProps = {
             width: 200,
         };
         const disabledDelete = !selectedRowKeys?.length;
+
+        const status_options = [];
+        Object.keys(code_status).forEach(function(key) {
+            status_options.push({'value': key, 'label': code_status[key]});
+        });
         return (
             <PageContent>
                 <QueryBar>
@@ -232,6 +259,13 @@ class RegisterCode extends Component {
                                 label="用户"
                                 name="creator"
                                 options={this.state.user_options}
+                            />
+                            <FormElement
+                                {...formProps}
+                                type="select"
+                                label="状态"
+                                name="status"
+                                options={status_options}
                             />
                             <FormElement
                                 width={300}
@@ -279,6 +313,7 @@ class RegisterCode extends Component {
                     isEdit={id !== null}
                     onOk={() => this.setState({ visible: false }, () => this.handleSubmit())}
                     onCancel={() => this.setState({ visible: false })}
+                    width="60%"
                 />
             </PageContent>
         );

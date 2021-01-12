@@ -47,3 +47,10 @@ export function bulkDeleteRegisterCode(data) {
     data,
   });
 }
+
+export function getRegisterCodeStatus() {
+  return request({
+    url: `/api/reg_codes/code_status/`,
+    method: "get",
+  });
+}

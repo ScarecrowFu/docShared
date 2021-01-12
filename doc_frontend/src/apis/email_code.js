@@ -55,3 +55,11 @@ export function getVerificationTypes(params) {
     params,
   });
 }
+
+
+export function getEmailCodeStatus() {
+  return request({
+    url: `/api/email_codes/code_status/`,
+    method: "get",
+  });
+}

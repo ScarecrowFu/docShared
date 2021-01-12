@@ -36,8 +36,7 @@ import EditExport from 'src/views/base/c_docs/EditExport';
 import './style.less';
 import EditModal from "src/views/base/docs/EditModal";
 import MarkdownRender  from "src/components/MarkdownRender";
-
-
+import {getBaseSetInfo, setBaseSetInfoRequest} from "src/utils/info"
 
 
 @config({
@@ -211,6 +210,7 @@ class Home extends Component {
 
 
     componentDidMount() {
+        setBaseSetInfoRequest(true);
         const login_user = getLoginUser();
         const params = this.props.match.params;
         this.setState({login_user:login_user},function () {
@@ -359,7 +359,7 @@ class Home extends Component {
                                     : null
                             }
                             {
-                                c_doc?.member_perm >= 10?
+                                c_doc?.member_perm >= 10 && getBaseSetInfo()?.can_download.toLowerCase() === 'true'?
                                     <Tooltip title="导出" styleName="form-element">
                                         <Button type="dashed" shape="circle" icon={<ExportOutlined />} onClick={() => this.setState({ visibleExport: true })}/>
                                     </Tooltip>

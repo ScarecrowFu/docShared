@@ -10,6 +10,7 @@ import KeepPage from './KeepPage';
 import {getUrlIndexName} from 'src/utils'
 import routes, {noFrameRoutes, noAuthRoutes /*commonPaths*/} from './routes';
 
+
 // 直接挂载到域名根目录
 export const ROUTE_BASE_NAME = process.env.BASE_NAME || '';
 
@@ -64,7 +65,11 @@ class AppRouter extends Component {
                             if (queryNoFrame === 'true') return null;
                             return <BasicLayout {...props}/>;
                         } else {
-                            if (pathname.startsWith('/login') || pathname.startsWith('/register') || pathname.startsWith('/forget_password')) {
+                            if (pathname.startsWith('/login') ||
+                                pathname.startsWith('/register') ||
+                                pathname.startsWith('/forget_password') ||
+                                pathname.startsWith('/validation'))
+                            {
                                 return null;
                             }
                             return <FrontLayout {...props}/>;

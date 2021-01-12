@@ -14,8 +14,8 @@ from doc_api.serializers.sys_manage_serializers import SystemSettingActionSerial
 from doc_api.serializers.sys_manage_serializers import EmailVerificationCodeActionSerializer, \
     EmailVerificationCodeDetailSerializer, EmailVerificationCodeListSerializer
 from doc_api.settings.conf import WebsiteSet, BaseSet, EmailSet
-from doc_api.settings.conf import VerificationType
-from doc_api.settings.conf import CreateAction, UpdateAction, DeleteAction, RecoverAction
+from doc_api.settings.conf import VerificationType, RegisterCodeStatus
+from doc_api.settings.conf import CreateAction, UpdateAction, DeleteAction
 from doc_api.utils.action_log_helpers import action_log
 from doc_api.utils.email_helpers import send_email
 
@@ -211,6 +211,11 @@ class RegisterCodeViewSet(viewsets.ModelViewSet):
         result = {'success': True, 'messages': f'批量删除注册码:{deleted_objects_names}'}
         return Response(result, status=status.HTTP_200_OK)
 
+    @action(methods=['GET'], detail=False)
+    def code_status(self, request, *args, **kwargs):
+        result = {'success': True, 'messages': f'获取状态类别:', 'results': RegisterCodeStatus}
+        return Response(result, status=status.HTTP_200_OK)
+
     def get_serializer_class(self):
         if self.action == 'list':
             return RegisterCodeListSerializer
@@ -226,8 +231,8 @@ class EmailVerificationCodeViewSet(viewsets.ModelViewSet):
     """邮箱验证码管理"""
     filter_backends = (filters.OrderingFilter, filters.SearchFilter, EmailVerificationCodeParameterFilter)
     search_fields = ('email_name', 'verification_code')
-    ordering_fields = ('email_name', 'verification_code', 'verification_type', 'expired_time', 'creator', 'created_time')
-    filterset_fields = ('email_name', 'verification_code', 'verification_type', 'expired_time', 'creator', 'created_time')
+    ordering_fields = ('email_name', 'verification_code', 'verification_type', 'expired_time', 'creator', 'created_time', 'status')
+    filterset_fields = ('email_name', 'verification_code', 'verification_type', 'expired_time', 'creator', 'created_time', 'status')
     queryset = EmailVerificationCode.objects.order_by('-id').all()
     permission_classes = (permissions.IsAuthenticated, )
 
@@ -316,6 +321,11 @@ class EmailVerificationCodeViewSet(viewsets.ModelViewSet):
     def verification_types(self, request, *args, **kwargs):
         # VerificationType
         result = {'success': True, 'messages': f'获取验证码类型', 'results': VerificationType}
+        return Response(result, status=status.HTTP_200_OK)
+
+    @action(methods=['GET'], detail=False)
+    def code_status(self, request, *args, **kwargs):
+        result = {'success': True, 'messages': f'获取状态类别:', 'results': RegisterCodeStatus}
         return Response(result, status=status.HTTP_200_OK)
 
     def get_serializer_class(self):

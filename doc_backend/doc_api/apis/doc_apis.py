@@ -174,7 +174,6 @@ class DocViewSet(viewsets.ModelViewSet):
         result = {'success': True, 'messages': f'批量还原文档:{recover_objects_names}'}
         return Response(result, status=status.HTTP_200_OK)
 
-
     @action(methods=['GET'], detail=True)
     def history_list(self, request, *args, **kwargs):
         instance = self.get_object()

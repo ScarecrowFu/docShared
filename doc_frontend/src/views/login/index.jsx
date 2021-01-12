@@ -7,8 +7,8 @@ import config from 'src/utils/Hoc/configHoc';
 import Banner from './banner/index';
 import { login } from 'src/apis/user'
 import './style.less';
-import {ROUTE_BASE_NAME} from "../../routers/AppRouter"
-import {getBaseSetInfo, setBaseSetInfoRequest} from "../../utils/info"
+import {ROUTE_BASE_NAME} from "src/routers/AppRouter"
+import {getBaseSetInfo, setBaseSetInfoRequest} from "src/utils/info"
 
 @config({
     path: '/login',

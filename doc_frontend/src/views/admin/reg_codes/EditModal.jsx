@@ -6,6 +6,9 @@ import ModalContent from 'src/library/ModalHoc/ModalContent';
 import { createRegisterCode, retrieveRegisterCode, updateRegisterCode } from 'src/apis/reg_code';
 import {messageDuration} from "src/config/settings";
 import validationRule from 'src/utils/validationRule'
+import Table from "src/library/Table"
+import Pagination from "src/library/Pagination"
+import {getUserList} from "src/apis/user"
 
 
 @config({
@@ -18,12 +21,18 @@ class EditModal extends Component {
     state = {
         loading: false, // 页面加载loading
         data: {},       // 回显数据
+        total: 0,           // 分页中条数
+        pageNum: 1,         // 分页当前页
+        pageSize: 10,       // 分页每页显示条数
+        ordering: null,
+        userData: []
     };
 
     componentDidMount() {
         const {isEdit} = this.props;
         if (isEdit) {
             this.fetchData();
+            this.handleUserTable();
         }
     }
 
@@ -82,9 +91,41 @@ class EditModal extends Component {
 
     };
 
+    columns = [
+        { title: '账号', dataIndex: 'username', width: 200 },
+        { title: '名称', dataIndex: 'nickname',  width: 200 },
+        { title: '邮箱', dataIndex: 'email', width: 200 },
+        { title: '性别', dataIndex: 'gender',  width: 100 },
+    ];
+
+    handleUserTable = () => {
+        if (this.state.loading) return;
+
+        let params = {
+            page: this.state.pageNum,
+            page_size: this.state.pageSize,
+            register_code: this.props.id
+        };
+        if (this.state.ordering) {
+            params['ordering'] = this.state.ordering;
+        }
+
+        this.setState({ loading: true });
+        getUserList(params)
+            .then(res => {
+                const data = res.data;
+                const userData = data?.results || [];
+                const total = data?.all_count || 0;
+                this.setState({ userData, total });
+            }, error => {
+                console.log(error.response);
+            })
+            .finally(() => this.setState({ loading: false }));
+    };
+
     render() {
         const {isEdit, onCancel} = this.props;
-        const {loading, data } = this.state;
+        const {loading, data, userData, total, pageNum, pageSize } = this.state;
         const formProps = {
             labelWidth: 100,
         };
@@ -113,6 +154,30 @@ class EditModal extends Component {
                         rules={[validationRule.integer()]}
                     />
                 </Form>
+                {isEdit?
+                 <div>
+                     <Table
+                         loading={loading}
+                         columns={this.columns}
+                         dataSource={userData}
+                         rowKey="id"
+                         serialNumber={false}
+                         pageNum={pageNum}
+                         pageSize={pageSize}
+                     />
+
+                     <Pagination
+                         total={total}
+                         pageNum={pageNum}
+                         pageSize={pageSize}
+                         onPageNumChange={pageNum => this.setState({ pageNum }, () => this.handleSubmit())}
+                         onPageSizeChange={pageSize => this.setState({ pageSize, pageNum: 1 })}
+                     />
+                 </div> :
+                null
+                }
+
+
             </ModalContent>
         );
     }

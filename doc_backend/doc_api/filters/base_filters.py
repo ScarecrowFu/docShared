@@ -35,6 +35,10 @@ class BaseParameterFilter(DjangoFilterBackend):
                     if param_value.lower() == 'false':
                         tmp_parameter_values.append(False)
                 parameter_values = tmp_parameter_values
+            # 布尔
+            elif model._meta.get_field(field).get_internal_type() == 'IntegerField':
+                field = int(field)
+                search_type = 'in'
             # 外鍵
             elif check_model_field(model, field, ForeignKey):
                 field = f'{field}__id'

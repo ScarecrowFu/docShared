@@ -32,7 +32,7 @@ export async function setSiteInfoRequest(reset=false) {
     let siteInfo = getSiteInfo();
     let site_use_help = siteInfo?.site_use_help? siteInfo.site_use_help : null
     let site_config_help = siteInfo?.site_config_help? siteInfo.site_config_help : null
-    if (site_use_help === null || !site_config_help  === null || reset) {
+    if (!siteInfo || site_use_help === null || !site_config_help  === null || reset) {
         await anonymousSettingSpecifyList()
             .then(res => {
                 const results = res.data?.results;
@@ -46,7 +46,7 @@ export async function setSiteInfoRequest(reset=false) {
 
 export async function setBaseSetInfoRequest(reset=false) {
     let baseInfo = getBaseSetInfo();
-    if (baseInfo === null || reset) {
+    if (!baseInfo || reset) {
         await anonymousSettingSpecifyList({'set_classify': 'BaseSet'})
             .then(res => {
                 const results = res.data?.results;
