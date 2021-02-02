@@ -260,7 +260,7 @@ class Home extends Component {
                 </div>
                 <Divider />
 
-                <div styleName="page-content">
+                <div styleName="front-page-content">
                     <div className="site-card-wrapper">
                         {renderCDoc()}
                     </div>

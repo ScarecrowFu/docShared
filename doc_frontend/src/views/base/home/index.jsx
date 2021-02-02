@@ -139,7 +139,7 @@ export default class HomeBase extends Component {
                                             }
                                     </Row>
                             </QueryBar>
-                            <div styleName="page-content">
+                            <div styleName="base-page-content">
                                     <QueryBar>
                                             <Row gutter={24}>
                                                     <Col span={12} styleName="card">

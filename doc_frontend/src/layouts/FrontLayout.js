@@ -6,7 +6,7 @@ import {withRouter} from 'react-router-dom';
 import Header from 'src/layouts/Header';
 import {connect} from 'src/models';
 import {PAGE_FRAME_LAYOUT} from 'src/models/settings';
-import './BasicLayout.less';
+import './FrontLayout.less';
 import CustomHelmet from "src/layouts/Helmet"
 
 @withRouter
