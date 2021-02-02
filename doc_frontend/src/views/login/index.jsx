@@ -25,9 +25,9 @@ class Login extends Component {
 
     componentDidMount() {
         // mark : 开发时方便测试，填写表单
-        // if (process.env.NODE_ENV === 'development') {
-        //     this.form.setFieldsValue({username: 'admin', password: 'admin123456'});
-        // }
+        if (process.env.NODE_ENV === 'development') {
+            this.form.setFieldsValue({username: 'admin', password: 'admin123456'});
+        }
         this.handleBaseInfo();
         setTimeout(() => this.setState({isMount: true}), 300);
     }
