@@ -98,7 +98,7 @@ export default (options = {}) => {
             // 设置框架级的一些数据
             initFrame = () => {
                 const { page, side: sideAction, system } = this.props.action;
-                console.log('initFrame', this.props);
+                // console.log('initFrame', this.props);
                 // 页面标题设置
                 if (title === false) {
                     page.setTitle('');
