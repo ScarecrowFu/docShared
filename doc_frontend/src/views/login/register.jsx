@@ -35,8 +35,8 @@ class Register extends Component {
     handleBaseInfo = () => {
         const base_info = getBaseSetInfo();
         if (base_info) {
-            const use_reg_code = base_info['use_reg_code'].toLowerCase() === 'true';
-            const can_register = base_info['can_register'].toLowerCase() === 'true';
+            const use_reg_code = base_info['use_reg_code'];
+            const can_register = base_info['can_register'];
             this.setState({use_reg_code: use_reg_code});
             this.setState({can_register: can_register}, function () {
                 if (!this.state.can_register) {
@@ -51,8 +51,8 @@ class Register extends Component {
         } else {
             setBaseSetInfoRequest().then(res => {
                 const base_info = getBaseSetInfo();
-                const use_reg_code = base_info['use_reg_code'].toLowerCase() === 'true';
-                const can_register = base_info['can_register'].toLowerCase() === 'true';
+                const use_reg_code = base_info['use_reg_code'];
+                const can_register = base_info['can_register'];
                 this.setState({use_reg_code: use_reg_code});
                 this.setState({can_register: can_register}, function () {
                     if (!this.state.can_register) {

@@ -30,9 +30,9 @@ class UploadModal extends Component {
 
     // 上传前处理, 相关限制
     handleBeforeUpload = (file) => {
-        console.log('handleBeforeUpload file:' + JSON.stringify(file));
-        console.log('handleBeforeUpload file.file:' + JSON.stringify(file.file));
-        console.log('handleBeforeUpload file type:' + JSON.stringify(file.type));
+        // console.log('handleBeforeUpload file:' + JSON.stringify(file));
+        // console.log('handleBeforeUpload file.file:' + JSON.stringify(file.file));
+        // console.log('handleBeforeUpload file type:' + JSON.stringify(file.type));
         if (this.state.file_type === 20) {
             const isJPG = file.type === 'image/jpeg';
             const isJPEG = file.type === 'image/jpeg';
@@ -69,9 +69,9 @@ class UploadModal extends Component {
 
 
     handleChange = ({ file, fileList }) => {
-        console.log('handleChange file:' + JSON.stringify(file));
-        console.log('handleChange fileList:' + JSON.stringify(fileList));
-        console.log('file.status', file.status);
+        // console.log('handleChange file:' + JSON.stringify(file));
+        // console.log('handleChange fileList:' + JSON.stringify(fileList));
+        // console.log('file.status', file.status);
         if (file.status === 'removed') {
             this.setState({ dataSource: fileList });
         }

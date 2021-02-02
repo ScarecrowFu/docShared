@@ -359,7 +359,7 @@ class Home extends Component {
                                     : null
                             }
                             {
-                                c_doc?.member_perm >= 10 && getBaseSetInfo()?.can_download.toLowerCase() === 'true'?
+                                c_doc?.member_perm >= 10 && getBaseSetInfo()?.can_download?
                                     <Tooltip title="导出" styleName="form-element">
                                         <Button type="dashed" shape="circle" icon={<ExportOutlined />} onClick={() => this.setState({ visibleExport: true })}/>
                                     </Tooltip>

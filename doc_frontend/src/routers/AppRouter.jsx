@@ -46,7 +46,7 @@ class AppRouter extends Component {
         const {noFrame: queryNoFrame, noAuth} = this.props.query;
         const {systemNoFrame} = this.props;
         const userRoutes = this.getUserRoutes();
-        console.log('AppRouter render: isLogin', isLogin())
+        // console.log('AppRouter render: isLogin', isLogin())
         return (
             <BrowserRouter basename={ROUTE_BASE_NAME}>
                 <div style={{display: 'flex', flexDirection: 'column', position: 'relative', minHeight: '100vh'}}>
@@ -78,11 +78,11 @@ class AppRouter extends Component {
 
                     }}/>
                     <Route exact path={userRoutes.map(item => item.path)}>
-                        {console.log("AppRouter Route KeepPage", userRoutes)}
+                        {/*{console.log("AppRouter Route KeepPage", userRoutes)}*/}
                         <KeepPage/>
                     </Route>
                     <Switch>
-                        {console.log("AppRouter Switch userRoutes map return KeepAuthRoute", userRoutes)}
+                        {/*{console.log("AppRouter Switch userRoutes map return KeepAuthRoute", userRoutes)}*/}
                         {userRoutes.map(item => {
                             const {path, component} = item;
                             let isNoAuthRoute = false;

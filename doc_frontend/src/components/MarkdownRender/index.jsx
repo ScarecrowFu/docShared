@@ -35,7 +35,7 @@ export default class MarkdownRender extends Component {
     renderDocToc = (html, first=true) =>{
         let div = document.createElement('div');
         div.innerHTML = html;
-        console.log('toc_html', html);
+        // console.log('toc_html', html);
         const tags = first? div.querySelectorAll('div > nav > ul > li') : div.querySelectorAll('div > li');
         // const tags = div.querySelectorAll('div > nav > ul > li');
         const { Link } = Anchor;
@@ -46,8 +46,8 @@ export default class MarkdownRender extends Component {
             const url  = child.getAttribute('href');
             const title  = child.textContent;
             child.remove();
-            console.log(title, url, 'parent', item.parentNode)
-            console.log(title, url,  'children', children)
+            // console.log(title, url, 'parent', item.parentNode)
+            // console.log(title, url,  'children', children)
             return (
                 <Link key={index} href={url} title={title}>
                     {children.length > 0 ? _that.renderDocToc(children[0].innerHTML, false) : null}

@@ -24,7 +24,7 @@ export default class SetBase extends Component {
     };
 
     getSetList = () => {
-        console.log('getSetList', this.props.set_classify);
+        // console.log('getSetList', this.props.set_classify);
         getSystemSettingSpecifyList({'set_classify': this.props.set_classify})
             .then(res => {
                 const data = res.data;
@@ -36,8 +36,8 @@ export default class SetBase extends Component {
 
     saveSetList = (values) => {
         if (this.state.loading) return;
-        console.log(this,this.form);
-        console.log(values);
+        // console.log(this,this.form);
+        // console.log(values);
         this.setState({loading: true});
         saveSystemSettingSpecifyList({'settings': values})
             .then(res => {

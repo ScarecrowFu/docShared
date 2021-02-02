@@ -35,12 +35,12 @@ class Login extends Component {
     handleBaseInfo = () => {
         const base_info = getBaseSetInfo();
         if (base_info) {
-            const can_register = base_info['can_register'].toLowerCase() === 'true';
+            const can_register = base_info['can_register'];
             this.setState({can_register: can_register});
         } else {
             setBaseSetInfoRequest().then(res => {
                 const base_info = getBaseSetInfo();
-                const can_register = base_info['can_register'].toLowerCase() === 'true';
+                const can_register = base_info['can_register'];
                 this.setState({can_register: can_register});
             }, error => {
                 console.log(error.response);

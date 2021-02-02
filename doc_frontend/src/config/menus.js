@@ -83,7 +83,7 @@ export default function getMenus(userId, menuType='front') {
             personalMenu.push({key: 'config_help', text: '配置手册', icon: 'gift', url: site_config_help, target: '_blank', order: 1500})
         } else {
             personalMenu.push({key: 'config_help', text: '配置手册', icon: 'gift', path: '/personal/config_help', order: 1500})
-            console.log('push')
+            // console.log('push')
         }
         if (site_use_help !== '' && site_use_help !== null && site_use_help !== undefined) {
             personalMenu.push({key: 'use_help', text: '使用手册', icon: 'shop', url: site_use_help, target: '_blank', order: 1500})

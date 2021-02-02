@@ -124,7 +124,7 @@ class AttachmentModal extends Component {
     };
 
     handleSelectedAttachments = (selectedRowKeys, selectedRows) => {
-        console.log(selectedRowKeys, selectedRows);
+        // console.log(selectedRowKeys, selectedRows);
         this.setState({ selectedRowKeys: selectedRowKeys });
         this.setState({ selected_attachments: selectedRows });
     };
@@ -143,7 +143,7 @@ class AttachmentModal extends Component {
             insertFunction(selected_attachments, file_type, current_tab);
         } else {
             await this.link_form.validateFields().then(values => {
-                console.log('values', values);
+                // console.log('values', values);
                 insertFunction([values], file_type, current_tab);
             }, error => {
                 console.log(error.response);

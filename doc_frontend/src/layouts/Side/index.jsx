@@ -60,7 +60,7 @@ class Side extends Component {
             const selectedMenuHeight = selectedMenuNode.offsetHeight;
 
             // 选中的菜单在非可视范围内，滚动到中间位置
-            console.log("选中的菜单在非可视范围内，滚动到中间位置");
+            // console.log("选中的菜单在非可视范围内，滚动到中间位置");
             if (selectedMenuTop < innerScrollTop || (selectedMenuTop + selectedMenuHeight) > (innerScrollTop + innerHeight)) {
                 this.inner.scrollTop = selectedMenuTop - selectedMenuHeight - (innerHeight - selectedMenuHeight) / 2;
             }

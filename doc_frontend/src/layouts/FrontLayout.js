@@ -21,7 +21,7 @@ class FrontLayout extends Component {
 
     constructor(...props) {
         super(...props);
-        console.log('front constructor');
+        // console.log('front constructor');
         // 从Storage中获取出需要同步到redux的数据
         this.props.action.getStateFromStorage();
     }
