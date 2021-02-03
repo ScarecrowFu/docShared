@@ -241,7 +241,7 @@ class Home extends Component {
     // 选择文档
     onSelectDocTree = (selectedKeys, info) => {
         // console.log('onSelectDocTree', selectedKeys);
-        if (selectedKeys.length < 0) this.handleGetCurrentDoc(selectedKeys[0]);
+        if (selectedKeys.length > 0) this.handleGetCurrentDoc(selectedKeys[0]);
 
     };
 
