@@ -6,7 +6,7 @@ module.exports = {
     baseURL:
         process.env.NODE_ENV === "development" || process.env.NODE_ENV === "preview" || process.env.NODE_ENV === "test"
             ? "http://127.0.0.1:8000/"
-            : "",
+            : "/",
     // 存储前缀，用来区分不同用户数据，否则同一台电脑，不同人存储数据会互相干扰
     keyPrefix: "doc",
     // 登录信息保存名称
