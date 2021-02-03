@@ -150,8 +150,8 @@ npm start
 
 # 配置手册
 
-[配置手册]
+[配置手册](http://90fyl.com/detail/1/)
 
 # 使用手册
 
-[使用手册]
+[使用手册](http://90fyl.com/detail/1/)
