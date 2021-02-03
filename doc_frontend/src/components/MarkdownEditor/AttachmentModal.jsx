@@ -13,6 +13,7 @@ import Pagination from "src/library/Pagination"
 import Table from "src/library/Table"
 import './style.less'
 import UploadModal from "src/views/base/file_attachments/UploadModal"
+import {getSiteInfo} from "src/utils/info";
 
 
 @config({
@@ -174,10 +175,12 @@ class AttachmentModal extends Component {
 
     componentDidMount() {
         const {file_type} = this.props;
+        let siteInfo = getSiteInfo();
+        let title = siteInfo ? siteInfo?.site_name : 'docShared';
         if (file_type === 20) {
-            document.title = `插入图片`;
+            document.title = `${title} 插入图片`;
         } else {
-            document.title = `插入附件`;
+            document.title = `${title} 插入附件`;
         }
         this.handleGroupOptions();
         this.handleSubmit();

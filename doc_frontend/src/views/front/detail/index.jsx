@@ -36,7 +36,7 @@ import EditExport from 'src/views/base/c_docs/EditExport';
 import './style.less';
 import EditModal from "src/views/base/docs/EditModal";
 import MarkdownRender  from "src/components/MarkdownRender";
-import {getBaseSetInfo, setBaseSetInfoRequest} from "src/utils/info"
+import {getBaseSetInfo, getSiteInfo, setBaseSetInfoRequest} from "src/utils/info"
 
 
 @config({
@@ -139,7 +139,9 @@ class Home extends Component {
                 this.setState({c_doc: data.results}, function () {
                     _that.validCurrentUser();
                 });
-                document.title = `docShared ${data.results.name}`;
+                let siteInfo = getSiteInfo();
+                let title = siteInfo ? siteInfo?.site_name : 'docShared';
+                document.title = `${title} ${data.results.name}`;
             }, error => {
                 console.log(error.response);
             })

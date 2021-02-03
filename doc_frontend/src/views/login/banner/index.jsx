@@ -23,7 +23,7 @@ export default class index extends Component {
                 </div>
                 <div styleName="logo">
                     <img src={logo} alt="图标"/>
-                    <span>DocShared</span>
+                    <span>docShared</span>
                 </div>
             </div>
         );
