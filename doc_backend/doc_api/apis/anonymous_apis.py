@@ -87,7 +87,7 @@ class AnonymousDocViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins
     """
     filter_backends = (filters.OrderingFilter, filters.SearchFilter, DocParameterFilter)
     search_fields = ('c_doc__name', 'title',)
-    ordering_fields = ('c_doc__name', 'title',)
+    ordering_fields = ('c_doc', 'title', 'created_time', 'parent_doc', 'status', 'sort')
     filterset_fields = ('creator', 'created_time', 'c_doc', 'status', 'is_deleted')
     queryset = Doc.objects.order_by('-id').all()
     permission_classes = ()
