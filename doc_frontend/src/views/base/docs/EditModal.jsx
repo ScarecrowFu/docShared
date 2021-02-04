@@ -208,7 +208,8 @@ class EditModal extends Component {
 
     handleSubmit = async () => {
         if (this.state.loading) return;
-        const values = await this.form.validateFields();
+        let values = await this.form.validateFields();
+        values['parent_doc'] = values.parent_doc !== undefined? values.parent_doc: null;
         console.log('doc_status', this.state.status);
         console.log('values', values);
         const {isEdit} = this.props;
@@ -377,7 +378,7 @@ class EditModal extends Component {
                             label="标题"
                             name="title"
                             required
-                            noSpace
+                            // noSpace
                         />
                     </FormRow>
 
