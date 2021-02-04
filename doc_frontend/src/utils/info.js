@@ -30,8 +30,8 @@ export function setBaseSetInfo(baseSetInfo = {}) {
 
 export async function setSiteInfoRequest(reset=false) {
     let siteInfo = getSiteInfo();
-    let site_use_help = siteInfo?.site_use_help? siteInfo.site_use_help : null
-    let site_config_help = siteInfo?.site_config_help? siteInfo.site_config_help : null
+    let site_use_help = siteInfo?.site_use_help? siteInfo.site_use_help : null;
+    let site_config_help = siteInfo?.site_config_help? siteInfo.site_config_help : null;
     if (!siteInfo || site_use_help === null || !site_config_help  === null || reset) {
         await anonymousSettingSpecifyList()
             .then(res => {
