@@ -11,7 +11,7 @@ import { PAGE_FRAME_LAYOUT } from 'src/models/settings';
 import Breadcrumb from '../Breadcrumb';
 import './style.less';
 import {toHome} from "src/utils/userAuth"
-import {getSiteInfo} from "../../utils/info";
+import {getSiteInfo, setSiteInfoRequest} from "../../utils/info";
 
 @connect(state => {
     const { menus, topMenu } = state.menu;
@@ -98,6 +98,10 @@ class Header extends Component {
         const theme = this.props.theme || ((isTopSideMenu || isSideMenu) ? 'default' : 'dark');
 
         let siteInfo = getSiteInfo();
+        if (!siteInfo){
+            setSiteInfoRequest();
+            siteInfo = getSiteInfo();
+        }
         let title = siteInfo ? siteInfo?.site_name : 'docShared';
 
         return (
