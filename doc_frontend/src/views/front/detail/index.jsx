@@ -398,7 +398,7 @@ class Home extends Component {
                 <div styleName="page-detail">
                     <div styleName="page-docs">
                         <Anchor offsetTop={50}>
-                            <Button type="link" onClick={ () => this.onReSetDoc()}>
+                            <Button type="link" onClick={ () =>  {this.setState({ search_docs: null });this.setState({ current_doc: null });}}>
                                 <Title level={2}>{c_doc.name}</Title>
                             </Button>
                             <Divider />
