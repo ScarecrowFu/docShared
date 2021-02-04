@@ -279,7 +279,7 @@ class Home extends Component {
         getDocListFun(params)
             .then(res => {
                 const data = res.data;
-                this.onReSetDoc();
+                this.setState({ current_doc: null });
                 this.setState({ search_docs: data.results });
             }, error => {
                 console.log(error.response);
