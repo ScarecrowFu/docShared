@@ -172,7 +172,7 @@ class Home extends Component {
         let params = {
             'not_page': true,
             'c_doc': c_id,
-            'ordering': '-sort,-created_time',
+            'ordering': '-sort',
             'tree': true,
             'status': 20,
             'search': search,
